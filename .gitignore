@@ -5,6 +5,7 @@ node_modules
 .next
 dist
 coverage
+.turbo
 
 # env
 .env
@@ -14,15 +15,16 @@ coverage
 # logs
 *.log
 
-# turborepo
-.turbo
-
 # editor
-.vscode/settings.json
+.vscode/*
+!.vscode/settings.json
 .idea
 
 # macOS
 .DS_Store
+
+# TypeScript
+*.tsbuildinfo
 
 # misc
 .vercel
