@@ -1,0 +1,21 @@
+{
+
+  "name": "nidio",
+
+  "private": true,
+
+  "version": "0.1.0",
+
+  "type": "module",
+
+  "packageManager": "pnpm@11.15.1",
+
+  "scripts": {},
+
+  "devDependencies": {
+
+    "turbo": "^2.10.5"
+
+  }
+
+}

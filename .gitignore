@@ -1,0 +1,28 @@
+# dependencies
+node_modules
+
+# build
+.next
+dist
+coverage
+
+# env
+.env
+.env.*
+!.env.example
+
+# logs
+*.log
+
+# turborepo
+.turbo
+
+# editor
+.vscode/settings.json
+.idea
+
+# macOS
+.DS_Store
+
+# misc
+.vercel
