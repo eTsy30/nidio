@@ -2,5 +2,6 @@ packages:
 
   - apps/*
 allowBuilds:
-  sharp: set this to true or false
-  unrs-resolver: set this to true or false
+  '@parcel/watcher': true
+  sharp: true
+  unrs-resolver: true
