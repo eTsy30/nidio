@@ -8,7 +8,20 @@
     "build": "turbo build",
     "lint": "turbo lint",
     "typecheck": "turbo typecheck",
-    "clean": "turbo clean"
+    "clean": "turbo clean",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier . --write",
+    "format:check": "prettier . --check",
+    "prepare": "husky",
+    "lint-staged": {
+      "*.{js,jsx,ts,tsx}": [
+        "eslint --fix",
+        "prettier --write"
+      ],
+      "*.{json,md,yml,yaml,scss,css}": [
+        "prettier --write"
+      ]
+    }
   },
   "devDependencies": {
     "@eslint/js": "^9.39.5",
@@ -16,6 +29,9 @@
     "eslint-config-next": "16.2.10",
     "eslint-config-prettier": "^10.1.8",
     "globals": "^17.7.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^17.1.0",
+    "prettier": "^3.9.5",
     "turbo": "^2.10.5",
     "typescript-eslint": "^8.64.0"
   }

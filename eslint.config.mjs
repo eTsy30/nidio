@@ -30,24 +30,20 @@ export default [
     },
   },
 
-  ...nextVitals.map(config => ({
+  ...nextVitals.map((config) => ({
     ...config,
     files: ["apps/web/**/*.{ts,tsx,js,jsx}"],
   })),
 
-  ...nextTs.map(config => ({
+  ...nextTs.map((config) => ({
     ...config,
     files: ["apps/web/**/*.{ts,tsx,js,jsx}"],
   })),
   {
+    files: ["apps/web/**/*.{ts,tsx,js,jsx}"],
 
-  files: ["apps/web/**/*.{ts,tsx,js,jsx}"],
-
-  rules: {
-
-    "@next/next/no-html-link-for-pages": "off",
-
+    rules: {
+      "@next/next/no-html-link-for-pages": "off",
+    },
   },
-
-}
 ];
