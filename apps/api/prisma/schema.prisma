@@ -1,0 +1,229 @@
+generator client {
+    provider = "prisma-client-js"
+
+    // output = "../generated/prisma"
+}
+
+datasource db {
+    provider = "postgresql"
+}
+
+enum WorkspaceType {
+    PERSONAL
+    COUPLE
+}
+
+enum BlockType {
+    TEXT
+    CHECKLIST
+    LINK
+    IMAGE
+    QUOTE
+    DIVIDER
+}
+
+enum Gender {
+    MALE
+    FEMALE
+    UNSPECIFIED
+}
+
+model User {
+    id           String @id @default(cuid())
+    email        String @unique
+    passwordHash String
+
+    firstName String  @db.VarChar(50)
+    lastName  String? @db.VarChar(50)
+
+    avatarUrl String?
+
+    gender Gender @default(UNSPECIFIED)
+
+    emailVerifiedAt DateTime?
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    refreshTokens      RefreshToken[]
+    memberships        CoupleMember[]
+    workspaces         Workspace[]
+    messages           Message[]
+    createdInvites     Invite[]
+    passwordResets     PasswordReset[]
+    emailVerifications EmailVerification[]
+}
+
+model PasswordReset {
+    id String @id @default(cuid())
+
+    userId String
+    user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    tokenHash String
+
+    expiresAt DateTime
+    usedAt    DateTime?
+
+    createdAt DateTime @default(now())
+
+    @@index([userId])
+    @@index([userId, expiresAt])
+}
+
+model EmailVerification {
+    id String @id @default(cuid())
+
+    userId String
+    user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    tokenHash String
+
+    expiresAt  DateTime
+    verifiedAt DateTime?
+
+    createdAt DateTime @default(now())
+
+    @@index([userId])
+    @@index([userId, expiresAt])
+}
+
+model RefreshToken {
+    id String @id @default(cuid())
+
+    tokenHash String
+
+    expiresAt DateTime
+    createdAt DateTime @default(now())
+
+    userId String
+    user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    @@index([userId])
+}
+
+model Couple {
+    id String @id @default(cuid())
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    members   CoupleMember[]
+    invites   Invite[]
+    workspace Workspace?
+}
+
+model CoupleMember {
+    id String @id @default(cuid())
+
+    coupleId String
+    couple   Couple @relation(fields: [coupleId], references: [id], onDelete: Cascade)
+
+    userId String
+    user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    joinedAt DateTime @default(now())
+
+    @@unique([coupleId, userId])
+    @@index([coupleId])
+    @@index([userId])
+}
+
+model Workspace {
+    id String @id @default(cuid())
+
+    type WorkspaceType
+
+    title String @db.VarChar(100)
+
+    userId String?
+    user   User?   @relation(fields: [userId], references: [id])
+
+    coupleId String? @unique
+    couple   Couple? @relation(fields: [coupleId], references: [id])
+
+    spaces   Space[]
+    messages Message[]
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    @@index([userId])
+}
+
+model Invite {
+    id String @id @default(cuid())
+
+    token String @unique
+
+    coupleId String
+    couple   Couple @relation(fields: [coupleId], references: [id], onDelete: Cascade)
+
+    creatorId String
+    creator   User   @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+
+    expiresAt  DateTime
+    acceptedAt DateTime?
+    revokedAt  DateTime?
+
+    createdAt DateTime @default(now())
+
+    @@index([coupleId])
+    @@index([creatorId])
+}
+
+model Message {
+    id String @id @default(cuid())
+
+    workspaceId String
+    workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+    senderId String
+    sender   User   @relation(fields: [senderId], references: [id])
+
+    text Json
+
+    createdAt DateTime @default(now())
+
+    editedAt  DateTime?
+    deletedAt DateTime?
+
+    @@index([workspaceId])
+    @@index([senderId])
+}
+
+model Space {
+    id String @id @default(cuid())
+
+    workspaceId String
+    workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+    title String @db.VarChar(100)
+
+    icon  String?
+    color String?
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    blocks Block[]
+
+    @@index([workspaceId])
+}
+
+model Block {
+    id String @id @default(cuid())
+
+    spaceId String
+    space   Space  @relation(fields: [spaceId], references: [id], onDelete: Cascade)
+
+    type BlockType
+
+    position Int
+    content  Json
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    @@index([spaceId])
+}

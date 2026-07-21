@@ -2,5 +2,9 @@ packages:
   - apps/*
 allowBuilds:
   "@parcel/watcher": true
+  "@prisma/engines": true
+  "@scarf/scarf": true
+  argon2: true
+  prisma: true
   sharp: true
   unrs-resolver: true

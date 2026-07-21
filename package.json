@@ -12,7 +12,12 @@
     "lint:fix": "eslint . --fix",
     "format": "prettier . --write",
     "format:check": "prettier . --check",
-    "prepare": "husky"
+    "prepare": "husky",
+    "prisma studio": "pnpm prisma studio --schema=apps/api/prisma/schema.prisma",
+    "db:up": "docker compose -f docker/docker-compose.yml up -d",
+    "db:down": "docker compose -f docker/docker-compose.yml down",
+    "db:logs": "docker compose -f docker/docker-compose.yml logs -f",
+    "db:restart": "docker compose -f docker/docker-compose.yml restart"
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx}": [
@@ -25,6 +30,9 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.39.5",
+    "@types/node": "^26.1.1",
+    "@types/passport-jwt": "^4.0.1",
+    "@types/pg": "^8.20.0",
     "eslint": "^9.39.5",
     "eslint-config-next": "16.2.10",
     "eslint-config-prettier": "^10.1.8",
@@ -33,15 +41,30 @@
     "husky": "^9.1.7",
     "lint-staged": "^17.1.0",
     "prettier": "^3.9.5",
+    "prisma": "^7.8.0",
     "turbo": "^2.10.5",
     "typescript-eslint": "^8.64.0"
   },
   "dependencies": {
+    "@nestjs/config": "^4.0.4",
+    "@nestjs/jwt": "^11.0.2",
+    "@nestjs/passport": "^11.0.5",
+    "@nestjs/swagger": "^11.4.6",
+    "@prisma/adapter-pg": "^7.8.0",
+    "@prisma/client": "^7.8.0",
     "@tanstack/react-query": "^5.101.2",
+    "argon2": "^0.45.0",
     "axios": "^1.18.1",
+    "class-transformer": "^0.5.1",
+    "class-validator": "^0.15.1",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "nodemailer": "^9.0.3",
+    "passport": "^0.7.0",
+    "passport-jwt": "^4.0.1",
+    "pg": "^8.22.0",
     "react-hook-form": "^7.82.0",
+    "swagger-ui-express": "^5.0.1",
     "tailwind-merge": "^3.6.0",
     "zod": "^4.4.3"
   }
