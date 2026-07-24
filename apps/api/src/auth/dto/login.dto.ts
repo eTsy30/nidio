@@ -11,7 +11,7 @@ export class LoginDto {
   @ApiProperty({
     example: 'user@example.com',
   })
-  @IsEmail()
+  @IsEmail({}, { message: 'Некорректный email' })
   @IsNotEmpty()
   email!: string;
 

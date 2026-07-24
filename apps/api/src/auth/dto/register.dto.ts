@@ -36,7 +36,7 @@ export class RegisterRequestDto {
     example: 'StrongPassword123',
   })
   @IsString({ message: 'Пароль должен быть строкой' })
-  @MinLength(8, { message: 'Минимум 8 символов' })
+  @MinLength(6, { message: 'Минимум 6 символов' })
   @MaxLength(120, { message: 'Максимум 120 символов' })
   password!: string;
 
@@ -44,7 +44,7 @@ export class RegisterRequestDto {
     example: 'StrongPassword123',
   })
   @IsString({ message: 'Подтверждение пароля должно быть строкой' })
-  @MinLength(8, { message: 'Минимум 8 символов' })
+  @MinLength(6, { message: 'Минимум 6 символов' })
   @MaxLength(120, { message: 'Максимум 120 символов' })
   confirmPassword!: string;
 }
