@@ -6,7 +6,7 @@ import {
 import { UnauthorizedException } from '@nestjs/common';
 
 import { EmailService } from '../email/email.service';
-import { PrismaService } from '../prismas/prisma.service';
+import { PrismaService } from '../prisma/prisma.service';
 
 import { LoginDto } from './dto/login.dto';
 import { RegisterRequestDto } from './dto/register.dto';
@@ -53,7 +53,6 @@ export class AuthService {
         id: true,
         email: true,
         firstName: true,
-        lastName: true,
         avatarUrl: true,
         gender: true,
         createdAt: true,

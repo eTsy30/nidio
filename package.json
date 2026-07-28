@@ -13,7 +13,7 @@
     "format": "prettier . --write",
     "format:check": "prettier . --check",
     "prepare": "husky",
-    "prisma studio": "pnpm prisma studio --schema=apps/api/prisma/schema.prisma",
+    "prisma:studio": "cd apps/api && pnpm prisma studio",
     "db:up": "docker compose -f docker/docker-compose.yml up -d",
     "db:down": "docker compose -f docker/docker-compose.yml down",
     "db:logs": "docker compose -f docker/docker-compose.yml logs -f",

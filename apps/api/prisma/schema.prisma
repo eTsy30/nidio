@@ -66,22 +66,25 @@ model Couple {
   id        String         @id @default(cuid())
   createdAt DateTime       @default(now())
   updatedAt DateTime       @updatedAt
+  deletedAt DateTime?
   members   CoupleMember[]
   invites   Invite[]
   workspace Workspace?
+
+  @@index([createdAt])
+  @@index([deletedAt])
 }
 
 model CoupleMember {
   id       String   @id @default(cuid())
   coupleId String
-  userId   String
+  userId   String   @unique
   joinedAt DateTime @default(now())
   couple   Couple   @relation(fields: [coupleId], references: [id], onDelete: Cascade)
   user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([coupleId, userId])
   @@index([coupleId])
-  @@index([userId])
 }
 
 model Workspace {
@@ -101,19 +104,21 @@ model Workspace {
 }
 
 model Invite {
-  id         String    @id @default(cuid())
-  token      String    @unique
-  coupleId   String
+  id         String       @id @default(cuid())
+  token      String       @unique
+  coupleId   String?
   creatorId  String
+  status     InviteStatus @default(PENDING)
   expiresAt  DateTime
   acceptedAt DateTime?
   revokedAt  DateTime?
-  createdAt  DateTime  @default(now())
-  couple     Couple    @relation(fields: [coupleId], references: [id], onDelete: Cascade)
-  creator    User      @relation(fields: [creatorId], references: [id], onDelete: Cascade)
+  createdAt  DateTime     @default(now())
+  couple     Couple?      @relation(fields: [coupleId], references: [id], onDelete: Cascade)
+  creator    User         @relation(fields: [creatorId], references: [id], onDelete: Cascade)
 
   @@index([coupleId])
   @@index([creatorId])
+  @@index([token])
 }
 
 model Message {
@@ -158,6 +163,19 @@ model Block {
   @@index([spaceId])
 }
 
+enum Gender {
+  MALE
+  FEMALE
+  UNSPECIFIED
+}
+
+enum InviteStatus {
+  PENDING
+  ACCEPTED
+  EXPIRED
+  REVOKED
+}
+
 enum WorkspaceType {
   PERSONAL
   COUPLE
@@ -170,10 +188,4 @@ enum BlockType {
   IMAGE
   QUOTE
   DIVIDER
-}
-
-enum Gender {
-  MALE
-  FEMALE
-  UNSPECIFIED
 }
