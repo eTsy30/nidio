@@ -49,6 +49,15 @@ export class AuthService {
       where: {
         id,
       },
+      select: {
+        id: true,
+        email: true,
+        firstName: true,
+        lastName: true,
+        avatarUrl: true,
+        gender: true,
+        createdAt: true,
+      },
     });
 
     if (!user) {

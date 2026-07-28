@@ -1,6 +1,15 @@
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 
-import { forgotPassword, login, logout, refresh, register, resetPassword } from "../api/auth.api";
+import {
+  forgotPassword,
+  login,
+  logout,
+  me,
+  refresh,
+  register,
+  resetPassword,
+} from "../api/auth.api";
+import { User } from "../model/auth.types";
 export const useLogin = () => {
   return useMutation({
     mutationFn: login,
@@ -33,5 +42,12 @@ export const useLogout = () => {
     mutationFn: async () => {
       await logout();
     },
+  });
+};
+export const useMe = () => {
+  return useQuery<User>({
+    queryKey: ["auth", "me"],
+    queryFn: me,
+    retry: false,
   });
 };

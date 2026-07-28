@@ -7,7 +7,7 @@ import {
   RegisterRequest,
   ResetPasswordRequest,
 } from "../model";
-import { AuthResponse } from "../model/auth.types";
+import { AuthResponse, User } from "../model/auth.types";
 
 export const login = async (data: LoginRequest) => {
   const response = await http.post<AuthResponse>("/auth/login", data);
@@ -39,4 +39,8 @@ export const logout = async () => {
   } finally {
     removeAccessToken();
   }
+};
+export const me = async () => {
+  const response = await http.get<User>("/auth/@me");
+  return response;
 };

@@ -28,9 +28,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const bootstrap = async () => {
       try {
         const response = await http.post<{ accessToken: string }>("/auth/refresh");
-        const { accessToken } = response;
-        setAccessToken(accessToken);
-      } catch {
+
+        if (response.accessToken) {
+          setAccessToken(response.accessToken);
+        }
+      } catch (error) {
         removeAccessToken();
       } finally {
         setIsLoading(false);
@@ -49,7 +51,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       unsubscribe();
     };
   }, []);
-
+  if (isLoading) {
+    return null;
+  }
   return (
     <AuthContext.Provider value={{ isAuthenticated, isLoading }}>{children}</AuthContext.Provider>
   );

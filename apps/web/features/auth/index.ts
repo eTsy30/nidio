@@ -2,6 +2,7 @@ export {
   useForgotPassword,
   useLogin,
   useLogout,
+  useMe,
   useRefresh,
   useRegister,
   useResetPassword,
