@@ -5,7 +5,6 @@ export const registerSchema = z
       .string()
       .min(2, { message: "Минимум 2 символа" })
       .max(50, { message: "Максимум 50 символов" }),
-    lastName: z.string().max(50, { message: "Максимум 50 символов" }).optional(),
     email: z.string().email("Некорректный email"),
     password: z
       .string()

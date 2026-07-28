@@ -13,7 +13,6 @@ CREATE TABLE "User" (
     "email" TEXT NOT NULL,
     "passwordHash" TEXT NOT NULL,
     "firstName" VARCHAR(50) NOT NULL,
-    "lastName" VARCHAR(50),
     "avatarUrl" TEXT,
     "gender" "Gender" NOT NULL DEFAULT 'UNSPECIFIED',
     "emailVerifiedAt" TIMESTAMP(3),

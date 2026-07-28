@@ -1,7 +1,4 @@
 import { QueryClient } from "@tanstack/react-query";
-
-import { responseInterceptor } from "../interceptors/response.interceptor";
-
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {

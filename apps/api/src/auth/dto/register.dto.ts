@@ -1,8 +1,7 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiProperty } from '@nestjs/swagger';
 import {
   IsEmail,
   IsNotEmpty,
-  IsOptional,
   IsString,
   MaxLength,
   MinLength,
@@ -17,14 +16,6 @@ export class RegisterRequestDto {
   @MinLength(2, { message: 'Минимум 2 символа' })
   @MaxLength(50, { message: 'Максимум 50 символов' })
   firstName!: string;
-
-  @ApiPropertyOptional({
-    example: 'Иванов',
-  })
-  @IsOptional()
-  @IsString({ message: 'Фамилия должна быть строкой' })
-  @MaxLength(50, { message: 'Максимум 50 символов' })
-  lastName?: string;
 
   @ApiProperty({
     example: 'user@mail.com',

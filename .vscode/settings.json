@@ -3,5 +3,9 @@
   "editor.codeActionsOnSave": {
     "source.fixAll.eslint": "always"
   },
-  "eslint.useFlatConfig": true
+  "eslint.useFlatConfig": true,
+  "css.validate": false,
+  "scss.validate": false,
+  "less.validate": false,
+  "css.lint.unknownAtRules": "ignore"
 }

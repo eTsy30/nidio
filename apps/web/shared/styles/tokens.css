@@ -1,0 +1,204 @@
+:root {
+  /* ==========================================
+     Colors
+  ========================================== */
+
+  --primary: #af4b2b;
+  --primary-foreground: #ffffff;
+
+  --accent: #ff7f50;
+  --accent-foreground: #ffffff;
+
+  --background: #f5f2ed;
+  --card: #ffffff;
+  --popover: var(--card);
+
+  --foreground: #1f1f1f;
+
+  --muted: #ede8e2;
+  --muted-foreground: #777777;
+
+  --secondary: var(--muted);
+  --secondary-foreground: var(--foreground);
+
+  --border: #e6e1da;
+  --input: var(--border);
+
+  --ring: var(--primary);
+
+  --overlay: rgb(0 0 0 / 0.45);
+  --success: #4f8a5b;
+
+  --success-foreground: #ffffff;
+
+  --warning: #d79a2b;
+
+  --warning-foreground: #ffffff;
+
+  --destructive: #c95a4a;
+
+  --destructive-foreground: #ffffff;
+
+  /* ==========================================
+     Radius
+  ========================================== */
+
+  --radius-sm: 8px;
+  --radius-md: 16px;
+  --radius-lg: 32px;
+
+  /* ==========================================
+     Controls
+  ========================================== */
+
+  --control-sm: 40px;
+  --control-md: 48px;
+  --control-lg: 56px;
+
+  /* ==========================================
+     Spacing
+  ========================================== */
+
+  --space-4: 4px;
+  --space-8: 8px;
+  --space-16: 16px;
+  --space-32: 32px;
+  --space-48: 48px;
+  --space-64: 64px;
+
+  /* ==========================================
+     Shadows
+  ========================================== */
+
+  --shadow-none: none;
+  --shadow-soft: 0 2px 8px rgb(0 0 0 / 0.04);
+  --shadow-floating: 0 12px 32px rgb(0 0 0 / 0.08);
+  --shadow-modal: 0 32px 80px rgb(0 0 0 / 0.12);
+}
+
+.dark {
+  --primary: #c56240;
+  --primary-foreground: #ffffff;
+
+  --accent: #ff9068;
+  --accent-foreground: #ffffff;
+
+  --background: #121212;
+  --card: #222120;
+  --popover: var(--card);
+
+  --foreground: #f5f5f5;
+
+  --muted: #2a2a2a;
+  --muted-foreground: #a1a1aa;
+
+  --secondary: var(--muted);
+  --secondary-foreground: var(--foreground);
+
+  --border: #2c2c2c;
+  --input: var(--border);
+
+  --ring: var(--primary);
+
+  --overlay: rgb(0 0 0 / 0.6);
+
+  --shadow-none: none;
+  --shadow-soft: 0 2px 8px rgb(0 0 0 / 0.25);
+  --shadow-floating: 0 16px 48px rgb(0 0 0 / 0.35);
+  --shadow-modal: 0 32px 80px rgb(0 0 0 / 0.45);
+  --success: #63b873;
+
+  --success-foreground: #ffffff;
+
+  --warning: #f2b84b;
+
+  --warning-foreground: #1f1f1f;
+
+  --destructive: #e37a6b;
+
+  --destructive-foreground: #ffffff;
+}
+
+@theme inline {
+  /* ==========================================
+     Fonts
+  ========================================== */
+
+  --font-sans: var(--font-inter);
+  --font-mono: var(--font-geist-mono);
+
+  /* ==========================================
+     Colors
+  ========================================== */
+
+  --color-background: var(--background);
+  --color-card: var(--card);
+  --color-popover: var(--popover);
+
+  --color-foreground: var(--foreground);
+
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-success: var(--success);
+
+  --color-success-foreground: var(--success-foreground);
+
+  --color-warning: var(--warning);
+
+  --color-warning-foreground: var(--warning-foreground);
+
+  --color-destructive: var(--destructive);
+
+  --color-destructive-foreground: var(--destructive-foreground);
+
+  /* ==========================================
+     Radius
+  ========================================== */
+
+  --radius-sm: var(--radius-sm);
+  --radius-md: var(--radius-md);
+  --radius-lg: var(--radius-lg);
+
+  /* ==========================================
+     Controls
+  ========================================== */
+
+  --control-sm: var(--control-sm);
+  --control-md: var(--control-md);
+  --control-lg: var(--control-lg);
+
+  /* ==========================================
+     Spacing
+  ========================================== */
+
+  --space-4: var(--space-4);
+  --space-8: var(--space-8);
+  --space-16: var(--space-16);
+  --space-32: var(--space-32);
+  --space-48: var(--space-48);
+  --space-64: var(--space-64);
+
+  /* ==========================================
+     Shadows
+  ========================================== */
+
+  --shadow-none: var(--shadow-none);
+  --shadow-soft: var(--shadow-soft);
+  --shadow-floating: var(--shadow-floating);
+  --shadow-modal: var(--shadow-modal);
+
+  --ease-default: cubic-bezier(0.2, 0.8, 0.2, 1);
+}

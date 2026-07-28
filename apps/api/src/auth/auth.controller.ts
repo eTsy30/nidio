@@ -6,9 +6,10 @@ import {
   HttpStatus,
   Post,
   Req,
+  Res,
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
-import type { Request } from 'express';
+import type { Request, Response } from 'express';
 
 import { Authorization } from './decorators/Authorization.decorator';
 import { Authorized } from './decorators/authorized.decorator';
@@ -25,29 +26,87 @@ export class AuthController {
 
   @Post('register')
   @HttpCode(HttpStatus.CREATED)
-  register(@Body() dto: RegisterRequestDto) {
-    return this.authService.register(dto);
+  async register(
+    @Body() dto: RegisterRequestDto,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const { accessToken, refreshToken } = await this.authService.register(dto);
+
+    res.cookie('refreshToken', refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      path: '/auth/refresh',
+      maxAge: 1000 * 60 * 60 * 24 * 30,
+    });
+
+    return {
+      accessToken,
+    };
   }
 
   @Post('login')
   @HttpCode(HttpStatus.OK)
-  login(@Body() dto: LoginDto) {
-    return this.authService.login(dto);
+  async login(
+    @Body() dto: LoginDto,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const { accessToken, refreshToken } = await this.authService.login(dto);
+
+    res.cookie('refreshToken', refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      path: '/auth/refresh',
+      maxAge: 1000 * 60 * 60 * 24 * 30,
+    });
+
+    return {
+      accessToken,
+    };
   }
 
   @Post('refresh')
   @HttpCode(HttpStatus.OK)
-  refresh(@Req() req: Request) {
-    const refreshToken =
-      req.headers.authorization?.replace('Bearer ', '') ?? '';
-    return this.authService.refresh(refreshToken);
+  async refresh(
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const refreshToken = req.cookies?.refreshToken ?? '';
+
+    const { accessToken, refreshToken: newRefreshToken } =
+      await this.authService.refresh(refreshToken);
+
+    res.cookie('refreshToken', newRefreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      path: '/auth/refresh',
+      maxAge: 1000 * 60 * 60 * 24 * 30,
+    });
+
+    return {
+      accessToken,
+    };
   }
 
   @Post('logout')
   @HttpCode(HttpStatus.OK)
-  logout(@Req() req: Request) {
+  async logout(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
     const userId = (req as any).user?.id;
-    return this.authService.logout(userId);
+
+    await this.authService.logout(userId);
+
+    res.clearCookie('refreshToken', {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      path: '/auth/refresh',
+    });
+
+    return {
+      success: true,
+    };
   }
 
   @Post('forgot-password')

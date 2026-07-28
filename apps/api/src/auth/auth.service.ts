@@ -40,6 +40,10 @@ export class AuthService {
     };
   }
 
+  async createSession(userId: string) {
+    return this.auth(userId);
+  }
+
   async validate(id: string) {
     const user = await this.prisma.user.findUnique({
       where: {
@@ -76,7 +80,6 @@ export class AuthService {
         email: dto.email,
         passwordHash,
         firstName: dto.firstName,
-        lastName: dto.lastName ?? null,
       },
     });
 
@@ -113,7 +116,13 @@ export class AuthService {
   }
 
   async refresh(refreshToken: string) {
+    if (!refreshToken) {
+      throw new UnauthorizedException('Refresh token is missing');
+    }
     const payload = this.tokenService.verify<{ sub: string }>(refreshToken);
+    if (!payload.sub) {
+      throw new UnauthorizedException('Invalid refresh token');
+    }
 
     const sessions = await this.sessionService.findAllByUser(payload.sub);
 

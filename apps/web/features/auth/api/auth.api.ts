@@ -1,4 +1,5 @@
-import { api } from "@/shared/api/client/api";
+import { http } from "@/shared/api/client/api";
+import { removeAccessToken, setAccessToken } from "@/shared/lib/token";
 
 import {
   ForgotPasswordRequest,
@@ -6,14 +7,36 @@ import {
   RegisterRequest,
   ResetPasswordRequest,
 } from "../model";
-import { AuthResponse } from "../types/auth.types";
+import { AuthResponse } from "../model/auth.types";
 
-export const login = (data: LoginRequest) => api.post<AuthResponse>("/auth/login", data);
+export const login = async (data: LoginRequest) => {
+  const response = await http.post<AuthResponse>("/auth/login", data);
+  setAccessToken(response.accessToken);
+  return response;
+};
 
-export const register = (data: RegisterRequest) => api.post<AuthResponse>("/auth/register", data);
+export const refresh = async () => {
+  const response = await http.post<AuthResponse>("/auth/refresh");
+  setAccessToken(response.accessToken);
+  return response;
+};
+
+export const register = async (data: RegisterRequest) => {
+  const response = await http.post<AuthResponse>("/auth/register", data);
+  setAccessToken(response.accessToken);
+  return response;
+};
 
 export const forgotPassword = (data: ForgotPasswordRequest) =>
-  api.post<void>("/auth/forgot-password", data);
+  http.post<void>("/auth/forgot-password", data);
 
 export const resetPassword = (data: ResetPasswordRequest) =>
-  api.post<void>("/auth/reset-password", data);
+  http.post<void>("/auth/reset-password", data);
+
+export const logout = async () => {
+  try {
+    await http.post<void>("/auth/logout");
+  } finally {
+    removeAccessToken();
+  }
+};
