@@ -33,7 +33,7 @@ export class EmailService {
 
     try {
       const info = await this.transporter.sendMail({
-        from: `"Logma" <${process.env.GMAIL_USER}>`,
+        from: `"nidio" <${process.env.GMAIL_USER}>`,
         to: email,
         subject: 'Восстановление пароля',
         html: this.getResetPasswordTemplate(resetUrl),
@@ -48,69 +48,209 @@ export class EmailService {
   }
 
   private getResetPasswordTemplate(resetUrl: string): string {
+    const year = new Date().getFullYear();
+
     return `
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Восстановление пароля</title>
-      </head>
-      <body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f5f5;">
-        <table width="100%" cellpadding="0" cellspacing="0" style="background: #f5f5f5; padding: 40px 20px;">
-          <tr>
-            <td align="center">
-              <table width="100%" max-width="480" cellpadding="0" cellspacing="0" style="background: #ffffff; border-radius: 16px; padding: 48px 32px; box-shadow: 0 4px 24px rgba(0,0,0,0.08);">
-                <tr>
-                  <td align="center" style="padding-bottom: 32px;">
-                    <div style="font-size: 32px; font-weight: 700; color: #1a1a1a;">
-                      L<span style="color: #f1d36b;">💡</span>gma
-                    </div>
-                  </td>
-                </tr>
-                <tr>
-                  <td style="padding-bottom: 24px;">
-                    <h1 style="margin: 0; font-size: 24px; font-weight: 700; color: #1a1a1a; text-align: center;">
-                      Восстановление пароля
-                    </h1>
-                  </td>
-                </tr>
-                <tr>
-                  <td style="padding-bottom: 32px;">
-                    <p style="margin: 0; font-size: 16px; line-height: 1.6; color: #666; text-align: center;">
-                      Вы запросили сброс пароля. Нажмите на кнопку ниже, чтобы создать новый пароль:
-                    </p>
-                  </td>
-                </tr>
-                <tr>
-                  <td align="center" style="padding-bottom: 32px;">
-                    <a href="${resetUrl}" 
-                       style="display: inline-block; padding: 16px 32px; background: #f1d36b; color: #000; text-decoration: none; border-radius: 12px; font-weight: 600; font-size: 16px; box-shadow: 0 4px 12px rgba(241, 211, 107, 0.3);">
-                      Сбросить пароль
-                    </a>
-                  </td>
-                </tr>
-                <tr>
-                  <td style="padding-bottom: 16px;">
-                    <p style="margin: 0; font-size: 14px; line-height: 1.5; color: #999; text-align: center;">
-                      Ссылка действительна <strong style="color: #666;">15 минут</strong>. Если вы не запрашивали сброс, проигнорируйте это письмо.
-                    </p>
-                  </td>
-                </tr>
-                <tr>
-                  <td style="padding-top: 32px; border-top: 1px solid #eee;">
-                    <p style="margin: 0; font-size: 12px; color: #ccc; text-align: center;">
-                      © ${new Date().getFullYear()} Logma. Все права защищены.
-                    </p>
-                  </td>
-                </tr>
-              </table>
-            </td>
-          </tr>
-        </table>
-      </body>
-      </html>
-    `;
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Восстановление пароля</title>
+</head>
+
+<body
+  style="
+    margin:0;
+    padding:0;
+    background:#F8F7F4;
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Inter,Roboto,sans-serif;
+  "
+>
+
+<table
+  width="100%"
+  cellpadding="0"
+  cellspacing="0"
+  style="padding:48px 16px;"
+>
+<tr>
+<td align="center">
+
+<table
+  width="100%"
+  cellpadding="0"
+  cellspacing="0"
+  style="
+    max-width:560px;
+    background:#FFFFFF;
+    border:1px solid #EFECE7;
+    border-radius:28px;
+    padding:56px 48px;
+  "
+>
+
+<tr>
+<td align="center">
+
+<div
+  style="
+    font-size:30px;
+    font-weight:700;
+    color:#181818;
+    letter-spacing:-0.04em;
+    margin-bottom:40px;
+  "
+>
+Nidio
+</div>
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+<h1
+  style="
+    margin:0 0 20px;
+    font-size:30px;
+    font-weight:700;
+    line-height:1.2;
+    color:#181818;
+    text-align:center;
+  "
+>
+Восстановление пароля
+</h1>
+
+<p
+  style="
+    margin:0 auto 36px;
+    max-width:420px;
+    font-size:16px;
+    line-height:1.7;
+    color:#666666;
+    text-align:center;
+  "
+>
+Мы получили запрос на изменение пароля для вашей учетной записи.
+Если это были вы, нажмите кнопку ниже, чтобы создать новый пароль.
+</p>
+
+</td>
+</tr>
+
+<tr>
+<td align="center">
+
+<a
+  href="${resetUrl}"
+  style="
+    display:inline-block;
+    padding:16px 32px;
+    background:#C97A63;
+    color:#FFFFFF;
+    text-decoration:none;
+    font-size:16px;
+    font-weight:600;
+    border-radius:18px;
+  "
+>
+Создать новый пароль
+</a>
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+<p
+  style="
+    margin:40px auto 0;
+    max-width:420px;
+    font-size:14px;
+    line-height:1.7;
+    color:#8A8A8A;
+    text-align:center;
+  "
+>
+Ссылка действительна в течение
+<strong>15 минут</strong>.
+Если вы не отправляли этот запрос, просто проигнорируйте это письмо —
+ваш пароль останется без изменений.
+</p>
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+<p
+  style="
+    margin:32px 0 0;
+    font-size:13px;
+    line-height:1.6;
+    color:#999999;
+    text-align:center;
+    word-break:break-all;
+  "
+>
+Если кнопка не работает, откройте ссылку вручную:
+</p>
+
+<p
+  style="
+    margin:8px 0 0;
+    font-size:13px;
+    text-align:center;
+    word-break:break-all;
+  "
+>
+<a
+  href="${resetUrl}"
+  style="
+    color:#C97A63;
+    text-decoration:none;
+  "
+>
+${resetUrl}
+</a>
+</p>
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+<div
+  style="
+    margin-top:48px;
+    padding-top:24px;
+    border-top:1px solid #EFECE7;
+    text-align:center;
+    font-size:13px;
+    color:#B3B3B3;
+  "
+>
+© ${year} Nidio. Shared space for two.
+</div>
+
+</td>
+</tr>
+
+</table>
+
+</td>
+</tr>
+</table>
+
+</body>
+</html>
+`;
   }
 
   private getMessageId(info: unknown): string {

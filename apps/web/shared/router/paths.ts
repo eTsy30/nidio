@@ -5,8 +5,6 @@ export const routes = {
   homepage: "/",
   login: "/login",
   registration: "/registration",
-  forgotPassword: "/forgotPassword",
-  // recoverReset: '/password/reset',
-  // emailResend: '/email/resend',
-  // emailConfirm: (token) => `/email/confirm/${token}`,
+  forgotPassword: "/forgot-password",
+  resetPassword: "/reset-password",
 } satisfies Record<string, Route>;
