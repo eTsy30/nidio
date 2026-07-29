@@ -7,4 +7,5 @@ export const routes = {
   registration: "/registration",
   forgotPassword: "/forgot-password",
   resetPassword: "/reset-password",
+  invitePartner: "/invite-partner",
 } satisfies Record<string, Route>;
