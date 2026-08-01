@@ -1,10 +1,11 @@
 "use client";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { AxiosError } from "axios";
 import { Mail, User } from "lucide-react";
 import { useForm } from "react-hook-form";
 
+import { useAcceptInvite } from "@/features/relationship/hook/use-relationship";
 import { cn } from "@/shared/lib/cn";
 import { routes } from "@/shared/router/paths";
 import { AuthLayout, PasswordInput } from "@/shared/ui";
@@ -19,6 +20,11 @@ import { registrationFeatures } from "./registration-features";
 
 export function RegistrationForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirect = searchParams.get("redirect");
+
+  const inviteToken = redirect?.startsWith("/invite/") ? (redirect.split("/").pop() ?? null) : null;
+  const acceptInviteMutation = useAcceptInvite();
   const {
     register,
     formState: { errors, isValid, isDirty },
@@ -38,13 +44,18 @@ export function RegistrationForm() {
   const emailField = register("email");
   const passwordField = register("password");
   const confirmPasswordField = register("confirmPassword");
-
   const registerMutation = useRegister();
 
   async function handleRegisterSubmit(data: RegisterRequest) {
     await registerMutation.mutateAsync(data);
-    router.replace(routes.homepage);
-    router.refresh();
+
+    if (inviteToken) {
+      await acceptInviteMutation.mutateAsync(inviteToken);
+      router.replace(routes.homepage);
+      return;
+    }
+
+    router.replace(redirect ?? routes.invite);
   }
 
   let errorMessage: string | null = null;
@@ -53,7 +64,8 @@ export function RegistrationForm() {
     errorMessage = err.response?.data?.message || "Произошла ошибка. Попробуйте еще раз.";
   }
 
-  const isSubmitDisabled = !isDirty || !isValid || registerMutation.isPending;
+  const isSubmitDisabled =
+    !isDirty || !isValid || registerMutation.isPending || acceptInviteMutation.isPending;
 
   return (
     <AuthLayout
@@ -125,14 +137,21 @@ export function RegistrationForm() {
           size="lg"
           type="submit"
           fullWidth
-          loading={registerMutation.isPending}
+          loading={registerMutation.isPending || acceptInviteMutation.isPending}
           disabled={isSubmitDisabled}
         >
           Создать аккаунт
         </Button>
 
         <p className="mt-2 description text-center text-muted-foreground">
-          Уже есть аккаунт? <Link href={routes.login}>Войти</Link>
+          Уже есть аккаунт?{" "}
+          <Link
+            href={
+              redirect ? `${routes.login}?redirect=${encodeURIComponent(redirect)}` : routes.login
+            }
+          >
+            Войти
+          </Link>
         </p>
       </form>
     </AuthLayout>

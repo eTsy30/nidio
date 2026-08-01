@@ -64,7 +64,7 @@ niDio — это платформа, которая помогает двум л
 1. **Клонируйте репозиторий:**
 
    ```bash
-   git clone https://github.com/your-org/nidio.git
+   git clone https://github.com/eTsy30/nidio
    cd nidio
    ```
 

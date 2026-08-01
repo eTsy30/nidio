@@ -1,44 +1,26 @@
 import * as React from "react";
 import QRCode from "react-qr-code";
 
+import type { CurrentInviteResponse } from "@/features/relationship/model/relationship.types";
+import { getRemainingTime } from "@/shared/lib/getRemainingTime";
 import { Badge } from "@/shared/ui";
 import { AvatarPair } from "@/shared/ui/avatar-pair/AvatarPair";
 import { Button } from "@/shared/ui/button/Button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/shared/ui/card/Card";
-function getRemainingTime(expiresAt: string) {
-  const now = new Date().getTime();
-  const expires = new Date(expiresAt).getTime();
-  const difference = expires - now;
-
-  if (difference <= 0) {
-    return "Expired";
-  }
-
-  const hours = Math.floor(difference / (1000 * 60 * 60));
-  const minutes = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
-
-  if (hours === 0) {
-    return `${minutes}m`;
-  }
-
-  return `${hours}h ${minutes}m`;
-}
 
 export interface InvitePartnerCardProps {
   isCreating?: boolean;
   onCreateInvite: () => void;
-  inviteUrl?: string | undefined;
-  expiresAt?: string | undefined;
+  invite?: CurrentInviteResponse;
   isRevoking?: boolean;
-  onCopy?: () => Promise<void>;
+  onCopy?: () => void;
   onRevoke?: () => void;
 }
 
 export function InvitePartnerCard({
   isCreating = false,
   onCreateInvite,
-  inviteUrl,
-  expiresAt,
+  invite,
   isRevoking = false,
   onCopy,
   onRevoke,
@@ -56,7 +38,7 @@ export function InvitePartnerCard({
         </CardDescription>
       </CardHeader>
 
-      {!inviteUrl ? (
+      {!invite ? (
         <CardContent>
           <Button fullWidth loading={isCreating} onClick={onCreateInvite}>
             Создать приглашение
@@ -68,22 +50,22 @@ export function InvitePartnerCard({
             <Badge variant="success">Приглашение активно</Badge>
           </div>
 
-          <div className="mx-auto mt-3 flex size-52 items-center justify-center rounded-3xl border border-border bg-background ">
-            <QRCode value={inviteUrl} size={176} bgColor="transparent" fgColor="currentColor" />
+          <div className="mx-auto mt-2 flex size-52 items-center justify-center rounded-3xl border border-border bg-background ">
+            <QRCode value={invite.url} size={176} bgColor="transparent" fgColor="currentColor" />
           </div>
 
           <div className="mt-6">
             <label className="block mb-1 font-medium">Ссылка для партнёра</label>
-            <div className="rounded-md bg-muted px-3 py-2 break-all">{inviteUrl}</div>
+            <div className="rounded-md bg-muted px-3 py-2 break-all">{invite.url}</div>
           </div>
 
           <Button fullWidth className="mt-4" onClick={onCopy}>
             Скопировать ссылку
           </Button>
 
-          {expiresAt && (
+          {invite && (
             <p className="mt-2 text-center text-sm text-muted-foreground">
-              Действует ещё {getRemainingTime(expiresAt)}
+              Действует ещё {getRemainingTime(invite.expiresAt)}
             </p>
           )}
 

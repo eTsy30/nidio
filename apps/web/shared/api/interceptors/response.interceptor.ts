@@ -2,6 +2,7 @@ import { AxiosError, type InternalAxiosRequestConfig } from "axios";
 
 import { refresh } from "@/features/auth/api/auth.api";
 import { removeAccessToken } from "@/shared/lib/token";
+import { routes } from "@/shared/router/paths";
 
 import { api } from "../client/api";
 
@@ -12,6 +13,7 @@ export const responseInterceptor = <T>(response: T) => {
 export const responseErrorInterceptor = async (error: AxiosError) => {
   const originalRequest = error.config as
     (InternalAxiosRequestConfig & { _retry?: boolean }) | undefined;
+
   const url = originalRequest?.url ?? "";
 
   if (
@@ -34,11 +36,18 @@ export const responseErrorInterceptor = async (error: AxiosError) => {
     if (!originalRequest.headers) {
       return Promise.reject(error);
     }
+
     originalRequest.headers.set("Authorization", `Bearer ${accessToken}`);
 
     return api(originalRequest);
   } catch {
     removeAccessToken();
+
+    if (typeof window !== "undefined") {
+      const redirect = `${window.location.pathname}${window.location.search}`;
+      window.location.replace(`${routes.login}?redirect=${encodeURIComponent(redirect)}`);
+    }
+
     return Promise.reject(error);
   }
 };

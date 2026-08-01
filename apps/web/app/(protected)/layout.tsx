@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 
+import { ConnectionSuccessOverlay } from "@/screens/home/ui/ConnectionSuccessOverlay";
 import { AuthGuard } from "@/shared/router/guards/AuthGuard";
 
 type Props = {
@@ -7,5 +8,10 @@ type Props = {
 };
 
 export default function ProtectedLayout({ children }: Props) {
-  return <AuthGuard>{children}</AuthGuard>;
+  return (
+    <AuthGuard>
+      <ConnectionSuccessOverlay />
+      {children}
+    </AuthGuard>
+  );
 }

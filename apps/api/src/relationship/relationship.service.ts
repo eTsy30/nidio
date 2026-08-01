@@ -9,12 +9,14 @@ import { Invite, InviteStatus, Prisma, WorkspaceType } from '@prisma/client';
 import { randomUUID } from 'node:crypto';
 
 import { PrismaService } from '../prisma/prisma.service';
+import { RealtimeService } from '../realtime/realtime.service';
 
 @Injectable()
 export class RelationshipService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly configService: ConfigService,
+    private readonly realtimeService: RealtimeService,
   ) {}
 
   async createInvite(userId: string) {
@@ -104,7 +106,25 @@ export class RelationshipService {
         throw new ConflictException('User is already in a couple.');
       }
 
-      return this.createCouple(tx, invite, userId);
+      const couple = await this.createCouple(tx, invite, userId);
+
+      this.realtimeService.emitToUser(
+        invite.creatorId,
+        'relationship.connected',
+        {
+          type: 'relationship.connected',
+          relationshipId: couple.id,
+          partnerId: userId,
+        },
+      );
+
+      this.realtimeService.emitToUser(userId, 'relationship.connected', {
+        type: 'relationship.connected',
+        relationshipId: couple.id,
+        partnerId: invite.creatorId,
+      });
+
+      return couple;
     });
   }
 

@@ -2,8 +2,8 @@ import {
   ConflictException,
   Injectable,
   NotFoundException,
+  UnauthorizedException,
 } from '@nestjs/common';
-import { UnauthorizedException } from '@nestjs/common';
 
 import { EmailService } from '../email/email.service';
 import { PrismaService } from '../prisma/prisma.service';
@@ -46,16 +46,28 @@ export class AuthService {
 
   async validate(id: string) {
     const user = await this.prisma.user.findUnique({
-      where: {
-        id,
-      },
-      select: {
-        id: true,
-        email: true,
-        firstName: true,
-        avatarUrl: true,
-        gender: true,
-        createdAt: true,
+      where: { id },
+      include: {
+        memberships: {
+          include: {
+            couple: {
+              include: {
+                workspace: true,
+                members: {
+                  include: {
+                    user: {
+                      select: {
+                        id: true,
+                        firstName: true,
+                        avatarUrl: true,
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
       },
     });
 
@@ -63,7 +75,25 @@ export class AuthService {
       throw new NotFoundException('User not found');
     }
 
-    return user;
+    const membership = user.memberships[0] ?? null;
+    const couple = membership?.couple ?? null;
+    const partner =
+      couple?.members.find((member) => member.userId !== user.id)?.user ?? null;
+
+    return {
+      id: user.id,
+      email: user.email,
+      firstName: user.firstName,
+      avatarUrl: user.avatarUrl,
+      gender: user.gender,
+      createdAt: user.createdAt,
+      relationship: {
+        connected: !!couple,
+        coupleId: couple?.id ?? null,
+        workspaceId: couple?.workspace?.id ?? null,
+        partner,
+      },
+    };
   }
 
   async register(dto: RegisterRequestDto) {
@@ -127,7 +157,13 @@ export class AuthService {
     if (!refreshToken) {
       throw new UnauthorizedException('Refresh token is missing');
     }
-    const payload = this.tokenService.verify<{ sub: string }>(refreshToken);
+    let payload: { sub: string };
+    try {
+      payload = this.tokenService.verify<{ sub: string }>(refreshToken);
+    } catch {
+      throw new UnauthorizedException('Invalid or expired refresh token');
+    }
+
     if (!payload.sub) {
       throw new UnauthorizedException('Invalid refresh token');
     }

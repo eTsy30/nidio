@@ -9,7 +9,7 @@ export function generateMetadata(): Metadata {
     title: "Пригласить партнёра",
     description:
       "Отправьте приглашение своему партнёру и создайте ваше общее пространство в Nidio.",
-    url: routes.invitePartner,
+    url: routes.invite,
   });
 }
 

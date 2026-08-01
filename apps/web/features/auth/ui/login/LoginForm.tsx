@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { AxiosError } from "axios";
 import { Mail } from "lucide-react";
@@ -32,13 +32,15 @@ export function LoginForm() {
     },
   });
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirect = searchParams.get("redirect");
   const login = useLogin();
   const emailField = register("email");
   const passwordField = register("password");
 
   async function handleLoginSubmit(data: LoginRequest) {
     await login.mutateAsync(data);
-    router.replace(routes.homepage);
+    router.replace(redirect ?? routes.homepage);
     router.refresh();
   }
 
@@ -126,7 +128,16 @@ export function LoginForm() {
         </div>
 
         <p className="mt-2 description text-center text-muted-foreground">
-          Еще нет аккаунта? <Link href={routes.registration}>Создать аккаунт</Link>
+          Еще нет аккаунта?{" "}
+          <Link
+            href={
+              redirect
+                ? `${routes.registration}?redirect=${encodeURIComponent(redirect)}`
+                : routes.registration
+            }
+          >
+            Зарегистрироваться
+          </Link>
         </p>
       </form>
     </AuthLayout>

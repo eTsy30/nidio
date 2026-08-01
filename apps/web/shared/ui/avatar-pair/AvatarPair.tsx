@@ -3,10 +3,10 @@ import { Heart, User } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "./Avatar";
 
 export interface AvatarPairProps {
-  leftAvatar?: string | null;
-  rightAvatar?: string | null;
-  leftAlt?: string;
-  rightAlt?: string;
+  leftAvatar?: string | null | undefined;
+  rightAvatar?: string | null | undefined;
+  leftAlt?: string | undefined;
+  rightAlt?: string | undefined;
   leftFallback?: React.ReactNode;
   rightFallback?: React.ReactNode;
   size?: "sm" | "default" | "lg";

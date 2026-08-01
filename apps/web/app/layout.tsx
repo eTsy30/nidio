@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { Toaster } from "sonner";
 
 import { AuthProvider } from "@/shared/api/provider/auth-provider";
 import { QueryProvider } from "@/shared/api/query/query-provider";
+import { RealtimeProvider } from "@/shared/realtime";
 
 import "@/shared/styles/globals.css";
 
@@ -30,8 +32,11 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col">
+        <Toaster />
         <QueryProvider>
-          <AuthProvider>{children}</AuthProvider>
+          <AuthProvider>
+            <RealtimeProvider>{children}</RealtimeProvider>
+          </AuthProvider>
         </QueryProvider>
       </body>
     </html>

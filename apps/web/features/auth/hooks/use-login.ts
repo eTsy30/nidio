@@ -49,5 +49,8 @@ export const useMe = () => {
     queryKey: ["auth", "me"],
     queryFn: me,
     retry: false,
+
+    refetchOnWindowFocus: true,
+    staleTime: 0,
   });
 };

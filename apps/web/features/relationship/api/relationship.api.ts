@@ -8,26 +8,26 @@ import {
   LeaveCoupleResponse,
 } from "../model/relationship.types";
 
-export const createInvite = () => {
+export const createInvite = (): Promise<CreateInviteResponse> => {
   return http.post<CreateInviteResponse>("/relationship/invite");
 };
 
-export const getCurrentInvite = () => {
+export const getCurrentInvite = (): Promise<CurrentInviteResponse> => {
   return http.get<CurrentInviteResponse>("/relationship/invite");
 };
 
-export const getInvite = (token: string) => {
+export const getInvite = (token: string): Promise<InviteResponse> => {
   return http.get<InviteResponse>(`/relationship/invite/${token}`);
 };
 
-export const acceptInvite = (token: string) => {
+export const acceptInvite = (token: string): Promise<CoupleResponse> => {
   return http.post<CoupleResponse>(`/relationship/invite/${token}/accept`);
 };
 
-export const getCurrentCouple = () => {
+export const getCurrentCouple = (): Promise<CoupleResponse> => {
   return http.get<CoupleResponse>("/relationship/couple");
 };
 
-export const leaveCouple = () => {
+export const leaveCouple = (): Promise<LeaveCoupleResponse> => {
   return http.delete<LeaveCoupleResponse>("/relationship/couple");
 };
