@@ -9,6 +9,10 @@ import {
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 
+import { ChatService } from '../chat/chat.service';
+import { AddReactionDto } from '../chat/dto/add-reaction.dto';
+import { CreateMessageDto } from '../chat/dto/create-message.dto';
+import { EditMessageDto } from '../chat/dto/edit-message.dto';
 import { RelationshipService } from '../relationship/relationship.service';
 
 import { RealtimeService } from './realtime.service';
@@ -29,13 +33,14 @@ export class RealtimeGateway
 
     private readonly realtimeService: RealtimeService,
     private readonly relationshipService: RelationshipService,
+    private readonly chatService: ChatService,
   ) {}
 
   afterInit(server: Server) {
     this.realtimeService.setServer(server);
   }
 
-  handleConnection(client: Socket) {
+  async handleConnection(client: Socket) {
     try {
       const token = client.handshake.auth?.token;
 
@@ -51,6 +56,14 @@ export class RealtimeGateway
       });
 
       client.join(`user:${payload.sub}`);
+
+      const relationship = await this.relationshipService.getCurrentCouple(
+        payload.sub,
+      );
+
+      if (relationship) {
+        client.join(`workspace:${relationship.workspaceId}`);
+      }
     } catch {
       client.disconnect();
     }
@@ -75,6 +88,191 @@ export class RealtimeGateway
       type: 'relationship.connected',
       relationshipId: relationship.id,
       partnerId: relationship.partnerId,
+    });
+  }
+
+  @SubscribeMessage('chat:send')
+  async handleChatSend(client: Socket, dto: CreateMessageDto) {
+    const userId = client.data.user?.sub;
+
+    if (!userId) {
+      return;
+    }
+
+    const message = await this.chatService.sendMessage(userId, dto);
+    const relationship =
+      await this.relationshipService.getCurrentCouple(userId);
+    if (!relationship) return;
+    this.realtimeService.emitToWorkspace(
+      relationship.workspaceId,
+      'chat:message',
+      message,
+    );
+  }
+
+  @SubscribeMessage('chat:edit')
+  async handleChatEdit(
+    client: Socket,
+    payload: { messageId: string; dto: EditMessageDto },
+  ) {
+    const message = await this.chatService.editMessage(
+      payload.messageId,
+      payload.dto,
+    );
+    const userId = client.data.user?.sub;
+    if (!userId) return;
+
+    const relationship =
+      await this.relationshipService.getCurrentCouple(userId);
+    if (!relationship) return;
+
+    this.realtimeService.emitToWorkspace(
+      relationship.workspaceId,
+      'chat:edited',
+      message,
+    );
+  }
+
+  @SubscribeMessage('chat:delete')
+  async handleChatDelete(client: Socket, payload: { messageId: string }) {
+    await this.chatService.deleteMessage(payload.messageId);
+    const userId = client.data.user?.sub;
+    if (!userId) return;
+
+    const relationship =
+      await this.relationshipService.getCurrentCouple(userId);
+    if (!relationship) return;
+
+    this.realtimeService.emitToWorkspace(
+      relationship.workspaceId,
+      'chat:deleted',
+      payload,
+    );
+  }
+
+  @SubscribeMessage('chat:reaction:add')
+  async handleReactionAdd(
+    client: Socket,
+    payload: { messageId: string; dto: AddReactionDto },
+  ) {
+    const userId = client.data.user?.sub;
+    if (!userId) return;
+
+    const reaction = await this.chatService.addReaction(
+      userId,
+      payload.messageId,
+      payload.dto,
+    );
+    const relationship =
+      await this.relationshipService.getCurrentCouple(userId);
+    if (!relationship) return;
+
+    this.realtimeService.emitToWorkspace(
+      relationship.workspaceId,
+      'chat:reaction:added',
+      reaction,
+    );
+  }
+
+  @SubscribeMessage('chat:reaction:remove')
+  async handleReactionRemove(
+    client: Socket,
+    payload: { messageId: string; emoji: string },
+  ) {
+    const userId = client.data.user?.sub;
+    if (!userId) return;
+
+    await this.chatService.removeReaction(
+      userId,
+      payload.messageId,
+      payload.emoji,
+    );
+    const relationship =
+      await this.relationshipService.getCurrentCouple(userId);
+    if (!relationship) return;
+
+    this.realtimeService.emitToWorkspace(
+      relationship.workspaceId,
+      'chat:reaction:removed',
+      payload,
+    );
+  }
+
+  @SubscribeMessage('chat:typing:start')
+  async handleTypingStart(client: Socket) {
+    const userId = client.data.user?.sub;
+    if (!userId) return;
+
+    const relationship =
+      await this.relationshipService.getCurrentCouple(userId);
+    if (!relationship) return;
+
+    this.realtimeService.emitToWorkspace(
+      relationship.workspaceId,
+      'chat:typing:start',
+      { userId },
+    );
+  }
+
+  @SubscribeMessage('chat:typing:stop')
+  async handleTypingStop(client: Socket) {
+    const userId = client.data.user?.sub;
+    if (!userId) return;
+
+    const relationship =
+      await this.relationshipService.getCurrentCouple(userId);
+    if (!relationship) return;
+
+    this.realtimeService.emitToWorkspace(
+      relationship.workspaceId,
+      'chat:typing:stop',
+      { userId },
+    );
+  }
+
+  @SubscribeMessage('chat:read')
+  async handleRead(client: Socket, payload: { messageId: string }) {
+    const userId = client.data.user?.sub;
+    if (!userId) return;
+
+    const relationship =
+      await this.relationshipService.getCurrentCouple(userId);
+    if (!relationship) return;
+
+    const updatedMessage = await this.chatService.markRead(
+      payload.messageId,
+      relationship.id,
+      userId,
+    );
+
+    if (!updatedMessage) return;
+
+    this.realtimeService.emitToUser(relationship.partnerId, 'chat:read', {
+      userId,
+      messageId: payload.messageId,
+    });
+  }
+
+  @SubscribeMessage('chat:delivered')
+  async handleDelivered(client: Socket, payload: { messageId: string }) {
+    const userId = client.data.user?.sub;
+    if (!userId) return;
+
+    const relationship =
+      await this.relationshipService.getCurrentCouple(userId);
+    if (!relationship) return;
+
+    const updatedMessage = await this.chatService.markDelivered(
+      payload.messageId,
+      relationship.id,
+      userId,
+    );
+
+    if (!updatedMessage) return;
+
+    this.realtimeService.emitToUser(relationship.partnerId, 'chat:delivered', {
+      userId,
+      messageId: payload.messageId,
     });
   }
 

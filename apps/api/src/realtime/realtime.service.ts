@@ -12,4 +12,8 @@ export class RealtimeService {
   emitToUser(userId: string, event: string, payload: unknown) {
     this.server?.to(`user:${userId}`).emit(event, payload);
   }
+
+  emitToWorkspace(workspaceId: string, event: string, payload: unknown) {
+    this.server?.to(`workspace:${workspaceId}`).emit(event, payload);
+  }
 }

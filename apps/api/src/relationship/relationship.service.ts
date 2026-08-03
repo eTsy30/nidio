@@ -194,6 +194,7 @@ export class RelationshipService {
                 user: true,
               },
             },
+            workspace: true,
           },
         },
       },
@@ -203,6 +204,9 @@ export class RelationshipService {
 
     if (!membership.couple || membership.couple.deletedAt) {
       return null;
+    }
+    if (!membership.couple.workspace) {
+      throw new NotFoundException('Workspace not found.');
     }
 
     const partner = membership.couple.members.find(
@@ -215,11 +219,44 @@ export class RelationshipService {
 
     return {
       id: membership.couple.id,
+      workspaceId: membership.couple.workspace.id,
       partnerId: partner.user.id,
       partnerFirstName: partner.user.firstName,
       partnerAvatarUrl: partner.user.avatarUrl,
       createdAt: membership.couple.createdAt,
     };
+  }
+
+  async getWorkspaceId(userId: string): Promise<string> {
+    const workspace = await this.prisma.workspace.findFirst({
+      where: {
+        OR: [
+          {
+            type: WorkspaceType.PERSONAL,
+            userId,
+          },
+          {
+            type: WorkspaceType.COUPLE,
+            couple: {
+              members: {
+                some: {
+                  userId,
+                },
+              },
+            },
+          },
+        ],
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    if (!workspace) {
+      throw new NotFoundException('Workspace not found.');
+    }
+
+    return workspace.id;
   }
 
   // private хелпер потом вынести

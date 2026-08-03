@@ -20,6 +20,7 @@ model User {
   emailVerifications EmailVerification[]
   createdInvites     Invite[]
   messages           Message[]
+  messageReactions   MessageReaction[]
   passwordResets     PasswordReset[]
   refreshTokens      RefreshToken[]
   workspaces         Workspace[]
@@ -121,19 +122,102 @@ model Invite {
   @@index([token])
 }
 
+/// Сообщение чата.
+/// Поддерживает текст, ответы, реакции, вложения и будущие пользовательские типы сообщений.
 model Message {
-  id          String    @id @default(cuid())
-  workspaceId String
-  senderId    String
-  text        Json
-  createdAt   DateTime  @default(now())
-  editedAt    DateTime?
-  deletedAt   DateTime?
-  sender      User      @relation(fields: [senderId], references: [id])
-  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  id String @id @default(cuid())
 
-  @@index([workspaceId])
+  // Workspace, в котором хранится сообщение.
+  workspaceId String
+
+  // Пользователь, отправивший сообщение.
+  senderId String
+
+  // Тип сообщения. Позволяет расширять функциональность без изменения модели.
+  type MessageType @default(TEXT)
+
+  // Текстовое содержимое сообщения.
+  content String? @db.Text
+
+  // Временный идентификатор клиента для optimistic UI.
+  clientId String?
+
+  // Дополнительные данные для специальных типов сообщений.
+  // В будущем здесь можно хранить параметры для «Почтового голубя»,
+  // «Письма», «Полароида», «Подарка» и других уникальных механик,
+  // не изменяя структуру базы данных.
+  metadata Json?
+
+  // Ссылка на сообщение, на которое дан ответ.
+  replyToId String?
+
+  // Время доставки и прочтения сообщения.
+  deliveredAt DateTime?
+  readAt      DateTime?
+
+  // Время редактирования и мягкого удаления сообщения.
+  editedAt  DateTime?
+  deletedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  sender    User      @relation(fields: [senderId], references: [id])
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  replyTo Message?  @relation("MessageReply", fields: [replyToId], references: [id])
+  replies Message[] @relation("MessageReply")
+
+  attachments MessageAttachment[]
+  reactions   MessageReaction[]
+
+  @@index([workspaceId, createdAt])
   @@index([senderId])
+  @@index([replyToId])
+  @@index([clientId])
+}
+
+/// Вложения сообщения.
+/// Позволяет хранить изображения сейчас, а в будущем — видео, голосовые сообщения и документы.
+model MessageAttachment {
+  id        String @id @default(cuid())
+  messageId String
+
+  // Тип вложения. Сейчас используется IMAGE, позже можно добавить VIDEO, VOICE и FILE.
+  type AttachmentType
+
+  url      String
+  mimeType String
+  fileName String?
+  fileSize Int
+  width    Int?
+  height   Int?
+  duration Int?
+
+  createdAt DateTime @default(now())
+
+  message Message @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  @@index([messageId])
+}
+
+/// Реакции пользователей на сообщения.
+/// Один пользователь может поставить одну и ту же реакцию только один раз.
+model MessageReaction {
+  id        String @id @default(cuid())
+  messageId String
+  userId    String
+
+  // Emoji реакции, например ❤️ 😂 👍
+  emoji String @db.VarChar(20)
+
+  createdAt DateTime @default(now())
+
+  message Message @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([messageId, userId, emoji])
+  @@index([messageId])
 }
 
 model Space {
@@ -174,6 +258,19 @@ enum InviteStatus {
   ACCEPTED
   EXPIRED
   REVOKED
+}
+
+enum MessageType {
+  TEXT
+  IMAGE
+  SYSTEM
+}
+
+enum AttachmentType {
+  IMAGE
+  VIDEO
+  VOICE
+  FILE
 }
 
 enum WorkspaceType {
