@@ -22,7 +22,7 @@ export function InvitePartnerView() {
 
   useEffect(() => {
     if (connectionEvent) {
-      router.replace(routes.homepage);
+      router.replace(routes.home);
     }
   }, [connectionEvent, router]);
 

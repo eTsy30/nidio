@@ -140,7 +140,7 @@ model Message {
   content String? @db.Text
 
   // Временный идентификатор клиента для optimistic UI.
-  clientId String?
+  clientId String? @unique
 
   // Дополнительные данные для специальных типов сообщений.
   // В будущем здесь можно хранить параметры для «Почтового голубя»,

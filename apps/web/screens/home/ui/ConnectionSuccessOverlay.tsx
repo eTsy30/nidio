@@ -22,7 +22,7 @@ export function ConnectionSuccessOverlay() {
   const handleClose = () => {
     clearConnectionEvent();
 
-    router.replace(routes.homepage);
+    router.replace(routes.home);
   };
 
   if (!visible) {

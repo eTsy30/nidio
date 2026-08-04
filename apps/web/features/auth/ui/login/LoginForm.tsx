@@ -40,7 +40,7 @@ export function LoginForm() {
 
   async function handleLoginSubmit(data: LoginRequest) {
     await login.mutateAsync(data);
-    router.replace(redirect ?? routes.homepage);
+    router.replace(redirect ?? routes.home);
     router.refresh();
   }
 

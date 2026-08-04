@@ -7,7 +7,7 @@ import { useMe } from "@/features/auth";
 import { HomeView } from "@/screens/home";
 import { routes } from "@/shared/router/paths";
 
-export default function Home() {
+export default function HomePage() {
   const router = useRouter();
 
   const { data: user, isLoading } = useMe();
@@ -22,10 +22,5 @@ export default function Home() {
     return null;
   }
 
-  // TODO: Home layout (chat, memories, calendar, notes, settings, !!!!connection overlay)
-  return (
-    <main className="min-h-screen bg-background">
-      <HomeView />
-    </main>
-  );
+  return <HomeView />;
 }

@@ -105,7 +105,7 @@ export class RealtimeGateway
     if (!relationship) return;
     this.realtimeService.emitToWorkspace(
       relationship.workspaceId,
-      'chat:message',
+      'chat.message.created',
       message,
     );
   }
@@ -128,7 +128,7 @@ export class RealtimeGateway
 
     this.realtimeService.emitToWorkspace(
       relationship.workspaceId,
-      'chat:edited',
+      'chat.message.edited',
       message,
     );
   }
@@ -145,7 +145,7 @@ export class RealtimeGateway
 
     this.realtimeService.emitToWorkspace(
       relationship.workspaceId,
-      'chat:deleted',
+      'chat.message.deleted',
       payload,
     );
   }
@@ -169,7 +169,7 @@ export class RealtimeGateway
 
     this.realtimeService.emitToWorkspace(
       relationship.workspaceId,
-      'chat:reaction:added',
+      'chat.reaction.added',
       reaction,
     );
   }
@@ -193,7 +193,7 @@ export class RealtimeGateway
 
     this.realtimeService.emitToWorkspace(
       relationship.workspaceId,
-      'chat:reaction:removed',
+      'chat.reaction.removed',
       payload,
     );
   }
@@ -209,8 +209,10 @@ export class RealtimeGateway
 
     this.realtimeService.emitToWorkspace(
       relationship.workspaceId,
-      'chat:typing:start',
-      { userId },
+      'chat.typing.start',
+      {
+        userId,
+      },
     );
   }
 
@@ -225,8 +227,10 @@ export class RealtimeGateway
 
     this.realtimeService.emitToWorkspace(
       relationship.workspaceId,
-      'chat:typing:stop',
-      { userId },
+      'chat.typing.stop',
+      {
+        userId,
+      },
     );
   }
 
@@ -241,16 +245,20 @@ export class RealtimeGateway
 
     const updatedMessage = await this.chatService.markRead(
       payload.messageId,
-      relationship.id,
+      relationship.workspaceId,
       userId,
     );
 
     if (!updatedMessage) return;
 
-    this.realtimeService.emitToUser(relationship.partnerId, 'chat:read', {
-      userId,
-      messageId: payload.messageId,
-    });
+    this.realtimeService.emitToUser(
+      relationship.partnerId,
+      'chat.message.read',
+      {
+        userId,
+        messageId: payload.messageId,
+      },
+    );
   }
 
   @SubscribeMessage('chat:delivered')
@@ -264,16 +272,20 @@ export class RealtimeGateway
 
     const updatedMessage = await this.chatService.markDelivered(
       payload.messageId,
-      relationship.id,
+      relationship.workspaceId,
       userId,
     );
 
     if (!updatedMessage) return;
 
-    this.realtimeService.emitToUser(relationship.partnerId, 'chat:delivered', {
-      userId,
-      messageId: payload.messageId,
-    });
+    this.realtimeService.emitToUser(
+      relationship.partnerId,
+      'chat.message.delivered',
+      {
+        userId,
+        messageId: payload.messageId,
+      },
+    );
   }
 
   handleDisconnect(client: Socket) {

@@ -73,12 +73,14 @@ export class ChatRepository {
     senderId: string;
     content: string;
     replyToId?: string;
+    clientId?: string;
   }) {
     return this.prisma.message.create({
       data: {
         workspaceId: data.workspaceId,
         senderId: data.senderId,
         content: data.content,
+        ...(data.clientId ? { clientId: data.clientId } : {}),
         ...(data.replyToId ? { replyToId: data.replyToId } : {}),
       },
       include: {

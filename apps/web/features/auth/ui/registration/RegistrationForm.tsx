@@ -51,7 +51,7 @@ export function RegistrationForm() {
 
     if (inviteToken) {
       await acceptInviteMutation.mutateAsync(inviteToken);
-      router.replace(routes.homepage);
+      router.replace(routes.home);
       return;
     }
 

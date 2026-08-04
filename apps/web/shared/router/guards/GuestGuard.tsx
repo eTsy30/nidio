@@ -16,7 +16,7 @@ export function GuestGuard({ children }: Props) {
 
   useEffect(() => {
     if (!isLoading && isAuthenticated && !window.location.pathname.startsWith(routes.invite)) {
-      router.replace(routes.homepage);
+      router.replace(routes.home);
     }
   }, [isAuthenticated, isLoading, router]);
 

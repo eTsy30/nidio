@@ -2,7 +2,6 @@ export type ArgsRoute = (...args: (string | number)[]) => string;
 export type Route = string | ArgsRoute;
 
 export const routes = {
-  homepage: "/",
   login: "/login",
   registration: "/registration",
   forgotPassword: "/forgot-password",
@@ -10,4 +9,10 @@ export const routes = {
   invite: "/invite",
   inviteToken: "/invite/[token]",
   connected: "/connected",
+
+  home: "/",
+  chat: "/chat",
+  calendar: "/calendar",
+  space: "/space",
+  profile: "/profile",
 } satisfies Record<string, Route>;
