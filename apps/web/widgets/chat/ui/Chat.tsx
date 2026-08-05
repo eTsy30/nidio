@@ -6,6 +6,7 @@ import { useAuth } from "@/shared/api/provider/auth-provider";
 import { useRealtime } from "@/shared/realtime";
 
 import { useChatRealtime } from "../model/useChatRealtime";
+import { useDeleteMessage } from "../model/useDeleteMessage";
 import { useEditMessage } from "../model/useEditMessage";
 import { useLoadMessages } from "../model/useLoadMessages";
 import { useMarkMessagesRead } from "../model/useMarkMessagesRead";
@@ -43,6 +44,7 @@ export function Chat() {
 
   const sendMessage = useSendMessage(socket);
   const editMessage = useEditMessage(socket);
+  const deleteMessage = useDeleteMessage(socket);
   const markMessagesRead = useMarkMessagesRead(socket);
 
   const handleEdit = useCallback((message: ChatMessageItem) => {
@@ -60,6 +62,13 @@ export function Chat() {
     setEditingMessage(null);
   }, []);
 
+  const handleDelete = useCallback(
+    (messageId: string) => {
+      deleteMessage({ messageId });
+    },
+    [deleteMessage],
+  );
+
   return (
     <section className="flex h-[calc(100dvh-60px-env(safe-area-inset-bottom))] flex-col overflow-hidden bg-background">
       <div className="shrink-0 border-b border-border/50 bg-background/90 backdrop-blur-xl">
@@ -71,6 +80,7 @@ export function Chat() {
         currentUserId={currentUserId}
         onMessagesViewed={markMessagesRead}
         onEdit={handleEdit}
+        onDelete={handleDelete}
       />
 
       <div className="shrink-0 border-t border-border/50 bg-background/90 px-4 pb-[calc(env(safe-area-inset-bottom)+16px)] pt-4 backdrop-blur-xl">

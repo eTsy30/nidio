@@ -20,6 +20,7 @@ export type ChatMessagesProps = {
   onMessagesViewed?: (messageIds: string[]) => void;
   messages: ChatMessageItem[];
   onEdit?: ((message: ChatMessageItem) => void) | undefined;
+  onDelete?: ((messageId: string) => void) | undefined;
 };
 
 type MessageGroupItem = {
@@ -59,6 +60,7 @@ export function ChatMessages({
   currentUserId,
   onMessagesViewed,
   onEdit,
+  onDelete,
 }: ChatMessagesProps) {
   const viewportRef = useRef<HTMLDivElement>(null);
   const shouldScrollRef = useRef(true);
@@ -160,6 +162,7 @@ export function ChatMessages({
                           showName={false}
                           isFirstInGroup={messageIndex === 0}
                           onEdit={onEdit}
+                          onDelete={onDelete}
                         />
                       ))}
                     </MessageGroup>

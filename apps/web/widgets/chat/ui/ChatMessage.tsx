@@ -1,6 +1,6 @@
 "use client";
 
-import { Pencil } from "lucide-react";
+import { AlertCircle, Check, CheckCheck, Loader2, Pencil, Trash2 } from "lucide-react";
 
 import { cn } from "@/shared/lib/cn";
 import { Avatar, AvatarFallback, AvatarImage } from "@/shared/ui/avatar-pair/Avatar";
@@ -17,6 +17,7 @@ type ChatMessageProps = {
   showName?: boolean;
   isFirstInGroup?: boolean;
   onEdit?: ((message: ChatMessageItem) => void) | undefined;
+  onDelete?: ((messageId: string) => void) | undefined;
 };
 
 export function ChatMessage({
@@ -26,6 +27,7 @@ export function ChatMessage({
   showName = true,
   isFirstInGroup = false,
   onEdit,
+  onDelete,
 }: ChatMessageProps) {
   const isMine = message.sender.id === currentUserId;
   const time = new Date(message.createdAt).toLocaleTimeString([], {
@@ -85,75 +87,15 @@ export function ChatMessage({
                 {isMine && (
                   <span className="ml-1 inline-flex items-center">
                     {message.status === "sending" && (
-                      <span className="inline-block h-3 w-3 animate-spin rounded-full border-2 border-current border-t-transparent opacity-60" />
+                      <Loader2 className="size-3 animate-spin opacity-60" />
                     )}
-                    {message.status === "sent" && (
-                      <svg
-                        className="h-3 w-3"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="3"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      >
-                        <polyline points="20 6 9 17 4 12" />
-                      </svg>
-                    )}
+                    {message.status === "sent" && <Check className="size-3" strokeWidth={3} />}
                     {message.status === "delivered" && (
-                      <span className="flex">
-                        <svg
-                          className="h-3 w-3"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="3"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        >
-                          <polyline points="20 6 9 17 4 12" />
-                        </svg>
-                        <svg
-                          className="-ml-1.5 h-3 w-3"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="3"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        >
-                          <polyline points="20 6 9 17 4 12" />
-                        </svg>
-                      </span>
+                      <CheckCheck className="size-3" strokeWidth={3} />
                     )}
-                    {message.status === "read" && (
-                      <span className="flex">
-                        <svg
-                          className="h-3 w-3"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="3"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        >
-                          <polyline points="20 6 9 17 4 12" />
-                        </svg>
-                        <svg
-                          className="-ml-1.5 h-3 w-3"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="3"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        >
-                          <polyline points="20 6 9 17 4 12" />
-                        </svg>
-                      </span>
-                    )}
+                    {message.status === "read" && <CheckCheck className="size-3" strokeWidth={3} />}
                     {message.status === "error" && (
-                      <span className="font-bold text-destructive">!</span>
+                      <AlertCircle className="size-3 text-destructive" />
                     )}
                   </span>
                 )}
@@ -162,15 +104,29 @@ export function ChatMessage({
           </BubbleContent>
         </Bubble>
 
-        {isMine && onEdit && (
-          <button
-            type="button"
-            onClick={() => onEdit(message)}
-            className="mt-0.5 self-end opacity-0 transition-opacity duration-200 group-hover/message:opacity-50 hover:!opacity-100"
-            aria-label="Редактировать"
-          >
-            <Pencil className="size-3" />
-          </button>
+        {isMine && (onEdit || onDelete) && (
+          <div className="mt-0.5 flex gap-1.5 self-end opacity-0 transition-opacity duration-200 group-hover/message:opacity-50 hover:!opacity-100">
+            {onEdit && (
+              <button
+                type="button"
+                onClick={() => onEdit(message)}
+                className="transition-opacity hover:opacity-100"
+                aria-label="Редактировать"
+              >
+                <Pencil className="size-3" />
+              </button>
+            )}
+            {onDelete && (
+              <button
+                type="button"
+                onClick={() => onDelete(message.id)}
+                className="text-destructive transition-opacity hover:opacity-100"
+                aria-label="Удалить"
+              >
+                <Trash2 className="size-3" />
+              </button>
+            )}
+          </div>
         )}
       </MessageContent>
     </Message>

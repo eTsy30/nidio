@@ -86,6 +86,10 @@ export function useChatRealtime({
       );
     }
 
+    function handleDeleted(data: { messageId: string }) {
+      setMessages((prev) => prev.filter((item) => item.id !== data.messageId));
+    }
+
     socket.on("chat.message.created", handleMessage);
     socket.on("chat.message.delivered", handleDelivered);
     socket.on("chat.message.read", handleRead);
@@ -94,6 +98,7 @@ export function useChatRealtime({
     socket.on("user.online", handleUserOnline);
     socket.on("user.offline", handleUserOffline);
     socket.on("chat.message.edited", handleEdited);
+    socket.on("chat.message.deleted", handleDeleted);
 
     return () => {
       socket.off("chat.message.created", handleMessage);
@@ -104,6 +109,7 @@ export function useChatRealtime({
       socket.off("user.online", handleUserOnline);
       socket.off("user.offline", handleUserOffline);
       socket.off("chat.message.edited", handleEdited);
+      socket.off("chat.message.deleted", handleDeleted);
     };
   }, [socket, currentUserId, setMessages, setIsTyping, setIsOnline]);
 }

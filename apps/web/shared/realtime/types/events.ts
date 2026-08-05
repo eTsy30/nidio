@@ -17,6 +17,7 @@ export type ChatMessageItem = {
 export interface ServerToClientEvents {
   "chat.message.created": (message: ChatMessageItem) => void;
   "chat.message.edited": (message: ChatMessageItem) => void;
+  "chat.message.deleted": (data: { messageId: string }) => void;
   "chat.message.delivered": (data: { messageId: string }) => void;
   "chat.message.read": (data: { messageId: string }) => void;
   "chat.typing.start": (data: { userId: string }) => void;
@@ -29,6 +30,7 @@ export interface ServerToClientEvents {
 export interface ClientToServerEvents {
   "chat:send": (message: { content: string }) => void;
   "chat:edit": (payload: { messageId: string; dto: { content: string } }) => void;
+  "chat:delete": (payload: { messageId: string }) => void;
   "chat:typing:start": () => void;
   "chat:typing:stop": () => void;
   "chat:read": (data: { messageId: string }) => void;

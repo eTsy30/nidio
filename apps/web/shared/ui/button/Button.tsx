@@ -1,6 +1,7 @@
 import * as React from "react";
 import { Slot, Slottable } from "@radix-ui/react-slot";
 import { cva, type VariantProps } from "class-variance-authority";
+import { Loader2 } from "lucide-react";
 
 import { cn } from "@/shared/lib/cn";
 
@@ -40,9 +41,7 @@ const buttonVariants = cva(
           "bg-primary",
           "text-primary-foreground",
           "shadow-[0_10px_30px_rgb(175_75_43_/_0.28)]",
-
           "hover:brightness-[1.03]",
-
           "hover:shadow-[0_18px_40px_rgb(175_75_43_/_0.36)]",
         ].join(" "),
 
@@ -137,19 +136,7 @@ export function Button({
       aria-busy={loading}
       {...props}
     >
-      {loading ? (
-        <svg className="size-5 animate-spin " viewBox="0 0 24 24" fill="none" aria-hidden="true">
-          <circle cx="12" cy="12" r="10" stroke="currentColor" strokeOpacity=".2" strokeWidth="4" />
-          <path
-            d="M22 12a10 10 0 0 0-10-10"
-            stroke="currentColor"
-            strokeWidth="4"
-            strokeLinecap="round"
-          />
-        </svg>
-      ) : (
-        leftIcon
-      )}
+      {loading ? <Loader2 className="size-5 animate-spin" aria-hidden="true" /> : leftIcon}
 
       {!iconOnly && <Slottable>{children}</Slottable>}
 
