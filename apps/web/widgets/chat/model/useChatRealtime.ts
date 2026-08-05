@@ -90,26 +90,67 @@ export function useChatRealtime({
       setMessages((prev) => prev.filter((item) => item.id !== data.messageId));
     }
 
+    function handleReactionAdded(reaction: { messageId: string; emoji: string; userId: string }) {
+      setMessages((prev) =>
+        prev.map((item) => {
+          if (item.id !== reaction.messageId) return item;
+          const exists = item.reactions?.some(
+            (r) => r.emoji === reaction.emoji && r.userId === reaction.userId,
+          );
+          if (exists) return item;
+
+          const nextReactions = (item.reactions || []).concat({
+            emoji: reaction.emoji,
+            userId: reaction.userId,
+          });
+
+          return { ...item, reactions: nextReactions };
+        }),
+      );
+    }
+
+    function handleReactionRemoved(data: { messageId: string; emoji: string }) {
+      setMessages((prev) =>
+        prev.map((item) => {
+          if (item.id !== data.messageId) return item;
+
+          const nextReactions = item.reactions?.filter((r) => r.emoji !== data.emoji);
+
+          if (!nextReactions || nextReactions.length === 0) {
+            const { reactions: _, ...rest } = item;
+            return rest as ChatMessageItem;
+          }
+
+          return { ...item, reactions: nextReactions };
+        }),
+      );
+    }
+
     socket.on("chat.message.created", handleMessage);
+    socket.on("chat.message.edited", handleEdited);
+    socket.on("chat.message.deleted", handleDeleted);
+    socket.on("chat.reaction.added", handleReactionAdded);
+    socket.on("chat.reaction.removed", handleReactionRemoved);
     socket.on("chat.message.delivered", handleDelivered);
     socket.on("chat.message.read", handleRead);
     socket.on("chat.typing.start", handleTypingStart);
     socket.on("chat.typing.stop", handleTypingStop);
     socket.on("user.online", handleUserOnline);
     socket.on("user.offline", handleUserOffline);
-    socket.on("chat.message.edited", handleEdited);
-    socket.on("chat.message.deleted", handleDeleted);
+    socket.emit("user:status:sync");
 
     return () => {
       socket.off("chat.message.created", handleMessage);
+      socket.off("chat.message.edited", handleEdited);
+      socket.off("chat.message.deleted", handleDeleted);
+      socket.off("chat.reaction.added", handleReactionAdded);
+      socket.off("chat.reaction.removed", handleReactionRemoved);
       socket.off("chat.message.delivered", handleDelivered);
       socket.off("chat.message.read", handleRead);
       socket.off("chat.typing.start", handleTypingStart);
       socket.off("chat.typing.stop", handleTypingStop);
       socket.off("user.online", handleUserOnline);
       socket.off("user.offline", handleUserOffline);
-      socket.off("chat.message.edited", handleEdited);
-      socket.off("chat.message.deleted", handleDeleted);
     };
   }, [socket, currentUserId, setMessages, setIsTyping, setIsOnline]);
 }

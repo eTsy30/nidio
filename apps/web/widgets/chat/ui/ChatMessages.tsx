@@ -21,6 +21,8 @@ export type ChatMessagesProps = {
   messages: ChatMessageItem[];
   onEdit?: ((message: ChatMessageItem) => void) | undefined;
   onDelete?: ((messageId: string) => void) | undefined;
+  onAddReaction?: ((messageId: string, emoji: string) => void) | undefined;
+  onRemoveReaction?: ((messageId: string, emoji: string) => void) | undefined;
 };
 
 type MessageGroupItem = {
@@ -41,18 +43,11 @@ function isSameDay(left: Date, right: Date) {
 
 function formatMessageDate(date: Date) {
   const today = new Date();
-
   if (isSameDay(date, today)) return "Сегодня";
-
   const yesterday = new Date(today);
   yesterday.setDate(today.getDate() - 1);
-
   if (isSameDay(date, yesterday)) return "Вчера";
-
-  return new Intl.DateTimeFormat("ru-RU", {
-    day: "numeric",
-    month: "long",
-  }).format(date);
+  return new Intl.DateTimeFormat("ru-RU", { day: "numeric", month: "long" }).format(date);
 }
 
 export function ChatMessages({
@@ -61,6 +56,8 @@ export function ChatMessages({
   onMessagesViewed,
   onEdit,
   onDelete,
+  onAddReaction,
+  onRemoveReaction,
 }: ChatMessagesProps) {
   const viewportRef = useRef<HTMLDivElement>(null);
   const shouldScrollRef = useRef(true);
@@ -68,18 +65,11 @@ export function ChatMessages({
   const groupedMessages = useMemo<MessageGroupItem[]>(() => {
     return messages.reduce<MessageGroupItem[]>((groups, message) => {
       const lastGroup = groups.at(-1);
-
       if (lastGroup?.senderId === message.sender.id) {
         lastGroup.messages.push(message);
         return groups;
       }
-
-      groups.push({
-        id: message.id,
-        senderId: message.sender.id,
-        messages: [message],
-      });
-
+      groups.push({ id: message.id, senderId: message.sender.id, messages: [message] });
       return groups;
     }, []);
   }, [messages]);
@@ -87,21 +77,16 @@ export function ChatMessages({
   const items = useMemo<ChatListItem[]>(() => {
     const result: ChatListItem[] = [];
     let previousDate: Date | null = null;
-
     for (const group of groupedMessages) {
       const firstMessage = group.messages[0];
       if (!firstMessage) continue;
-
       const currentDate = new Date(firstMessage.createdAt);
-
       if (!previousDate || !isSameDay(previousDate, currentDate)) {
         result.push({ type: "date", label: formatMessageDate(currentDate) });
         previousDate = currentDate;
       }
-
       result.push({ type: "group", group });
     }
-
     return result;
   }, [groupedMessages]);
 
@@ -109,7 +94,6 @@ export function ChatMessages({
     if (!shouldScrollRef.current) return;
     const viewport = viewportRef.current;
     if (!viewport) return;
-
     requestAnimationFrame(() => {
       viewport.scrollTo({ top: viewport.scrollHeight, behavior: "smooth" });
     });
@@ -149,7 +133,6 @@ export function ChatMessages({
                     </MessageScrollerItem>
                   );
                 }
-
                 return (
                   <MessageScrollerItem key={item.group.id} className="py-1">
                     <MessageGroup>
@@ -163,6 +146,8 @@ export function ChatMessages({
                           isFirstInGroup={messageIndex === 0}
                           onEdit={onEdit}
                           onDelete={onDelete}
+                          onAddReaction={onAddReaction}
+                          onRemoveReaction={onRemoveReaction}
                         />
                       ))}
                     </MessageGroup>

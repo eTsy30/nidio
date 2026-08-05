@@ -95,6 +95,23 @@ export class RealtimeGateway
       client.disconnect();
     }
   }
+  @SubscribeMessage('user:status:sync')
+  async handleUserStatusSync(client: Socket) {
+    const userId = client.data.user?.sub;
+    if (!userId) return;
+
+    const relationship =
+      await this.relationshipService.getCurrentCouple(userId);
+    if (!relationship) return;
+
+    const partnerSockets = await this.server
+      .in(`user:${relationship.partnerId}`)
+      .fetchSockets();
+
+    client.emit(partnerSockets.length > 0 ? 'user.online' : 'user.offline', {
+      userId: relationship.partnerId,
+    });
+  }
 
   // @SubscribeMessage("relationship:sync")
   // async handleRelationshipSync(client: Socket) {

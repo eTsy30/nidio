@@ -7,8 +7,9 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/shared/ui/avatar-pair/Ava
 
 import type { ChatMessageItem } from "../type/chat";
 
-import { Bubble, BubbleContent, BubbleTail } from "./bubble";
+import { Bubble, BubbleContent, BubbleReactions, BubbleTail } from "./bubble";
 import { Message, MessageAvatar, MessageContent, MessageHeader } from "./message";
+import { REACTION_COLORS, REACTION_KEYS, ReactionIcon } from "./reaction-icon";
 
 type ChatMessageProps = {
   message: ChatMessageItem;
@@ -18,6 +19,8 @@ type ChatMessageProps = {
   isFirstInGroup?: boolean;
   onEdit?: ((message: ChatMessageItem) => void) | undefined;
   onDelete?: ((messageId: string) => void) | undefined;
+  onAddReaction?: ((messageId: string, emoji: string) => void) | undefined;
+  onRemoveReaction?: ((messageId: string, emoji: string) => void) | undefined;
 };
 
 export function ChatMessage({
@@ -28,6 +31,8 @@ export function ChatMessage({
   isFirstInGroup = false,
   onEdit,
   onDelete,
+  onAddReaction,
+  onRemoveReaction,
 }: ChatMessageProps) {
   const isMine = message.sender.id === currentUserId;
   const time = new Date(message.createdAt).toLocaleTimeString([], {
@@ -38,6 +43,8 @@ export function ChatMessage({
   const isEdited =
     !!message.updatedAt &&
     new Date(message.updatedAt).getTime() !== new Date(message.createdAt).getTime();
+
+  const hasReactions = message.reactions && message.reactions.length > 0;
 
   return (
     <Message align={isMine ? "end" : "start"}>
@@ -64,7 +71,7 @@ export function ChatMessage({
           )}
           <BubbleContent>
             <div className="flex flex-wrap items-end gap-x-2 gap-y-1">
-              <span className="break-words">{message.content}</span>
+              <span className="wrap-break-word">{message.content}</span>
 
               {isEdited && (
                 <span
@@ -102,32 +109,99 @@ export function ChatMessage({
               </span>
             </div>
           </BubbleContent>
+
+          {hasReactions && (
+            <BubbleReactions side="bottom" align={isMine ? "end" : "start"}>
+              {message.reactions!.map((reaction) => {
+                const isMyReaction = reaction.userId === currentUserId;
+                const colors = REACTION_COLORS[reaction.emoji as keyof typeof REACTION_COLORS];
+                return (
+                  <button
+                    key={reaction.emoji}
+                    type="button"
+                    onClick={() => {
+                      if (isMyReaction) {
+                        onRemoveReaction?.(message.id, reaction.emoji);
+                      } else {
+                        onAddReaction?.(message.id, reaction.emoji);
+                      }
+                    }}
+                    className={cn(
+                      "flex items-center gap-0.5 rounded-full px-1.5 py-0.5 text-xs transition-colors",
+                      isMyReaction
+                        ? cn(
+                            colors?.active || "bg-primary/20",
+                            colors?.activeText || "text-primary",
+                          )
+                        : cn(
+                            colors?.inactive || "bg-muted",
+                            colors?.inactiveText || "text-muted-foreground",
+                          ),
+                    )}
+                  >
+                    <ReactionIcon name={reaction.emoji} className="size-3.5" />
+                  </button>
+                );
+              })}
+            </BubbleReactions>
+          )}
         </Bubble>
 
-        {isMine && (onEdit || onDelete) && (
-          <div className="mt-0.5 flex gap-1.5 self-end opacity-0 transition-opacity duration-200 group-hover/message:opacity-50 hover:!opacity-100">
-            {onEdit && (
+        <div className="relative z-10 mt-4 flex items-center gap-1 opacity-0 transition-opacity duration-200 group-hover/message:opacity-100">
+          {REACTION_KEYS.map((key) => {
+            const isActive = message.reactions?.some(
+              (r) => r.emoji === key && r.userId === currentUserId,
+            );
+            const colors = REACTION_COLORS[key];
+            return (
               <button
+                key={key}
                 type="button"
-                onClick={() => onEdit(message)}
-                className="transition-opacity hover:opacity-100"
-                aria-label="Редактировать"
+                onClick={() => {
+                  if (isActive) {
+                    onRemoveReaction?.(message.id, key);
+                  } else {
+                    onAddReaction?.(message.id, key);
+                  }
+                }}
+                className={cn(
+                  "flex size-6 items-center justify-center rounded-full transition-all",
+                  isActive
+                    ? cn(colors.active, colors.activeText)
+                    : cn(colors.inactive, colors.inactiveText),
+                )}
+                title={key}
               >
-                <Pencil className="size-3" />
+                <ReactionIcon name={key} className="size-3.5" />
               </button>
-            )}
-            {onDelete && (
-              <button
-                type="button"
-                onClick={() => onDelete(message.id)}
-                className="text-destructive transition-opacity hover:opacity-100"
-                aria-label="Удалить"
-              >
-                <Trash2 className="size-3" />
-              </button>
-            )}
-          </div>
-        )}
+            );
+          })}
+
+          {isMine && (
+            <>
+              {onEdit && (
+                <button
+                  type="button"
+                  onClick={() => onEdit(message)}
+                  className="ml-1 flex size-6 items-center justify-center rounded-full bg-muted text-muted-foreground transition-colors hover:bg-muted/80"
+                  aria-label="Редактировать"
+                >
+                  <Pencil className="size-3" />
+                </button>
+              )}
+              {onDelete && (
+                <button
+                  type="button"
+                  onClick={() => onDelete(message.id)}
+                  className="flex size-6 items-center justify-center rounded-full bg-muted text-destructive transition-colors hover:bg-muted/80"
+                  aria-label="Удалить"
+                >
+                  <Trash2 className="size-3" />
+                </button>
+              )}
+            </>
+          )}
+        </div>
       </MessageContent>
     </Message>
   );

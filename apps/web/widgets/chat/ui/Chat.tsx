@@ -5,11 +5,13 @@ import { useCallback, useState } from "react";
 import { useAuth } from "@/shared/api/provider/auth-provider";
 import { useRealtime } from "@/shared/realtime";
 
+import { useAddReaction } from "../model/useAddReaction";
 import { useChatRealtime } from "../model/useChatRealtime";
 import { useDeleteMessage } from "../model/useDeleteMessage";
 import { useEditMessage } from "../model/useEditMessage";
 import { useLoadMessages } from "../model/useLoadMessages";
 import { useMarkMessagesRead } from "../model/useMarkMessagesRead";
+import { useRemoveReaction } from "../model/useRemoveReaction";
 import { useSendMessage } from "../model/useSendMessage";
 import { ChatMessageItem } from "../type/chat";
 
@@ -45,6 +47,8 @@ export function Chat() {
   const sendMessage = useSendMessage(socket);
   const editMessage = useEditMessage(socket);
   const deleteMessage = useDeleteMessage(socket);
+  const addReaction = useAddReaction(socket);
+  const removeReaction = useRemoveReaction(socket);
   const markMessagesRead = useMarkMessagesRead(socket);
 
   const handleEdit = useCallback((message: ChatMessageItem) => {
@@ -69,6 +73,20 @@ export function Chat() {
     [deleteMessage],
   );
 
+  const handleAddReaction = useCallback(
+    (messageId: string, emoji: string) => {
+      addReaction(messageId, emoji);
+    },
+    [addReaction],
+  );
+
+  const handleRemoveReaction = useCallback(
+    (messageId: string, emoji: string) => {
+      removeReaction(messageId, emoji);
+    },
+    [removeReaction],
+  );
+
   return (
     <section className="flex h-[calc(100dvh-60px-env(safe-area-inset-bottom))] flex-col overflow-hidden bg-background">
       <div className="shrink-0 border-b border-border/50 bg-background/90 backdrop-blur-xl">
@@ -81,6 +99,8 @@ export function Chat() {
         onMessagesViewed={markMessagesRead}
         onEdit={handleEdit}
         onDelete={handleDelete}
+        onAddReaction={handleAddReaction}
+        onRemoveReaction={handleRemoveReaction}
       />
 
       <div className="shrink-0 border-t border-border/50 bg-background/90 px-4 pb-[calc(env(safe-area-inset-bottom)+16px)] pt-4 backdrop-blur-xl">
