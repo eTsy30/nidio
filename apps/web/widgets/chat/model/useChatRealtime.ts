@@ -23,9 +23,8 @@ export function useChatRealtime({
   useEffect(() => {
     if (!socket) return;
 
-    // Серверный тип (status может не быть) — приводим к фронтовому
     function handleMessage(message: import("@/shared/realtime/types/events").ChatMessageItem) {
-      if (message.sender.id !== currentUserId) {
+      if (message.sender?.id !== currentUserId) {
         socket?.emit("chat:delivered", { messageId: message.id });
       }
 
@@ -68,6 +67,25 @@ export function useChatRealtime({
       if (data.userId !== currentUserId) setIsOnline(false);
     }
 
+    function handleEdited(message: import("@/shared/realtime/types/events").ChatMessageItem) {
+      setMessages((prev) =>
+        prev.map((item) => {
+          if (item.id !== message.id) return item;
+
+          const updated: ChatMessageItem = {
+            ...item,
+            content: message.content ?? item.content,
+          };
+
+          if (message.updatedAt !== undefined) {
+            updated.updatedAt = message.updatedAt;
+          }
+
+          return updated;
+        }),
+      );
+    }
+
     socket.on("chat.message.created", handleMessage);
     socket.on("chat.message.delivered", handleDelivered);
     socket.on("chat.message.read", handleRead);
@@ -75,6 +93,7 @@ export function useChatRealtime({
     socket.on("chat.typing.stop", handleTypingStop);
     socket.on("user.online", handleUserOnline);
     socket.on("user.offline", handleUserOffline);
+    socket.on("chat.message.edited", handleEdited);
 
     return () => {
       socket.off("chat.message.created", handleMessage);
@@ -84,6 +103,7 @@ export function useChatRealtime({
       socket.off("chat.typing.stop", handleTypingStop);
       socket.off("user.online", handleUserOnline);
       socket.off("user.offline", handleUserOffline);
+      socket.off("chat.message.edited", handleEdited);
     };
   }, [socket, currentUserId, setMessages, setIsTyping, setIsOnline]);
 }

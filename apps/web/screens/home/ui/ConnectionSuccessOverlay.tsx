@@ -12,7 +12,7 @@ export function ConnectionSuccessOverlay() {
   const { data: user } = useMe();
   const { connectionEvent, clearConnectionEvent } = useRealtimeContext();
 
-  const visible = connectionEvent !== null;
+  const visible = connectionEvent;
 
   const partner = user?.relationship?.partner;
 

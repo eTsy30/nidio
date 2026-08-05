@@ -9,13 +9,31 @@ import { Button } from "@/shared/ui/button";
 
 type ChatInputProps = {
   onMessageSent?: (message: { content: string }) => void;
+  onMessageEdit?: (payload: { messageId: string; content: string }) => void;
+  editingMessage?: { id: string; content: string } | null;
+  onCancelEdit?: () => void;
   socket?: import("socket.io-client").Socket<ServerToClientEvents, ClientToServerEvents> | null;
 };
 
-export function ChatInput({ onMessageSent, socket }: ChatInputProps) {
+export function ChatInput({
+  onMessageSent,
+  onMessageEdit,
+  editingMessage,
+  onCancelEdit,
+  socket,
+}: ChatInputProps) {
   const [message, setMessage] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const typingTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    if (!editingMessage) return;
+    const id = requestAnimationFrame(() => {
+      setMessage(editingMessage.content);
+      textareaRef.current?.focus();
+    });
+    return () => cancelAnimationFrame(id);
+  }, [editingMessage]);
 
   useEffect(() => {
     const el = textareaRef.current;
@@ -51,9 +69,15 @@ export function ChatInput({ onMessageSent, socket }: ChatInputProps) {
     if (!message.trim()) return;
 
     emitTypingStop();
-    onMessageSent?.({ content: message.trim() });
-    setMessage("");
 
+    if (editingMessage && onMessageEdit) {
+      onMessageEdit({ messageId: editingMessage.id, content: message.trim() });
+      onCancelEdit?.();
+    } else {
+      onMessageSent?.({ content: message.trim() });
+    }
+
+    setMessage("");
     if (textareaRef.current) {
       textareaRef.current.style.height = "auto";
     }
@@ -68,6 +92,22 @@ export function ChatInput({ onMessageSent, socket }: ChatInputProps) {
 
   return (
     <form onSubmit={handleSubmit} className="w-full">
+      {editingMessage && (
+        <div className="mb-1 flex items-center justify-between px-1 text-xs text-muted-foreground">
+          <span>Редактирование сообщения</span>
+          <button
+            type="button"
+            onClick={() => {
+              onCancelEdit?.();
+              setMessage("");
+            }}
+            className="hover:text-foreground transition-colors"
+          >
+            Отмена
+          </button>
+        </div>
+      )}
+
       <div
         className={cn(
           "flex items-end gap-2",
@@ -90,7 +130,7 @@ export function ChatInput({ onMessageSent, socket }: ChatInputProps) {
             else emitTypingStop();
           }}
           onKeyDown={handleKeyDown}
-          placeholder="Написать сообщение..."
+          placeholder={editingMessage ? "Изменить сообщение..." : "Написать сообщение..."}
           rows={1}
           className={cn(
             "ml-5",
@@ -115,7 +155,7 @@ export function ChatInput({ onMessageSent, socket }: ChatInputProps) {
               : "bg-muted text-muted-foreground",
           )}
           disabled={!message.trim()}
-          aria-label="Отправить"
+          aria-label={editingMessage ? "Сохранить" : "Отправить"}
         >
           <ArrowUpIcon className="size-5" />
         </Button>

@@ -21,10 +21,12 @@ export function useLoadMessages(setMessages: Dispatch<SetStateAction<ChatMessage
         const data = await http.get<GetMessagesResponse>("/chat/messages");
 
         setMessages(
-          data.messages.map((message) => ({
-            ...message,
-            status: message.readAt ? "read" : message.deliveredAt ? "delivered" : "sent",
-          })),
+          data.messages
+            .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
+            .map((message) => ({
+              ...message,
+              status: message.readAt ? "read" : message.deliveredAt ? "delivered" : "sent",
+            })),
         );
       } catch (error) {
         if (error instanceof Error) {

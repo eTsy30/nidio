@@ -7,4 +7,5 @@ export type { ChatMessageStatus };
 
 export type ChatMessageItem = ServerChatMessageItem & {
   status: ChatMessageStatus;
+  updatedAt?: string | null;
 };

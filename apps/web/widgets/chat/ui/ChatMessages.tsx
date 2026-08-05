@@ -19,6 +19,7 @@ export type ChatMessagesProps = {
   currentUserId: string;
   onMessagesViewed?: (messageIds: string[]) => void;
   messages: ChatMessageItem[];
+  onEdit?: ((message: ChatMessageItem) => void) | undefined;
 };
 
 type MessageGroupItem = {
@@ -53,7 +54,12 @@ function formatMessageDate(date: Date) {
   }).format(date);
 }
 
-export function ChatMessages({ messages, currentUserId, onMessagesViewed }: ChatMessagesProps) {
+export function ChatMessages({
+  messages,
+  currentUserId,
+  onMessagesViewed,
+  onEdit,
+}: ChatMessagesProps) {
   const viewportRef = useRef<HTMLDivElement>(null);
   const shouldScrollRef = useRef(true);
 
@@ -153,6 +159,7 @@ export function ChatMessages({ messages, currentUserId, onMessagesViewed }: Chat
                           showAvatar={message.sender.id !== currentUserId && messageIndex === 0}
                           showName={false}
                           isFirstInGroup={messageIndex === 0}
+                          onEdit={onEdit}
                         />
                       ))}
                     </MessageGroup>

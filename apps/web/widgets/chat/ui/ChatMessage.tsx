@@ -1,5 +1,7 @@
 "use client";
 
+import { Pencil } from "lucide-react";
+
 import { cn } from "@/shared/lib/cn";
 import { Avatar, AvatarFallback, AvatarImage } from "@/shared/ui/avatar-pair/Avatar";
 
@@ -14,6 +16,7 @@ type ChatMessageProps = {
   showAvatar?: boolean;
   showName?: boolean;
   isFirstInGroup?: boolean;
+  onEdit?: ((message: ChatMessageItem) => void) | undefined;
 };
 
 export function ChatMessage({
@@ -22,12 +25,17 @@ export function ChatMessage({
   showAvatar = true,
   showName = true,
   isFirstInGroup = false,
+  onEdit,
 }: ChatMessageProps) {
   const isMine = message.sender.id === currentUserId;
   const time = new Date(message.createdAt).toLocaleTimeString([], {
     hour: "2-digit",
     minute: "2-digit",
   });
+
+  const isEdited =
+    !!message.updatedAt &&
+    new Date(message.updatedAt).getTime() !== new Date(message.createdAt).getTime();
 
   return (
     <Message align={isMine ? "end" : "start"}>
@@ -55,6 +63,18 @@ export function ChatMessage({
           <BubbleContent>
             <div className="flex flex-wrap items-end gap-x-2 gap-y-1">
               <span className="break-words">{message.content}</span>
+
+              {isEdited && (
+                <span
+                  className={cn(
+                    "text-[10px] opacity-60",
+                    isMine ? "text-primary-foreground/60" : "text-muted-foreground/60",
+                  )}
+                >
+                  изм.
+                </span>
+              )}
+
               <span
                 className={cn(
                   "ml-auto shrink-0 translate-y-0.5 text-[11px] leading-none",
@@ -141,6 +161,17 @@ export function ChatMessage({
             </div>
           </BubbleContent>
         </Bubble>
+
+        {isMine && onEdit && (
+          <button
+            type="button"
+            onClick={() => onEdit(message)}
+            className="mt-0.5 self-end opacity-0 transition-opacity duration-200 group-hover/message:opacity-50 hover:!opacity-100"
+            aria-label="Редактировать"
+          >
+            <Pencil className="size-3" />
+          </button>
+        )}
       </MessageContent>
     </Message>
   );
