@@ -64,32 +64,58 @@ export class RealtimeGateway
       if (relationship) {
         client.join(`workspace:${relationship.workspaceId}`);
       }
+      if (relationship) {
+        const partnerSockets = await this.server
+
+          .in(`user:${relationship.partnerId}`)
+
+          .fetchSockets();
+
+        if (partnerSockets.length > 0) {
+          client.emit('user.online', {
+            userId: relationship.partnerId,
+          });
+        } else {
+          client.emit('user.offline', {
+            userId: relationship.partnerId,
+          });
+        }
+
+        this.realtimeService.emitToUser(
+          relationship.partnerId,
+
+          'user.online',
+
+          {
+            userId: payload.sub,
+          },
+        );
+      }
     } catch {
       client.disconnect();
     }
   }
 
-  @SubscribeMessage('relationship:sync')
-  async handleRelationshipSync(client: Socket) {
-    const userId = client.data.user?.sub;
+  // @SubscribeMessage("relationship:sync")
+  // async handleRelationshipSync(client: Socket) {
+  //   const userId = client.data.user?.sub;
 
-    if (!userId) {
-      return;
-    }
+  //   if (!userId) {
+  //     return;
+  //   }
 
-    const relationship =
-      await this.relationshipService.getCurrentCouple(userId);
+  //   const relationship = await this.relationshipService.getCurrentCouple(userId);
 
-    if (!relationship) {
-      return;
-    }
+  //   if (!relationship) {
+  //     return;
+  //   }
 
-    client.emit('relationship.connected', {
-      type: 'relationship.connected',
-      relationshipId: relationship.id,
-      partnerId: relationship.partnerId,
-    });
-  }
+  //   client.emit("relationship.connected", {
+  //     userId: relationship.partnerId,
+
+  //     online: true,
+  //   });
+  // }
 
   @SubscribeMessage('chat:send')
   async handleChatSend(client: Socket, dto: CreateMessageDto) {
@@ -288,7 +314,35 @@ export class RealtimeGateway
     );
   }
 
-  handleDisconnect(client: Socket) {
-    client.disconnect();
+  async handleDisconnect(client: Socket) {
+    const userId = client.data.user?.sub;
+    if (!userId) {
+      return;
+    }
+    const relationship =
+      await this.relationshipService.getCurrentCouple(userId);
+    if (!relationship) {
+      return;
+    }
+    this.realtimeService.emitToWorkspace(
+      relationship.workspaceId,
+      'chat.typing.stop',
+      {
+        userId,
+      },
+    );
+
+    const sockets = await this.server.in(`user:${userId}`).fetchSockets();
+    if (sockets.length === 0) {
+      this.realtimeService.emitToUser(
+        relationship.partnerId,
+
+        'user.offline',
+
+        {
+          userId,
+        },
+      );
+    }
   }
 }

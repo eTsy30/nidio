@@ -13,6 +13,9 @@ export const REALTIME_EVENTS = {
   CALENDAR_UPDATED: "calendar.updated",
   NOTE_UPDATED: "note.updated",
   MEMORY_CREATED: "memory.created",
+
+  USER_ONLINE: "user.online",
+  USER_OFFLINE: "user.offline",
 } as const;
 
 export type RealtimeEventName = (typeof REALTIME_EVENTS)[keyof typeof REALTIME_EVENTS];

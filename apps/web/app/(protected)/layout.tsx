@@ -13,7 +13,7 @@ export default function ProtectedLayout({ children }: Props) {
     <AuthGuard>
       <ConnectionSuccessOverlay />
 
-      <div className="min-h-screen pb-20">{children}</div>
+      <div className="min-h-dvh pb-[calc(60px+env(safe-area-inset-bottom))]">{children}</div>
 
       <BottomNavigation />
     </AuthGuard>

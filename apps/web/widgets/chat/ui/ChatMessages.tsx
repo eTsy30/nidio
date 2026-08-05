@@ -1,7 +1,17 @@
-import { useCallback, useMemo } from "react";
+"use client";
+
+import { useCallback, useEffect, useMemo, useRef } from "react";
 
 import { ChatMessage } from "./ChatMessage";
 import { MessageGroup } from "./message";
+import {
+  MessageScroller,
+  MessageScrollerButton,
+  MessageScrollerContent,
+  MessageScrollerItem,
+  MessageScrollerProvider,
+  MessageScrollerViewport,
+} from "./message-scroller";
 
 export type ChatMessagesProps = {
   currentUserId: string;
@@ -63,6 +73,9 @@ function formatMessageDate(date: Date) {
 }
 
 export function ChatMessages({ messages, currentUserId, onMessagesViewed }: ChatMessagesProps) {
+  const viewportRef = useRef<HTMLDivElement>(null);
+  const shouldScrollRef = useRef(true);
+
   const groupedMessages = useMemo<MessageGroupItem[]>(() => {
     return messages.reduce<MessageGroupItem[]>((groups, message) => {
       const lastGroup = groups.at(-1);
@@ -84,15 +97,11 @@ export function ChatMessages({ messages, currentUserId, onMessagesViewed }: Chat
 
   const items = useMemo<ChatListItem[]>(() => {
     const result: ChatListItem[] = [];
-
     let previousDate: Date | null = null;
 
     for (const group of groupedMessages) {
       const firstMessage = group.messages[0];
-
-      if (!firstMessage) {
-        continue;
-      }
+      if (!firstMessage) continue;
 
       const currentDate = new Date(firstMessage.createdAt);
 
@@ -101,7 +110,6 @@ export function ChatMessages({ messages, currentUserId, onMessagesViewed }: Chat
           type: "date",
           label: formatMessageDate(currentDate),
         });
-
         previousDate = currentDate;
       }
 
@@ -114,48 +122,79 @@ export function ChatMessages({ messages, currentUserId, onMessagesViewed }: Chat
     return result;
   }, [groupedMessages]);
 
-  const handleMessagesViewed = useCallback(() => {
-    if (!onMessagesViewed) {
-      return;
-    }
+  useEffect(() => {
+    const viewport = viewportRef.current;
 
+    if (!viewport) return;
+
+    requestAnimationFrame(() => {
+      viewport.scrollTo({
+        top: viewport.scrollHeight,
+
+        behavior: "smooth",
+      });
+    });
+  }, [messages.length]);
+
+  const handleScroll = useCallback(() => {
+    const viewport = viewportRef.current;
+    if (!viewport) return;
+    const isNearBottom = viewport.scrollHeight - viewport.scrollTop - viewport.clientHeight < 120;
+    shouldScrollRef.current = isNearBottom;
+  }, []);
+
+  const handleMessagesViewed = useCallback(() => {
+    if (!onMessagesViewed) return;
     onMessagesViewed(messages.map((message) => message.id));
   }, [messages, onMessagesViewed]);
 
   return (
-    <section className="flex flex-1 overflow-y-auto" onMouseEnter={handleMessagesViewed}>
-      <div className="mx-auto flex w-full max-w-8xl  flex-col px-5 py-6">
-        {items.map((item, index) => {
-          if (item.type === "date") {
-            return (
-              <div key={`date-${index}`} className="sticky top-4 z-10 my-6 flex justify-center">
-                <div className="rounded-full border border-border/50 bg-card/80 px-4 py-1 text-xs font-medium text-muted-foreground shadow-sm backdrop-blur-xl">
-                  {item.label}
-                </div>
-              </div>
-            );
-          }
+    <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+      <MessageScrollerProvider>
+        <MessageScroller className="h-full">
+          <MessageScrollerViewport
+            ref={viewportRef}
+            onScroll={handleScroll}
+            onMouseEnter={handleMessagesViewed}
+          >
+            <MessageScrollerContent className="mx-auto w-full max-w-8xl px-4 py-2">
+              {items.map((item, index) => {
+                if (item.type === "date") {
+                  return (
+                    <MessageScrollerItem key={`date-${index}`} className="py-4">
+                      <div className="flex justify-center">
+                        <div className="rounded-full border border-border/60 bg-card/90 px-4 py-1.5 text-xs font-medium text-muted-foreground shadow-soft backdrop-blur-md">
+                          {item.label}
+                        </div>
+                      </div>
+                    </MessageScrollerItem>
+                  );
+                }
 
-          return (
-            <div key={item.group.id} className="mb-5 flex flex-col" data-message-group>
-              <MessageGroup>
-                {item.group.messages.map((message, messageIndex) => (
-                  <div key={message.id} data-message>
-                    <ChatMessage
-                      message={message}
-                      currentUserId={currentUserId}
-                      showAvatar={message.sender.id !== currentUserId && messageIndex === 0}
-                      showName={false}
-                    />
-                  </div>
-                ))}
-              </MessageGroup>
-            </div>
-          );
-        })}
-
-        <div className="h-24 shrink-0" />
-      </div>
-    </section>
+                const group = item.group;
+                return (
+                  <MessageScrollerItem key={group.id} className="py-1">
+                    <MessageGroup>
+                      {group.messages.map((message, messageIndex) => (
+                        <ChatMessage
+                          key={message.id}
+                          message={message}
+                          currentUserId={currentUserId}
+                          showAvatar={message.sender.id !== currentUserId && messageIndex === 0}
+                          showName={false}
+                          isFirstInGroup={messageIndex === 0}
+                        />
+                      ))}
+                    </MessageGroup>
+                  </MessageScrollerItem>
+                );
+              })}
+              <div className="h-4 shrink-0" />
+            </MessageScrollerContent>
+          </MessageScrollerViewport>
+          <MessageScrollerButton direction="end" />
+        </MessageScroller>
+      </MessageScrollerProvider>
+    </div>
   );
 }

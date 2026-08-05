@@ -9,9 +9,17 @@ type Props = {
   socket: Socket | null;
   currentUserId: string;
   setMessages: Dispatch<SetStateAction<ChatMessageItem[]>>;
+  setIsTyping: Dispatch<SetStateAction<boolean>>;
+  setIsOnline: Dispatch<SetStateAction<boolean>>;
 };
 
-export function useChatRealtime({ socket, currentUserId, setMessages }: Props) {
+export function useChatRealtime({
+  socket,
+  currentUserId,
+  setMessages,
+  setIsTyping,
+  setIsOnline,
+}: Props) {
   useEffect(() => {
     if (!socket) {
       return;
@@ -19,7 +27,7 @@ export function useChatRealtime({ socket, currentUserId, setMessages }: Props) {
 
     function handleMessage(message: ChatMessageItem) {
       if (message.sender.id !== currentUserId) {
-        socket!.emit(REALTIME_EVENTS.CHAT_DELIVERED, {
+        socket?.emit(REALTIME_EVENTS.CHAT_DELIVERED, {
           messageId: message.id,
         });
       }
@@ -57,14 +65,46 @@ export function useChatRealtime({ socket, currentUserId, setMessages }: Props) {
       );
     }
 
+    function handleTypingStart(data: { userId: string }) {
+      if (data.userId !== currentUserId) {
+        setIsTyping(true);
+      }
+    }
+
+    function handleTypingStop(data: { userId: string }) {
+      if (data.userId !== currentUserId) {
+        setIsTyping(false);
+      }
+    }
+
+    function handleUserOnline(data: { userId: string }) {
+      if (data.userId !== currentUserId) {
+        setIsOnline(true);
+      }
+    }
+
+    function handleUserOffline(data: { userId: string }) {
+      if (data.userId !== currentUserId) {
+        setIsOnline(false);
+      }
+    }
+
     socket.on(REALTIME_EVENTS.CHAT_MESSAGE_CREATED, handleMessage);
     socket.on(REALTIME_EVENTS.CHAT_DELIVERED, handleDelivered);
     socket.on(REALTIME_EVENTS.CHAT_READ, handleRead);
+    socket.on(REALTIME_EVENTS.CHAT_TYPING_START, handleTypingStart);
+    socket.on(REALTIME_EVENTS.CHAT_TYPING_STOP, handleTypingStop);
+    socket.on(REALTIME_EVENTS.USER_ONLINE, handleUserOnline);
+    socket.on(REALTIME_EVENTS.USER_OFFLINE, handleUserOffline);
 
     return () => {
       socket.off(REALTIME_EVENTS.CHAT_MESSAGE_CREATED, handleMessage);
       socket.off(REALTIME_EVENTS.CHAT_DELIVERED, handleDelivered);
       socket.off(REALTIME_EVENTS.CHAT_READ, handleRead);
+      socket.off(REALTIME_EVENTS.CHAT_TYPING_START, handleTypingStart);
+      socket.off(REALTIME_EVENTS.CHAT_TYPING_STOP, handleTypingStop);
+      socket.off(REALTIME_EVENTS.USER_ONLINE, handleUserOnline);
+      socket.off(REALTIME_EVENTS.USER_OFFLINE, handleUserOffline);
     };
-  }, [socket, currentUserId, setMessages]);
+  }, [socket, currentUserId, setMessages, setIsTyping, setIsOnline]);
 }

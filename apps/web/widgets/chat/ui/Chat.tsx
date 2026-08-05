@@ -23,7 +23,9 @@ export function Chat() {
 
   const currentUserId = user?.id ?? "";
   const partner = user?.relationship?.partner ?? null;
-  const isOnline = user?.relationship?.connected ?? false;
+
+  const [isTyping, setIsTyping] = useState(false);
+  const [isOnline, setIsOnline] = useState(user?.relationship?.connected ?? false);
 
   useLoadMessages(setMessages);
 
@@ -31,24 +33,24 @@ export function Chat() {
     socket,
     currentUserId,
     setMessages,
+    setIsTyping,
+    setIsOnline,
   });
 
   const sendMessage = useSendMessage(socket);
   const markMessagesRead = useMarkMessagesRead(socket);
 
   return (
-    <section className="flex h-full min-h-0 flex-1 flex-col  bg-background">
+    <section className="flex h-[calc(100dvh-60px-env(safe-area-inset-bottom))] flex-col overflow-hidden bg-background">
       <div className="shrink-0 border-b border-border/50 bg-background/90 backdrop-blur-xl">
-        <ChatHeader partner={partner} isOnline={isOnline} isTyping={false} />
+        <ChatHeader partner={partner} isOnline={isOnline} isTyping={isTyping} />
       </div>
 
-      <main className="min-h-0 flex-1 ">
-        <ChatMessages
-          messages={messages}
-          currentUserId={currentUserId}
-          onMessagesViewed={markMessagesRead}
-        />
-      </main>
+      <ChatMessages
+        messages={messages}
+        currentUserId={currentUserId}
+        onMessagesViewed={markMessagesRead}
+      />
 
       <div className="shrink-0 border-t border-border/50 bg-background/90 px-4 pb-[calc(env(safe-area-inset-bottom)+16px)] pt-4 backdrop-blur-xl">
         <ChatInput onMessageSent={sendMessage} />

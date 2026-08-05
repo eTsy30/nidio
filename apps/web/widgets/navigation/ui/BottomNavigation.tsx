@@ -42,7 +42,7 @@ export function BottomNavigation() {
 
   return (
     <nav className="fixed inset-x-0 bottom-0 z-50 border-t border-border/60 bg-card/90 shadow-floating backdrop-blur-xl supports-[padding:max(0px)]:pb-[max(env(safe-area-inset-bottom),0px)]">
-      <div className="mx-auto flex h-22 max-w-md items-center justify-between px-3 pb-[env(safe-area-inset-bottom)]">
+      <div className="mx-auto flex h-15 max-w-md items-center justify-between px-3 pb-[env(safe-area-inset-bottom)]">
         {navigation.map((item) => {
           const Icon = item.icon;
           const active = pathname === item.href;
