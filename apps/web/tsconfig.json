@@ -16,12 +16,14 @@
     "jsx": "react-jsx",
     "incremental": true,
     "plugins": [{ "name": "next" }],
-    "paths": { "@/*": ["./*"] }
+    "paths": { "@/*": ["./*"] },
+    "types": ["@serwist/next/typings"]
   },
   "include": [
     "next-env.d.ts",
     ".next/types/**/*.ts",
     ".next/dev/types/**/*.ts",
+    "types/**/*.ts",
     "**/*.mts",
     "**/*.ts",
     "**/*.tsx"
