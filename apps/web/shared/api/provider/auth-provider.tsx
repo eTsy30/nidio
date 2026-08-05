@@ -1,8 +1,8 @@
 "use client";
 
 import { createContext, type ReactNode, useCallback, useContext, useEffect, useState } from "react";
-import type { Gender } from "@prisma/client";
 
+import { User } from "@/features/auth/model/auth.types";
 import { http } from "@/shared/api/client/api";
 import {
   getAccessToken,
@@ -11,35 +11,10 @@ import {
   subscribeAuth,
 } from "@/shared/lib/token";
 
-export interface RelationshipPartner {
-  id: string;
-  firstName: string;
-  avatarUrl: string | null;
-}
-
-export interface UserRelationship {
-  connected: boolean;
-  coupleId: string;
-  workspaceId: string;
-  partner: RelationshipPartner;
-}
-
-export interface AuthUser {
-  id: string;
-  email: string;
-  firstName: string;
-  avatarUrl: string | null;
-  gender: Gender;
-  emailVerifiedAt: string | null;
-  createdAt: string;
-  updatedAt: string;
-  relationship: UserRelationship | null;
-}
-
 type AuthContextValue = {
   isAuthenticated: boolean;
   isLoading: boolean;
-  user: AuthUser | null;
+  user: User | null;
   refreshUser: () => Promise<void>;
 };
 
@@ -53,12 +28,11 @@ const AuthContext = createContext<AuthContextValue>({
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => Boolean(getAccessToken()));
   const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [user, setUser] = useState<AuthUser | null>(null);
+  const [user, setUser] = useState<User | null>(null);
 
   const refreshUser = useCallback(async (): Promise<void> => {
     try {
-      const me = await http.get<AuthUser>("/auth/@me");
-
+      const me = await http.get<User>("/auth/@me");
       setUser(me);
       setIsAuthenticated(true);
     } catch {

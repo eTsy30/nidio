@@ -1,12 +1,12 @@
 import { Dispatch, SetStateAction, useEffect } from "react";
 import type { Socket } from "socket.io-client";
 
-import { REALTIME_EVENTS } from "@/shared/realtime/lib/events";
+import type { ClientToServerEvents, ServerToClientEvents } from "@/shared/realtime/types/events";
 
-import { ChatMessageItem } from "../type/chat";
+import type { ChatMessageItem } from "../type/chat";
 
 type Props = {
-  socket: Socket | null;
+  socket: Socket<ServerToClientEvents, ClientToServerEvents> | null;
   currentUserId: string;
   setMessages: Dispatch<SetStateAction<ChatMessageItem[]>>;
   setIsTyping: Dispatch<SetStateAction<boolean>>;
@@ -21,90 +21,69 @@ export function useChatRealtime({
   setIsOnline,
 }: Props) {
   useEffect(() => {
-    if (!socket) {
-      return;
-    }
+    if (!socket) return;
 
-    function handleMessage(message: ChatMessageItem) {
+    // Серверный тип (status может не быть) — приводим к фронтовому
+    function handleMessage(message: import("@/shared/realtime/types/events").ChatMessageItem) {
       if (message.sender.id !== currentUserId) {
-        socket?.emit(REALTIME_EVENTS.CHAT_DELIVERED, {
-          messageId: message.id,
-        });
+        socket?.emit("chat:delivered", { messageId: message.id });
       }
 
       setMessages((prev) => {
         const exists = prev.some((item) => item.id === message.id);
+        if (exists) return prev;
 
-        if (exists) {
-          return prev;
-        }
-
-        return [
-          ...prev,
-          {
-            ...message,
-            status: "sent",
-          },
-        ];
+        const next: ChatMessageItem = { ...message, status: message.status ?? "sent" };
+        return [...prev, next];
       });
     }
 
     function handleDelivered(data: { messageId: string }) {
-      setMessages((prev) =>
-        prev.map((message) =>
-          message.id === data.messageId ? { ...message, status: "delivered" } : message,
-        ),
-      );
+      updateStatus(data.messageId, "delivered");
     }
 
     function handleRead(data: { messageId: string }) {
+      updateStatus(data.messageId, "read");
+    }
+
+    function updateStatus(messageId: string, status: ChatMessageItem["status"]) {
       setMessages((prev) =>
-        prev.map((message) =>
-          message.id === data.messageId ? { ...message, status: "read" } : message,
-        ),
+        prev.map((message) => (message.id === messageId ? { ...message, status } : message)),
       );
     }
 
     function handleTypingStart(data: { userId: string }) {
-      if (data.userId !== currentUserId) {
-        setIsTyping(true);
-      }
+      if (data.userId !== currentUserId) setIsTyping(true);
     }
 
     function handleTypingStop(data: { userId: string }) {
-      if (data.userId !== currentUserId) {
-        setIsTyping(false);
-      }
+      if (data.userId !== currentUserId) setIsTyping(false);
     }
 
     function handleUserOnline(data: { userId: string }) {
-      if (data.userId !== currentUserId) {
-        setIsOnline(true);
-      }
+      if (data.userId !== currentUserId) setIsOnline(true);
     }
 
     function handleUserOffline(data: { userId: string }) {
-      if (data.userId !== currentUserId) {
-        setIsOnline(false);
-      }
+      if (data.userId !== currentUserId) setIsOnline(false);
     }
 
-    socket.on(REALTIME_EVENTS.CHAT_MESSAGE_CREATED, handleMessage);
-    socket.on(REALTIME_EVENTS.CHAT_DELIVERED, handleDelivered);
-    socket.on(REALTIME_EVENTS.CHAT_READ, handleRead);
-    socket.on(REALTIME_EVENTS.CHAT_TYPING_START, handleTypingStart);
-    socket.on(REALTIME_EVENTS.CHAT_TYPING_STOP, handleTypingStop);
-    socket.on(REALTIME_EVENTS.USER_ONLINE, handleUserOnline);
-    socket.on(REALTIME_EVENTS.USER_OFFLINE, handleUserOffline);
+    socket.on("chat.message.created", handleMessage);
+    socket.on("chat.message.delivered", handleDelivered);
+    socket.on("chat.message.read", handleRead);
+    socket.on("chat.typing.start", handleTypingStart);
+    socket.on("chat.typing.stop", handleTypingStop);
+    socket.on("user.online", handleUserOnline);
+    socket.on("user.offline", handleUserOffline);
 
     return () => {
-      socket.off(REALTIME_EVENTS.CHAT_MESSAGE_CREATED, handleMessage);
-      socket.off(REALTIME_EVENTS.CHAT_DELIVERED, handleDelivered);
-      socket.off(REALTIME_EVENTS.CHAT_READ, handleRead);
-      socket.off(REALTIME_EVENTS.CHAT_TYPING_START, handleTypingStart);
-      socket.off(REALTIME_EVENTS.CHAT_TYPING_STOP, handleTypingStop);
-      socket.off(REALTIME_EVENTS.USER_ONLINE, handleUserOnline);
-      socket.off(REALTIME_EVENTS.USER_OFFLINE, handleUserOffline);
+      socket.off("chat.message.created", handleMessage);
+      socket.off("chat.message.delivered", handleDelivered);
+      socket.off("chat.message.read", handleRead);
+      socket.off("chat.typing.start", handleTypingStart);
+      socket.off("chat.typing.stop", handleTypingStop);
+      socket.off("user.online", handleUserOnline);
+      socket.off("user.offline", handleUserOffline);
     };
   }, [socket, currentUserId, setMessages, setIsTyping, setIsOnline]);
 }

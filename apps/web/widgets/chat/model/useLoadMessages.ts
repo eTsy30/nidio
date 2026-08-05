@@ -1,5 +1,6 @@
 import { Dispatch, SetStateAction, useEffect } from "react";
 
+import type { ApiError } from "@/shared/api/client/api";
 import { http } from "@/shared/api/client/api";
 
 import { ChatMessageItem } from "../type/chat";
@@ -26,7 +27,13 @@ export function useLoadMessages(setMessages: Dispatch<SetStateAction<ChatMessage
           })),
         );
       } catch (error) {
-        console.error("Failed to load chat messages", error);
+        if (error instanceof Error) {
+          const apiError = error as ApiError;
+          console.error(
+            "Failed to load chat messages",
+            apiError.response?.data?.message ?? apiError.message,
+          );
+        }
       }
     }
 

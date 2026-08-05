@@ -1,6 +1,8 @@
 "use client";
+
 import { useRouter } from "next/navigation";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { AxiosError } from "axios";
 import { Mail } from "lucide-react";
 import { useForm } from "react-hook-form";
 
@@ -11,22 +13,37 @@ import { AuthLayout, Button, Input, Link } from "@/shared/ui";
 import { useForgotPassword } from "../../hooks/use-login";
 import { ForgotPasswordRequest, forgotPasswordSchema } from "../../model";
 
-function ForgotPasswordForm() {
+export function ForgotPasswordForm() {
   const {
     register,
-    formState: { errors },
+    formState: { errors, isValid, isDirty },
     handleSubmit,
   } = useForm<ForgotPasswordRequest>({
     mode: "onBlur",
     resolver: zodResolver(forgotPasswordSchema),
+    defaultValues: {
+      email: "",
+    },
   });
+
   const router = useRouter();
-  const forgotPasswordMutation = useForgotPassword();
-  async function handleForgotPasswordSubmit(data: ForgotPasswordRequest) {
-    await forgotPasswordMutation.mutateAsync(data);
+
+  const { mutateAsync: forgotPassword, isPending, isError, error, reset } = useForgotPassword();
+
+  const emailField = register("email");
+
+  async function handleForgotPasswordSubmit(data: ForgotPasswordRequest): Promise<void> {
+    await forgotPassword(data);
     router.replace(routes.login);
-    router.refresh();
   }
+
+  const isSubmitDisabled = isPending || !isDirty || !isValid;
+
+  const errorMessage: string =
+    error instanceof AxiosError
+      ? (error.message ?? "Не удалось отправить письмо. Попробуйте позже.")
+      : "Не удалось отправить письмо. Попробуйте позже.";
+
   return (
     <AuthLayout
       title="Восстановление пароля"
@@ -40,12 +57,25 @@ function ForgotPasswordForm() {
           label="Электронная почта"
           placeholder="Введите email"
           leftIcon={<Mail className="size-5 text-primary" />}
-          {...register("email")}
+          {...emailField}
+          disabled={isPending}
           error={errors.email?.message}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+            if (isError) reset();
+            emailField.onChange(e);
+          }}
         />
-        <Button size="lg" type="submit" loading={forgotPasswordMutation.isPending} fullWidth>
+
+        {isError && (
+          <div className="rounded-xl border border-destructive/20 bg-destructive/5 px-4 py-3 text-sm text-destructive">
+            {errorMessage}
+          </div>
+        )}
+
+        <Button size="lg" type="submit" fullWidth loading={isPending} disabled={isSubmitDisabled}>
           Отправить письмо
         </Button>
+
         <div className="pt-2 text-center">
           <Link href={routes.login}>Я вспомнил пароль</Link>
         </div>

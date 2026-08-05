@@ -101,7 +101,6 @@ export interface ButtonProps
   leftIcon?: React.ReactNode;
   rightIcon?: React.ReactNode;
   loading?: boolean;
-  iconOnly?: boolean;
 }
 
 export function Button({

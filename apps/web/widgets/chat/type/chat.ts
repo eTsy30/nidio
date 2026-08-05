@@ -1,12 +1,10 @@
-export type ChatMessageItem = {
-  id: string;
-  content: string | null;
-  sender: {
-    id: string;
-    firstName: string;
-    avatarUrl?: string | null;
-  };
-  createdAt: string;
-  clientId?: string;
-  status?: "sending" | "sent" | "delivered" | "read" | "error";
+import type {
+  ChatMessageItem as ServerChatMessageItem,
+  ChatMessageStatus,
+} from "@/shared/realtime/types/events";
+
+export type { ChatMessageStatus };
+
+export type ChatMessageItem = ServerChatMessageItem & {
+  status: ChatMessageStatus;
 };

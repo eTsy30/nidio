@@ -44,10 +44,10 @@ export function RegistrationForm() {
   const emailField = register("email");
   const passwordField = register("password");
   const confirmPasswordField = register("confirmPassword");
-  const registerMutation = useRegister();
+  const { mutateAsync: registerMutation, isPending, isError, error, reset } = useRegister();
 
   async function handleRegisterSubmit(data: RegisterRequest) {
-    await registerMutation.mutateAsync(data);
+    await registerMutation(data);
 
     if (inviteToken) {
       await acceptInviteMutation.mutateAsync(inviteToken);
@@ -59,13 +59,12 @@ export function RegistrationForm() {
   }
 
   let errorMessage: string | null = null;
-  if (registerMutation.isError) {
-    const err = registerMutation.error as AxiosError<{ message?: string }>;
+  if (isError) {
+    const err = error as AxiosError<{ message?: string }>;
     errorMessage = err.response?.data?.message || "Произошла ошибка. Попробуйте еще раз.";
   }
 
-  const isSubmitDisabled =
-    !isDirty || !isValid || registerMutation.isPending || acceptInviteMutation.isPending;
+  const isSubmitDisabled = !isDirty || !isValid || isPending || acceptInviteMutation.isPending;
 
   return (
     <AuthLayout
@@ -82,10 +81,10 @@ export function RegistrationForm() {
           placeholder="Введите имя"
           leftIcon={<User className="size-5 text-primary" />}
           {...firstNameField}
-          disabled={registerMutation.isPending}
+          disabled={isPending}
           error={errors.firstName?.message}
           onChange={(e) => {
-            if (registerMutation.isError) registerMutation.reset();
+            if (isError) reset();
             firstNameField.onChange(e);
           }}
         />
@@ -96,10 +95,10 @@ export function RegistrationForm() {
           placeholder="Введите email"
           leftIcon={<Mail className="size-5 text-primary" />}
           {...emailField}
-          disabled={registerMutation.isPending}
+          disabled={isPending}
           error={errors.email?.message}
           onChange={(e) => {
-            if (registerMutation.isError) registerMutation.reset();
+            if (isError) reset();
             emailField.onChange(e);
           }}
         />
@@ -108,10 +107,10 @@ export function RegistrationForm() {
           label="Пароль"
           placeholder="Введите пароль"
           {...passwordField}
-          disabled={registerMutation.isPending}
+          disabled={isPending}
           error={errors.password?.message}
           onChange={(e) => {
-            if (registerMutation.isError) registerMutation.reset();
+            if (isError) reset();
             passwordField.onChange(e);
           }}
         />
@@ -120,15 +119,15 @@ export function RegistrationForm() {
           label="Подтвердите пароль"
           placeholder="Повторите пароль"
           {...confirmPasswordField}
-          disabled={registerMutation.isPending}
+          disabled={isPending}
           error={errors.confirmPassword?.message}
           onChange={(e) => {
-            if (registerMutation.isError) registerMutation.reset();
+            if (isError) reset();
             confirmPasswordField.onChange(e);
           }}
         />
 
-        {registerMutation.isError && (
+        {isError && (
           <div className="rounded-xl border border-destructive/20 bg-destructive/5 px-4 py-3 text-sm text-destructive">
             {errorMessage}
           </div>
@@ -137,7 +136,7 @@ export function RegistrationForm() {
           size="lg"
           type="submit"
           fullWidth
-          loading={registerMutation.isPending || acceptInviteMutation.isPending}
+          loading={isPending || acceptInviteMutation.isPending}
           disabled={isSubmitDisabled}
         >
           Создать аккаунт

@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useMemo, useRef } from "react";
 
+import type { ChatMessageItem } from "../type/chat";
+
 import { ChatMessage } from "./ChatMessage";
 import { MessageGroup } from "./message";
 import {
@@ -16,33 +18,16 @@ import {
 export type ChatMessagesProps = {
   currentUserId: string;
   onMessagesViewed?: (messageIds: string[]) => void;
-  messages: Array<{
-    id: string;
-    content: string | null;
-    sender: {
-      id: string;
-      firstName: string;
-      avatarUrl?: string | null;
-    };
-    createdAt: string;
-  }>;
+  messages: ChatMessageItem[];
 };
 
 type MessageGroupItem = {
   id: string;
   senderId: string;
-  messages: ChatMessagesProps["messages"];
+  messages: ChatMessageItem[];
 };
 
-type ChatListItem =
-  | {
-      type: "date";
-      label: string;
-    }
-  | {
-      type: "group";
-      group: MessageGroupItem;
-    };
+type ChatListItem = { type: "date"; label: string } | { type: "group"; group: MessageGroupItem };
 
 function isSameDay(left: Date, right: Date) {
   return (
@@ -55,16 +40,12 @@ function isSameDay(left: Date, right: Date) {
 function formatMessageDate(date: Date) {
   const today = new Date();
 
-  if (isSameDay(date, today)) {
-    return "Сегодня";
-  }
+  if (isSameDay(date, today)) return "Сегодня";
 
   const yesterday = new Date(today);
   yesterday.setDate(today.getDate() - 1);
 
-  if (isSameDay(date, yesterday)) {
-    return "Вчера";
-  }
+  if (isSameDay(date, yesterday)) return "Вчера";
 
   return new Intl.DateTimeFormat("ru-RU", {
     day: "numeric",
@@ -106,33 +87,23 @@ export function ChatMessages({ messages, currentUserId, onMessagesViewed }: Chat
       const currentDate = new Date(firstMessage.createdAt);
 
       if (!previousDate || !isSameDay(previousDate, currentDate)) {
-        result.push({
-          type: "date",
-          label: formatMessageDate(currentDate),
-        });
+        result.push({ type: "date", label: formatMessageDate(currentDate) });
         previousDate = currentDate;
       }
 
-      result.push({
-        type: "group",
-        group,
-      });
+      result.push({ type: "group", group });
     }
 
     return result;
   }, [groupedMessages]);
 
   useEffect(() => {
+    if (!shouldScrollRef.current) return;
     const viewport = viewportRef.current;
-
     if (!viewport) return;
 
     requestAnimationFrame(() => {
-      viewport.scrollTo({
-        top: viewport.scrollHeight,
-
-        behavior: "smooth",
-      });
+      viewport.scrollTo({ top: viewport.scrollHeight, behavior: "smooth" });
     });
   }, [messages.length]);
 
@@ -171,11 +142,10 @@ export function ChatMessages({ messages, currentUserId, onMessagesViewed }: Chat
                   );
                 }
 
-                const group = item.group;
                 return (
-                  <MessageScrollerItem key={group.id} className="py-1">
+                  <MessageScrollerItem key={item.group.id} className="py-1">
                     <MessageGroup>
-                      {group.messages.map((message, messageIndex) => (
+                      {item.group.messages.map((message, messageIndex) => (
                         <ChatMessage
                           key={message.id}
                           message={message}

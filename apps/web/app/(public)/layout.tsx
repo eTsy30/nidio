@@ -7,5 +7,9 @@ type Props = {
 };
 
 export default function PublicLayout({ children }: Props) {
-  return <GuestGuard>{children}</GuestGuard>;
+  return (
+    <GuestGuard>
+      <div className="min-h-dvh">{children}</div>
+    </GuestGuard>
+  );
 }

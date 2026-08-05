@@ -2,18 +2,26 @@ import { io, type Socket } from "socket.io-client";
 
 import { getAccessToken } from "@/shared/lib/token";
 
-let socket: Socket | null = null;
+import type { ClientToServerEvents, ServerToClientEvents } from "../types/events";
 
-export function getSocket(): Socket {
+let socket: Socket<ServerToClientEvents, ClientToServerEvents> | null = null;
+
+export function getSocket(): Socket<ServerToClientEvents, ClientToServerEvents> {
   if (socket) {
     return socket;
   }
 
-  socket = io(process.env.NEXT_PUBLIC_REALTIME_URL ?? "", {
+  const url = process.env.NEXT_PUBLIC_REALTIME_URL;
+
+  if (!url) {
+    throw new Error("NEXT_PUBLIC_REALTIME_URL is not defined");
+  }
+
+  socket = io(url, {
     autoConnect: false,
     transports: ["websocket"],
     withCredentials: true,
-    auth: (cb) => {
+    auth: (cb: (data: { token: string | null }) => void) => {
       cb({
         token: getAccessToken(),
       });
@@ -23,7 +31,7 @@ export function getSocket(): Socket {
   return socket;
 }
 
-export function connectSocket(): Socket {
+export function connectSocket(): Socket<ServerToClientEvents, ClientToServerEvents> {
   const client = getSocket();
 
   if (!client.connected) {
@@ -33,6 +41,6 @@ export function connectSocket(): Socket {
   return client;
 }
 
-export function disconnectSocket() {
+export function disconnectSocket(): void {
   socket?.disconnect();
 }

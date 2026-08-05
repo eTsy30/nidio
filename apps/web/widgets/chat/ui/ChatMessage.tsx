@@ -1,21 +1,19 @@
 "use client";
 
 import { cn } from "@/shared/lib/cn";
-import { Avatar, AvatarBadge, AvatarFallback, AvatarImage } from "@/shared/ui/avatar-pair/Avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/shared/ui/avatar-pair/Avatar";
+
+import type { ChatMessageItem } from "../type/chat";
 
 import { Bubble, BubbleContent, BubbleTail } from "./bubble";
 import { Message, MessageAvatar, MessageContent, MessageHeader } from "./message";
 
-type ChatMessageData = {
-  id: string;
-  content: string | null;
-  sender: {
-    id: string;
-    firstName: string;
-    avatarUrl?: string | null;
-  };
-  createdAt: string;
-  status?: "sending" | "sent" | "delivered" | "read" | "error";
+type ChatMessageProps = {
+  message: ChatMessageItem;
+  currentUserId: string;
+  showAvatar?: boolean;
+  showName?: boolean;
+  isFirstInGroup?: boolean;
 };
 
 export function ChatMessage({
@@ -24,13 +22,7 @@ export function ChatMessage({
   showAvatar = true,
   showName = true,
   isFirstInGroup = false,
-}: {
-  message: ChatMessageData;
-  currentUserId: string;
-  showAvatar?: boolean;
-  showName?: boolean;
-  isFirstInGroup?: boolean;
-}) {
+}: ChatMessageProps) {
   const isMine = message.sender.id === currentUserId;
   const time = new Date(message.createdAt).toLocaleTimeString([], {
     hour: "2-digit",
@@ -45,7 +37,6 @@ export function ChatMessage({
             <Avatar>
               {message.sender.avatarUrl && <AvatarImage src={message.sender.avatarUrl} />}
               <AvatarFallback>{message.sender.firstName.slice(0, 1)}</AvatarFallback>
-              <AvatarBadge />
             </Avatar>
           )}
         </MessageAvatar>
@@ -71,7 +62,7 @@ export function ChatMessage({
                 )}
               >
                 {time}
-                {isMine && message.status && (
+                {isMine && (
                   <span className="ml-1 inline-flex items-center">
                     {message.status === "sending" && (
                       <span className="inline-block h-3 w-3 animate-spin rounded-full border-2 border-current border-t-transparent opacity-60" />

@@ -39,7 +39,6 @@ export function ChatHeader({ partner, isOnline, isTyping }: ChatHeaderProps) {
                 src={partner?.avatarUrl ?? undefined}
                 alt={partner?.firstName ?? "Partner"}
               />
-
               <AvatarFallback>{partner?.firstName?.charAt(0).toUpperCase() ?? "?"}</AvatarFallback>
             </Avatar>
 
@@ -53,7 +52,6 @@ export function ChatHeader({ partner, isOnline, isTyping }: ChatHeaderProps) {
 
           <div className="flex min-w-0 flex-col">
             <h4 className="truncate leading-tight">{partner?.firstName ?? "Неизвестно"}</h4>
-
             <span
               className={`body-sm transition-colors duration-200 ${
                 isTyping ? "text-primary" : isOnline ? "text-success" : "text-muted-foreground"

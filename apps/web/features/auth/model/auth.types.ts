@@ -1,19 +1,21 @@
+export type Gender = "MALE" | "FEMALE" | "UNSPECIFIED";
+
 export interface AuthResponse {
   accessToken: string;
   refreshToken: string;
 }
 
-export interface Partner {
+export interface RelationshipPartner {
   id: string;
-  firstName: string | null;
+  firstName: string;
   avatarUrl: string | null;
 }
 
-export interface Relationship {
+export interface UserRelationship {
   connected: boolean;
-  coupleId: string | null;
-  workspaceId: string | null;
-  partner: Partner | null;
+  coupleId: string;
+  workspaceId: string;
+  partner: RelationshipPartner;
 }
 
 export interface User {
@@ -21,7 +23,9 @@ export interface User {
   email: string;
   firstName: string | null;
   avatarUrl: string | null;
-  gender: "MALE" | "FEMALE" | "UNSPECIFIED";
+  gender: Gender;
+  emailVerifiedAt: string | null;
   createdAt: string;
-  relationship: Relationship;
+  updatedAt: string;
+  relationship: UserRelationship | null;
 }

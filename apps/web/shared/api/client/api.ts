@@ -1,4 +1,4 @@
-import axios from "axios";
+import axios, { AxiosError, AxiosResponse, InternalAxiosRequestConfig } from "axios";
 
 import { getAccessToken } from "@/shared/lib/token";
 
@@ -19,9 +19,8 @@ export const api = axios.create({
 
 api.interceptors.response.use(responseInterceptor, responseErrorInterceptor);
 
-api.interceptors.request.use((config) => {
+api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
   const accessToken = getAccessToken();
-
   if (accessToken) {
     config.headers.set("Authorization", `Bearer ${accessToken}`);
   }
@@ -30,17 +29,19 @@ api.interceptors.request.use((config) => {
 
 export const http = {
   get: <T>(url: string, config?: Parameters<typeof api.get>[1]) =>
-    api.get<T>(url, config).then((response) => response.data),
+    api.get<T>(url, config).then((response: AxiosResponse<T>) => response.data),
 
   post: <T>(url: string, data?: unknown, config?: Parameters<typeof api.post>[2]) =>
-    api.post<T>(url, data, config).then((response) => response.data),
+    api.post<T>(url, data, config).then((response: AxiosResponse<T>) => response.data),
 
   put: <T>(url: string, data?: unknown, config?: Parameters<typeof api.put>[2]) =>
-    api.put<T>(url, data, config).then((response) => response.data),
+    api.put<T>(url, data, config).then((response: AxiosResponse<T>) => response.data),
 
   patch: <T>(url: string, data?: unknown, config?: Parameters<typeof api.patch>[2]) =>
-    api.patch<T>(url, data, config).then((response) => response.data),
+    api.patch<T>(url, data, config).then((response: AxiosResponse<T>) => response.data),
 
   delete: <T>(url: string, config?: Parameters<typeof api.delete>[1]) =>
-    api.delete<T>(url, config).then((response) => response.data),
+    api.delete<T>(url, config).then((response: AxiosResponse<T>) => response.data),
 };
+
+export type ApiError = AxiosError<{ message?: string; code?: string }>;

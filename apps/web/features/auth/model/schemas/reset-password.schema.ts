@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 export const resetPasswordSchema = z.object({
-  token: z.string(),
+  token: z.string().min(1, "Токен обязателен"),
   newPassword: z
     .string()
     .min(6, { message: "Минимум 6 символов" })

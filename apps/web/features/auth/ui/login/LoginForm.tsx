@@ -31,22 +31,26 @@ export function LoginForm() {
       password: "",
     },
   });
+
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirect = searchParams.get("redirect");
-  const login = useLogin();
+  const { mutateAsync: login, isPending, isError, error, reset } = useLogin();
+
   const emailField = register("email");
   const passwordField = register("password");
 
-  async function handleLoginSubmit(data: LoginRequest) {
-    await login.mutateAsync(data);
+  async function handleLoginSubmit(data: LoginRequest): Promise<void> {
+    await login(data);
     router.replace(redirect ?? routes.home);
-    router.refresh();
   }
 
-  const isSubmitDisabled = login.isPending || !isDirty || !isValid;
-  const errorMessage =
-    login.error instanceof AxiosError ? login.error.response?.data?.message : "Что-то пошло не так";
+  const isSubmitDisabled = isPending || !isDirty || !isValid;
+
+  const errorMessage: string =
+    error instanceof AxiosError
+      ? (error.response?.data?.message ?? "Что-то пошло не так")
+      : "Что-то пошло не так";
 
   return (
     <AuthLayout
@@ -63,10 +67,10 @@ export function LoginForm() {
           placeholder="Введите email"
           leftIcon={<Mail className="size-5 text-primary" />}
           {...emailField}
-          disabled={login.isPending}
+          disabled={isPending}
           error={errors.email?.message}
-          onChange={(e) => {
-            if (login.isError) login.reset();
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+            if (isError) reset();
             emailField.onChange(e);
           }}
         />
@@ -77,10 +81,10 @@ export function LoginForm() {
           label="Пароль"
           placeholder="Введите пароль"
           {...passwordField}
-          disabled={login.isPending}
+          disabled={isPending}
           error={errors.password?.message}
-          onChange={(e) => {
-            if (login.isError) login.reset();
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+            if (isError) reset();
             passwordField.onChange(e);
           }}
         />
@@ -94,18 +98,13 @@ export function LoginForm() {
           </Link>
         </div>
 
-        {login.isError && (
+        {isError && (
           <div className="rounded-xl border border-destructive/20 bg-destructive/5 px-4 py-3 text-sm text-destructive">
             {errorMessage}
           </div>
         )}
-        <Button
-          size="lg"
-          type="submit"
-          fullWidth
-          loading={login.isPending}
-          disabled={isSubmitDisabled}
-        >
+
+        <Button size="lg" type="submit" fullWidth loading={isPending} disabled={isSubmitDisabled}>
           Войти
         </Button>
 

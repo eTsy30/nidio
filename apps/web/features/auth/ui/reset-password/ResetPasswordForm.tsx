@@ -18,7 +18,7 @@ function ResetPasswordForm() {
 
   const token = searchParams.get("token") ?? "";
 
-  const resetPasswordMutation = useResetPassword();
+  const { mutateAsync: resetPasswordMutation, isPending } = useResetPassword();
 
   const {
     register,
@@ -34,7 +34,7 @@ function ResetPasswordForm() {
   });
 
   async function handleSubmitForm(data: ResetPasswordRequest) {
-    await resetPasswordMutation.mutateAsync(data);
+    await resetPasswordMutation(data);
 
     router.replace(routes.login);
     router.refresh();
@@ -59,7 +59,7 @@ function ResetPasswordForm() {
           error={errors.newPassword?.message}
         />
 
-        <Button type="submit" size="lg" fullWidth loading={resetPasswordMutation.isPending}>
+        <Button type="submit" size="lg" fullWidth loading={isPending}>
           Сохранить пароль
         </Button>
 

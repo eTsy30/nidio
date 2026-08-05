@@ -4,20 +4,19 @@ import { useEffect, useRef, useState } from "react";
 import { ArrowUpIcon } from "lucide-react";
 
 import { cn } from "@/shared/lib/cn";
-import { useRealtime } from "@/shared/realtime/hooks/useRealtime";
+import type { ClientToServerEvents, ServerToClientEvents } from "@/shared/realtime/types/events";
 import { Button } from "@/shared/ui/button";
 
-export function ChatInput({
-  onMessageSent,
-}: {
+type ChatInputProps = {
   onMessageSent?: (message: { content: string }) => void;
-}) {
+  socket?: import("socket.io-client").Socket<ServerToClientEvents, ClientToServerEvents> | null;
+};
+
+export function ChatInput({ onMessageSent, socket }: ChatInputProps) {
   const [message, setMessage] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const socket = useRealtime();
-  const typingTimeout = useRef<NodeJS.Timeout | null>(null);
+  const typingTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Авто-ресайз
   useEffect(() => {
     const el = textareaRef.current;
     if (!el) return;

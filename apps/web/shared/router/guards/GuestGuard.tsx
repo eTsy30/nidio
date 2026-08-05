@@ -1,30 +1,27 @@
 "use client";
 
 import { type ReactNode, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 
 import { useAuth } from "@/shared/api/provider/auth-provider";
 import { routes } from "@/shared/router/paths";
 
-type Props = {
+type GuestGuardProps = {
   children: ReactNode;
 };
 
-export function GuestGuard({ children }: Props) {
+export function GuestGuard({ children }: GuestGuardProps) {
   const router = useRouter();
+  const pathname = usePathname();
   const { isAuthenticated, isLoading } = useAuth();
 
   useEffect(() => {
-    if (!isLoading && isAuthenticated && !window.location.pathname.startsWith(routes.invite)) {
+    if (!isLoading && isAuthenticated && !pathname.startsWith(routes.invite)) {
       router.replace(routes.home);
     }
-  }, [isAuthenticated, isLoading, router]);
+  }, [isAuthenticated, isLoading, router, pathname]);
 
-  if (isLoading) {
-    return null;
-  }
-
-  if (isAuthenticated) {
+  if (isLoading || isAuthenticated) {
     return null;
   }
 
