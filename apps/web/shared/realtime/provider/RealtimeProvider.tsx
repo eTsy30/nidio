@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, type ReactNode, useContext, useEffect, useState } from "react";
+import { createContext, type ReactNode, useCallback, useContext, useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import type { Socket } from "socket.io-client";
 
@@ -12,11 +12,15 @@ import type { ClientToServerEvents, ServerToClientEvents } from "../types/events
 type RealtimeContextValue = {
   socket: Socket<ServerToClientEvents, ClientToServerEvents> | null;
   typingUserId: string | null;
+  connectionEvent: boolean;
+  clearConnectionEvent: () => void;
 };
 
 const RealtimeContext = createContext<RealtimeContextValue>({
   socket: null,
   typingUserId: null,
+  connectionEvent: false,
+  clearConnectionEvent: () => {},
 });
 
 export function RealtimeProvider({ children }: { children: ReactNode }) {
@@ -25,6 +29,11 @@ export function RealtimeProvider({ children }: { children: ReactNode }) {
   const socket = getSocket();
 
   const [typingUserId, setTypingUserId] = useState<string | null>(null);
+  const [connectionEvent, setConnectionEvent] = useState(false);
+
+  const clearConnectionEvent = useCallback(() => {
+    setConnectionEvent(false);
+  }, []);
 
   useEffect(() => {
     if (isLoading) return;
@@ -49,17 +58,27 @@ export function RealtimeProvider({ children }: { children: ReactNode }) {
       setTypingUserId((current) => (current === data.userId ? null : current));
     }
 
+    function handleRelationshipConnected() {
+      setConnectionEvent(true);
+    }
+
     socket.on("chat.typing.start", handleTypingStart);
     socket.on("chat.typing.stop", handleTypingStop);
+    socket.on("relationship.connected", handleRelationshipConnected);
 
     return () => {
       socket.off("chat.typing.start", handleTypingStart);
       socket.off("chat.typing.stop", handleTypingStop);
+      socket.off("relationship.connected", handleRelationshipConnected);
     };
   }, [socket, queryClient]);
 
   return (
-    <RealtimeContext.Provider value={{ socket, typingUserId }}>{children}</RealtimeContext.Provider>
+    <RealtimeContext.Provider
+      value={{ socket, typingUserId, connectionEvent, clearConnectionEvent }}
+    >
+      {children}
+    </RealtimeContext.Provider>
   );
 }
 

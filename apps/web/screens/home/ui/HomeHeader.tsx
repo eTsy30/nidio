@@ -4,7 +4,7 @@ import { AvatarPair } from "@/shared/ui/avatar-pair/AvatarPair";
 export function HomeHeader() {
   const { data: user } = useMe();
 
-  const partner = user?.relationship.partner;
+  const partner = user?.relationship?.partner;
 
   const hour = new Date().getHours();
 

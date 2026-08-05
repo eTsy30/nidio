@@ -14,7 +14,7 @@ export function ConnectionSuccessOverlay() {
 
   const visible = connectionEvent !== null;
 
-  const partner = user?.relationship.partner;
+  const partner = user?.relationship?.partner;
 
   const currentFallback = user?.firstName?.charAt(0).toUpperCase() ?? "?";
   const partnerFallback = partner?.firstName?.charAt(0).toUpperCase() ?? "?";

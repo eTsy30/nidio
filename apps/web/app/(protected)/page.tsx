@@ -13,7 +13,7 @@ export default function HomePage() {
   const { data: user, isLoading } = useMe();
 
   useEffect(() => {
-    if (!isLoading && user && !user.relationship.connected) {
+    if (!isLoading && user && !user.relationship?.connected) {
       router.replace(routes.invite);
     }
   }, [user, isLoading, router]);
