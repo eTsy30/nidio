@@ -117,6 +117,7 @@ export function useChatRealtime({
           const nextReactions = item.reactions?.filter((r) => r.emoji !== data.emoji);
 
           if (!nextReactions || nextReactions.length === 0) {
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
             const { reactions: _, ...rest } = item;
             return rest as ChatMessageItem;
           }

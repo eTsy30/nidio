@@ -62,6 +62,7 @@ export function ChatInput({
     return () => {
       emitTypingStop();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   function handleSubmit(event?: React.FormEvent) {

@@ -1,9 +1,20 @@
+import { globalIgnores } from "eslint/config";
 import base from "./tooling/eslint/base.mjs";
-
 import nextVitals from "eslint-config-next/core-web-vitals";
 import nextTs from "eslint-config-next/typescript";
 
 export default [
+  globalIgnores([
+
+  "**/node_modules/**",
+
+  "**/dist/**",
+
+  "**/.next/**",
+
+  "**/generated/**",
+
+]),
   ...base,
 
   {

@@ -1,15 +1,22 @@
-import { defineConfig, env } from 'prisma/config';
+import { config } from 'dotenv';
+import { resolve } from 'path';
+import { defineConfig } from 'prisma/config';
 
-import 'dotenv/config';
+const envFile =
+  process.env.NODE_ENV === 'production'
+    ? '.env.production'
+    : '.env.development';
+
+config({
+  path: resolve(process.cwd(), envFile),
+});
 
 export default defineConfig({
-  schema: './prisma/schema.prisma',
-
+  schema: 'prisma/schema.prisma',
   migrations: {
-    path: './prisma/migrations',
+    path: 'prisma/migrations',
   },
-
   datasource: {
-    url: env('DATABASE_URL'),
+    url: process.env.DIRECT_URL ?? process.env.DATABASE_URL ?? '',
   },
 });
