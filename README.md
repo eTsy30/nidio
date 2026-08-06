@@ -1,12 +1,13 @@
 # 💞 niDio
 
-**niDio** — PWA-приложение для пар. Объединяет общение, совместное пространство и инструменты для совместной жизни.
+**niDio** — PWA-приложение для пар.  
+Объединяет общение, совместное пространство и инструменты для совместной жизни.
 
 ---
 
-## 🚀 Технологии
+# 🚀 Технологии
 
-### Frontend
+## Frontend
 
 ![Next.js](https://img.shields.io/badge/Next.js_16-000000?logo=next.js)
 ![React](https://img.shields.io/badge/React_19-61DAFB?logo=react&logoColor=black)
@@ -14,7 +15,15 @@
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-06B6D4?logo=tailwindcss&logoColor=white)
 ![TanStack Query](https://img.shields.io/badge/TanStack_Query-FF4154?logo=reactquery&logoColor=white)
 
-### Backend
+- **Next.js 16** — React framework для frontend
+- **React 19** — UI библиотека
+- **TypeScript** — типизация
+- **Tailwind CSS** — стилизация
+- **TanStack Query** — управление серверным состоянием
+
+---
+
+## Backend
 
 ![NestJS](https://img.shields.io/badge/NestJS-E0234E?logo=nestjs&logoColor=white)
 ![Prisma](https://img.shields.io/badge/Prisma_ORM-2D3748?logo=prisma&logoColor=white)
@@ -22,15 +31,27 @@
 ![Socket.IO](https://img.shields.io/badge/Socket.IO-010101?logo=socket.io&logoColor=white)
 ![JWT](https://img.shields.io/badge/JWT_Auth-000000?logo=jsonwebtokens)
 
-### Инфраструктура
+- **NestJS** — backend framework
+- **Prisma ORM** — работа с базой данных
+- **PostgreSQL** — основная база данных
+- **Socket.IO** — realtime коммуникация
+- **JWT** — аутентификация
+
+---
+
+## Инфраструктура
 
 ![Turborepo](https://img.shields.io/badge/Turborepo-EF4444?logo=turborepo&logoColor=white)
 ![pnpm](https://img.shields.io/badge/pnpm-F69220?logo=pnpm&logoColor=white)
 ![Docker](https://img.shields.io/badge/Docker-2496ED?logo=docker&logoColor=white)
 
+- **Turborepo** — monorepo управление
+- **pnpm** — пакетный менеджер
+- **Docker** — локальная инфраструктура
+
 ---
 
-## ✨ Возможности
+# ✨ Возможности
 
 | Реализовано                            | В разработке         |
 | -------------------------------------- | -------------------- |
@@ -46,166 +67,241 @@
 
 ---
 
-## 🏁 Быстрый старт
+# 🏁 Быстрый старт
 
-### 1. Требования
+## 1. Требования
 
-- **Node.js** `&gt;= 22`
-- **pnpm** `&gt;= 9`
+Перед запуском необходимо установить:
+
+- **Node.js** `>= 22`
+- **pnpm** `>= 9`
 - **Docker Desktop**
+
+Проверить установку:
+
+```bash
+node -v
+pnpm -v
+docker -v
+```
+
+Пример:
 
 ```bash
 node -v   # v22.x
 pnpm -v   # 9.x
 docker -v # 24.x
+```
 
-Запуск проекта
+---
 
-1. Установить необходимые программы
+# 📦 Установка проекта
 
-Перед запуском нужно установить:
+## 2. Клонирование репозитория
 
-- Node.js 22+
-- pnpm
-- Docker Desktop
-
-Проверить установку:
-
-node -v
-pnpm -v
-docker -v
-
-⸻
-
-2. Скачать проект
-
-Клонировать репозиторий:
-
+```bash
 git clone https://github.com/eTsy30/nidio.git
+```
 
-Перейти в папку проекта:
+Перейти в директорию проекта:
 
+```bash
 cd nidio
+```
 
-⸻
+---
 
-3. Установить зависимости
-
-В папке проекта выполнить:
-
-pnpm install
-
-Команда установит все необходимые библиотеки для frontend и backend.
-
-⸻
-
-4. Настроить переменные окружения
-
-Создать два файла:
-
-apps/api/.env.development
-apps/web/.env.development
-
-Backend:
-
-apps/api/.env.development
-
-Добавить:
-
-NODE_ENV=development
-DATABASE_URL="postgresql://postgres:postgres@localhost:5432/nidio"
-DIRECT_URL="postgresql://postgres:postgres@localhost:5432/nidio"
-JWT_SECRET="your_secret"
-FRONTEND_URL="http://localhost:3000"
-GMAIL_USER="your_email"
-GMAIL_APP_PASSWORD="your_password"
-
-Frontend:
-
-apps/web/.env.development
-
-Добавить:
-
-NEXT_PUBLIC_API_URL="http://localhost:3001"
-NEXT_PUBLIC_REALTIME_URL="http://localhost:3001"
-
-⸻
-
-5. Запустить базу данных
-
-Запустить Docker:
-
-pnpm db:up
-
-После этого PostgreSQL будет работать локально.
-
-⸻
-
-6. Подготовить базу данных
-
-Перейти в backend:
-
-cd apps/api
-
-Создать Prisma Client:
-
-pnpm db:generate
-
-Применить миграции:
-
-pnpm db:migrate
-
-Вернуться в корень проекта:
-
-cd ../..
-
-⸻
-
-7. Запустить приложение
+## 3. Установка зависимостей
 
 В корне проекта выполнить:
 
-pnpm dev
+```bash
+pnpm install
+```
 
-После запуска открыть:
+Команда установит все необходимые зависимости frontend и backend.
+
+---
+
+# ⚙️ Настройка окружения
+
+Создать два файла:
+
+```
+apps/api/.env.development
+apps/web/.env.development
+```
+
+---
+
+## Backend
+
+Файл:
+
+```
+apps/api/.env.development
+```
+
+Добавить:
+
+```env
+NODE_ENV=development
+
+DATABASE_URL="postgresql://postgres:postgres@localhost:5432/nidio"
+DIRECT_URL="postgresql://postgres:postgres@localhost:5432/nidio"
+
+JWT_SECRET="your_secret"
+
+FRONTEND_URL="http://localhost:3000"
+
+GMAIL_USER="your_email"
+GMAIL_APP_PASSWORD="your_password"
+```
+
+---
+
+## Frontend
+
+Файл:
+
+```
+apps/web/.env.development
+```
+
+Добавить:
+
+```env
+NEXT_PUBLIC_API_URL="http://localhost:3001"
+NEXT_PUBLIC_REALTIME_URL="http://localhost:3001"
+```
+
+---
+
+# 🐘 Запуск базы данных
+
+Запустить Docker Desktop.
+
+Для запуска PostgreSQL:
+
+```bash
+pnpm db:up
+```
+
+После этого база данных будет доступна локально.
+
+---
+
+# 🗄 Подготовка базы данных
+
+Перейти в backend:
+
+```bash
+cd apps/api
+```
+
+---
+
+## Создание Prisma Client
+
+```bash
+pnpm db:generate
+```
+
+---
+
+## Если база уже существует
+
+⚠️ Команда удалит все локальные данные:
+
+```bash
+npx prisma migrate reset
+```
+
+Применить миграции:
+
+```bash
+pnpm db:migrate
+```
+
+Перегенерировать Prisma Client:
+
+```bash
+pnpm db:generate
+```
+
+---
+
+## Если проект чистый
+
+Выполнить:
+
+```bash
+pnpm db:migrate
+```
+
+---
+
+Вернуться в корень проекта:
+
+```bash
+cd ../..
+```
+
+---
+
+# ▶️ Запуск приложения
+
+В корне проекта:
+
+```bash
+pnpm dev
+```
+
+После запуска:
 
 Frontend:
 
+```
 http://localhost:3000
+```
 
 Backend:
 
+```
 http://localhost:3001
+```
 
-⸻
+---
 
-Основные команды
+# 🛠 Основные команды
 
-Команда Назначение
-pnpm dev Запуск проекта
-pnpm typecheck Проверка TypeScript
-pnpm lint Проверка кода
-pnpm format Форматирование
-pnpm db:up Запуск PostgreSQL
-pnpm db:down Остановка PostgreSQL
-pnpm prisma:studio Открыть базу данных
+| Команда              | Назначение             |
+| -------------------- | ---------------------- |
+| `pnpm dev`           | Запуск проекта         |
+| `pnpm typecheck`     | Проверка TypeScript    |
+| `pnpm lint`          | Проверка качества кода |
+| `pnpm format`        | Форматирование проекта |
+| `pnpm db:up`         | Запуск PostgreSQL      |
+| `pnpm db:down`       | Остановка PostgreSQL   |
+| `pnpm prisma:studio` | Открыть Prisma Studio  |
 
-⸻
+---
 
-Структура проекта
+# 📁 Структура проекта
 
+```text
 nidio
 ├── apps
-│ ├── web # Frontend Next.js
-│ └── api # Backend NestJS
+│   ├── web                 # Frontend Next.js
+│   └── api                 # Backend NestJS
 │
-├── docker # Docker конфигурация
-├── packages # Общие пакеты
-└── tooling # Настройки проекта
+├── docker                  # Docker конфигурация
+├── packages                # Общие пакеты
+└── tooling                 # Настройки проекта
+```
 
-⸻
+---
 
-Статус
+# 📌 Статус
 
 Проект находится в активной разработке.
-```
