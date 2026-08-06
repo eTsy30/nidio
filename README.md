@@ -1,37 +1,63 @@
-niDio
+# 💞 niDio
 
-niDio — PWA-приложение для пар.
-Проект объединяет общение, совместное пространство и инструменты для совместной жизни.
+**niDio** — PWA-приложение для пар. Объединяет общение, совместное пространство и инструменты для совместной жизни.
 
-⸻
+---
 
-Технологии
+## 🚀 Технологии
 
-Frontend Backend Инфраструктура
-Next.js 16 NestJS pnpm workspace
-React 19 TypeScript Turborepo
-TypeScript Prisma ORM Docker
-Tailwind CSS PostgreSQL
-Feature-Sliced Design JWT authentication
-TanStack Query Socket.IO realtime
-React Hook Form + Zod
+### Frontend
 
-⸻
+![Next.js](https://img.shields.io/badge/Next.js_16-000000?logo=next.js)
+![React](https://img.shields.io/badge/React_19-61DAFB?logo=react&logoColor=black)
+![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=white)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-06B6D4?logo=tailwindcss&logoColor=white)
+![TanStack Query](https://img.shields.io/badge/TanStack_Query-FF4154?logo=reactquery&logoColor=white)
 
-Возможности
+### Backend
 
-Реализовано В разработке
-Регистрация и авторизация Чат между пользователями
-JWT access/refresh токены Совместные задачи
-Работа с httpOnly cookies Заметки
-Email подтверждение Уведомления
-Система приглашений PWA offline режим
-Создание пары через invite-ссылку
-Создание общего workspace
-Prisma-модели пользователей, отношений и сообщений
-Подготовка realtime-инфраструктуры
+![NestJS](https://img.shields.io/badge/NestJS-E0234E?logo=nestjs&logoColor=white)
+![Prisma](https://img.shields.io/badge/Prisma_ORM-2D3748?logo=prisma&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-4169E1?logo=postgresql&logoColor=white)
+![Socket.IO](https://img.shields.io/badge/Socket.IO-010101?logo=socket.io&logoColor=white)
+![JWT](https://img.shields.io/badge/JWT_Auth-000000?logo=jsonwebtokens)
 
-⸻
+### Инфраструктура
+
+![Turborepo](https://img.shields.io/badge/Turborepo-EF4444?logo=turborepo&logoColor=white)
+![pnpm](https://img.shields.io/badge/pnpm-F69220?logo=pnpm&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-2496ED?logo=docker&logoColor=white)
+
+---
+
+## ✨ Возможности
+
+| Реализовано                            | В разработке         |
+| -------------------------------------- | -------------------- |
+| ✅ Регистрация и авторизация           | 🔄 Совместные задачи |
+| ✅ JWT access / refresh токены         | 🔄 Заметки           |
+| ✅ httpOnly cookies                    | 🔄 Push-уведомления  |
+| ✅ Email подтверждение                 |                      |
+| ✅ Система приглашений (invite-ссылка) |                      |
+| ✅ Создание пары и общего workspace    |                      |
+| ✅ Чат между пользователями (realtime) |                      |
+| ✅ PWA offline-режим                   |                      |
+| ✅ Prisma-модели + миграции            |                      |
+
+---
+
+## 🏁 Быстрый старт
+
+### 1. Требования
+
+- **Node.js** `&gt;= 22`
+- **pnpm** `&gt;= 9`
+- **Docker Desktop**
+
+```bash
+node -v   # v22.x
+pnpm -v   # 9.x
+docker -v # 24.x
 
 Запуск проекта
 
@@ -182,3 +208,4 @@ nidio
 Статус
 
 Проект находится в активной разработке.
+```
