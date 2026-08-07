@@ -1,9 +1,11 @@
 import { Dispatch, SetStateAction, useEffect } from "react";
 import type { Socket } from "socket.io-client";
 
-import type { ClientToServerEvents, ServerToClientEvents } from "@/shared/realtime/types/events";
-
-import type { ChatMessageItem } from "../type/chat";
+import type {
+  ChatMessageItem,
+  ClientToServerEvents,
+  ServerToClientEvents,
+} from "@/shared/realtime/types/events";
 
 type Props = {
   socket: Socket<ServerToClientEvents, ClientToServerEvents> | null;
@@ -23,16 +25,26 @@ export function useChatRealtime({
   useEffect(() => {
     if (!socket) return;
 
-    function handleMessage(message: import("@/shared/realtime/types/events").ChatMessageItem) {
-      if (message.sender?.id !== currentUserId) {
-        socket?.emit("chat:delivered", { messageId: message.id });
+    function handleMessage(message: ChatMessageItem) {
+      if (message.sender.id !== currentUserId) {
+        socket?.emit("chat:delivered", {
+          messageId: message.id,
+        });
       }
 
       setMessages((prev) => {
         const exists = prev.some((item) => item.id === message.id);
-        if (exists) return prev;
 
-        const next: ChatMessageItem = { ...message, status: message.status ?? "sent" };
+        if (exists) {
+          return prev;
+        }
+
+        const next: ChatMessageItem = {
+          ...message,
+
+          status: message.status ?? "sent",
+        };
+
         return [...prev, next];
       });
     }
@@ -67,7 +79,7 @@ export function useChatRealtime({
       if (data.userId !== currentUserId) setIsOnline(false);
     }
 
-    function handleEdited(message: import("@/shared/realtime/types/events").ChatMessageItem) {
+    function handleEdited(message: ChatMessageItem) {
       setMessages((prev) =>
         prev.map((item) => {
           if (item.id !== message.id) return item;
@@ -119,7 +131,12 @@ export function useChatRealtime({
           if (!nextReactions || nextReactions.length === 0) {
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
             const { reactions: _, ...rest } = item;
-            return rest as ChatMessageItem;
+
+            return {
+              ...rest,
+
+              status: item.status,
+            };
           }
 
           return { ...item, reactions: nextReactions };

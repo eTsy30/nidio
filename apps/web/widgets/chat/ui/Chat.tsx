@@ -24,15 +24,13 @@ export function Chat() {
   const [editingMessage, setEditingMessage] = useState<{ id: string; content: string } | null>(
     null,
   );
-
+  const [isTyping, setIsTyping] = useState(false);
+  const [isOnline, setIsOnline] = useState(false);
   const socket = useRealtime();
   const { user } = useAuth();
 
   const currentUserId = user?.id ?? "";
   const partner = user?.relationship?.partner ?? null;
-
-  const [isTyping, setIsTyping] = useState(false);
-  const [isOnline, setIsOnline] = useState(false);
 
   useLoadMessages(setMessages);
 
@@ -88,7 +86,7 @@ export function Chat() {
   );
 
   return (
-    <section className="flex h-[calc(100dvh-60px-env(safe-area-inset-bottom))] flex-col overflow-hidden bg-background">
+    <section className="flex min-h-0 flex-1 flex-col overflow-hidden bg-background">
       <div className="shrink-0 border-b border-border/50 bg-background/90 backdrop-blur-xl">
         <ChatHeader partner={partner} isOnline={isOnline} isTyping={isTyping} />
       </div>

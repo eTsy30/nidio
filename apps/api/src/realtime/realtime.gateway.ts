@@ -278,30 +278,40 @@ export class RealtimeGateway
   }
 
   @SubscribeMessage('chat:read')
-  async handleRead(client: Socket, payload: { messageId: string }) {
+  async handleRead(
+    client: Socket,
+
+    payload: { messageIds: string[] },
+  ) {
     const userId = client.data.user?.sub;
+
     if (!userId) return;
 
     const relationship =
       await this.relationshipService.getCurrentCouple(userId);
+
     if (!relationship) return;
 
-    const updatedMessage = await this.chatService.markRead(
-      payload.messageId,
+    const updatedMessages = await this.chatService.markRead(
+      payload.messageIds,
       relationship.workspaceId,
+
       userId,
     );
 
-    if (!updatedMessage) return;
+    for (const messageId of updatedMessages) {
+      this.realtimeService.emitToUser(
+        relationship.partnerId,
 
-    this.realtimeService.emitToUser(
-      relationship.partnerId,
-      'chat.message.read',
-      {
-        userId,
-        messageId: payload.messageId,
-      },
-    );
+        'chat.message.read',
+
+        {
+          userId,
+
+          messageId,
+        },
+      );
+    }
   }
 
   @SubscribeMessage('chat:delivered')

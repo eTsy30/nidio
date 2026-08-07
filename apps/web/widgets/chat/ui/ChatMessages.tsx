@@ -154,7 +154,6 @@ export function ChatMessages({
                   </MessageScrollerItem>
                 );
               })}
-              <div className="h-4 shrink-0" />
             </MessageScrollerContent>
           </MessageScrollerViewport>
           <MessageScrollerButton direction="end" />

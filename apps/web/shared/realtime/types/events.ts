@@ -13,11 +13,12 @@ export type ChatMessageItem = {
     firstName: string;
     avatarUrl?: string | null;
   };
+
   createdAt: string;
   updatedAt?: string | null;
   reactions?: ChatReaction[];
   clientId?: string;
-  status?: ChatMessageStatus;
+  status: ChatMessageStatus;
 };
 
 export interface ServerToClientEvents {
@@ -27,7 +28,7 @@ export interface ServerToClientEvents {
   "chat.reaction.added": (reaction: { messageId: string; emoji: string; userId: string }) => void;
   "chat.reaction.removed": (data: { messageId: string; emoji: string }) => void;
   "chat.message.delivered": (data: { messageId: string }) => void;
-  "chat.message.read": (data: { messageId: string }) => void;
+  "chat.message.read": (data: { userId: string; messageId: string }) => void;
   "chat.typing.start": (data: { userId: string }) => void;
   "chat.typing.stop": (data: { userId: string }) => void;
   "user.online": (data: { userId: string }) => void;
@@ -43,7 +44,7 @@ export interface ClientToServerEvents {
   "chat:reaction:remove": (payload: { messageId: string; emoji: string }) => void;
   "chat:typing:start": () => void;
   "chat:typing:stop": () => void;
-  "chat:read": (data: { messageId: string }) => void;
+  "chat:read": (data: { messageIds: string[] }) => void;
   "chat:delivered": (data: { messageId: string }) => void;
   "user:status:sync": () => void;
 }

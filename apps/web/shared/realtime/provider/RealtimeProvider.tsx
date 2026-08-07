@@ -1,7 +1,6 @@
 "use client";
 
 import { createContext, type ReactNode, useCallback, useContext, useEffect, useState } from "react";
-import { useQueryClient } from "@tanstack/react-query";
 import type { Socket } from "socket.io-client";
 
 import { useAuth } from "@/shared/api/provider/auth-provider";
@@ -24,8 +23,7 @@ const RealtimeContext = createContext<RealtimeContextValue>({
 });
 
 export function RealtimeProvider({ children }: { children: ReactNode }) {
-  const { isAuthenticated, isLoading } = useAuth();
-  const queryClient = useQueryClient();
+  const { user, isLoading } = useAuth();
   const socket = getSocket();
 
   const [typingUserId, setTypingUserId] = useState<string | null>(null);
@@ -38,7 +36,7 @@ export function RealtimeProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (isLoading) return;
 
-    if (isAuthenticated) {
+    if (user) {
       connectSocket();
     } else {
       disconnectSocket();
@@ -47,7 +45,7 @@ export function RealtimeProvider({ children }: { children: ReactNode }) {
     return () => {
       disconnectSocket();
     };
-  }, [isAuthenticated, isLoading]);
+  }, [user, isLoading]);
 
   useEffect(() => {
     function handleTypingStart(data: { userId: string }) {
@@ -71,7 +69,7 @@ export function RealtimeProvider({ children }: { children: ReactNode }) {
       socket.off("chat.typing.stop", handleTypingStop);
       socket.off("relationship.connected", handleRelationshipConnected);
     };
-  }, [socket, queryClient]);
+  }, [socket]);
 
   return (
     <RealtimeContext.Provider

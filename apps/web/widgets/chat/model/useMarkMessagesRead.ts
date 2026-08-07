@@ -8,11 +8,9 @@ export function useMarkMessagesRead(
 ) {
   return useCallback(
     (messageIds: string[]): void => {
-      if (!socket) return;
+      if (!socket || messageIds.length === 0) return;
 
-      messageIds.forEach((messageId) => {
-        socket.emit("chat:read", { messageId });
-      });
+      socket.emit("chat:read", { messageIds });
     },
     [socket],
   );

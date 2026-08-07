@@ -88,18 +88,25 @@ export class ChatService {
   }
 
   /** Отметить сообщение как прочитанное. */
-  async markRead(messageId: string, workspaceId: string, userId: string) {
-    const message = await this.chatRepository.canUpdateStatus(
-      messageId,
-      workspaceId,
-      userId,
-    );
+  async markRead(messageIds: string[], workspaceId: string, userId: string) {
+    const updatedIds: string[] = [];
 
-    if (!message || message.readAt) {
-      return message;
+    for (const messageId of messageIds) {
+      const message = await this.chatRepository.canUpdateStatus(
+        messageId,
+        workspaceId,
+        userId,
+      );
+
+      if (!message || message.readAt) {
+        continue;
+      }
+
+      await this.chatRepository.markRead(messageId);
+      updatedIds.push(messageId);
     }
 
-    return this.chatRepository.markRead(messageId);
+    return updatedIds;
   }
 
   /** Отметить сообщение как доставленное. */

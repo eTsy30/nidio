@@ -12,21 +12,18 @@ import {
 } from "@/shared/lib/token";
 
 type AuthContextValue = {
-  isAuthenticated: boolean;
   isLoading: boolean;
   user: User | null;
   refreshUser: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextValue>({
-  isAuthenticated: false,
   isLoading: true,
   user: null,
   refreshUser: async () => {},
 });
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => Boolean(getAccessToken()));
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [user, setUser] = useState<User | null>(null);
 
@@ -34,11 +31,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const me = await http.get<User>("/auth/@me");
       setUser(me);
-      setIsAuthenticated(true);
     } catch {
       removeAccessToken();
       setUser(null);
-      setIsAuthenticated(false);
     }
   }, []);
 
@@ -60,7 +55,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } catch {
         removeAccessToken();
         setUser(null);
-        setIsAuthenticated(false);
       } finally {
         setIsLoading(false);
       }
@@ -75,7 +69,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         void refreshUser();
       } else {
         setUser(null);
-        setIsAuthenticated(false);
       }
     });
 
@@ -89,7 +82,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   return (
     <AuthContext.Provider
       value={{
-        isAuthenticated,
         isLoading,
         user,
         refreshUser,

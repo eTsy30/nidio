@@ -12,20 +12,20 @@ type Props = {
 
 export function AuthGuard({ children }: Props) {
   const router = useRouter();
-  const { isAuthenticated, isLoading } = useAuth();
+  const { user, isLoading } = useAuth();
 
   useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
+    if (!isLoading && !user) {
       const redirect = `${window.location.pathname}${window.location.search}`;
       router.replace(`${routes.login}?redirect=${encodeURIComponent(redirect)}`);
     }
-  }, [isAuthenticated, isLoading, router]);
+  }, [user, isLoading, router]);
 
   if (isLoading) {
     return null;
   }
 
-  if (!isAuthenticated) {
+  if (!user) {
     return null;
   }
 

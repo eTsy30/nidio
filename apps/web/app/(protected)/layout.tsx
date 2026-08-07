@@ -12,8 +12,9 @@ export default function ProtectedLayout({ children }: Props) {
   return (
     <AuthGuard>
       <ConnectionSuccessOverlay />
-
-      <div className="min-h-dvh pb-[calc(60px+env(safe-area-inset-bottom))]">{children}</div>
+      <main className="flex h-[calc(100dvh-60px)] min-h-0 flex-col overflow-hidden bg-background">
+        {children}
+      </main>
 
       <BottomNavigation />
     </AuthGuard>

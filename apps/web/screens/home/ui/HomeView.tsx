@@ -6,13 +6,9 @@ import { HomeHeader } from "./HomeHeader";
 export function HomeView() {
   return (
     <>
-      <main className="flex min-h-screen flex-col bg-background">
-        <HomeHeader />
+      <HomeHeader />
 
-        <HomeContent />
-
-        {/* <BottomNavigation /> */}
-      </main>
+      <HomeContent />
     </>
   );
 }

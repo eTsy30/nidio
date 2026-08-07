@@ -1,5 +1,4 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
 import { Toaster } from "sonner";
 
 import { AuthProvider } from "@/shared/api/provider/auth-provider";
@@ -7,17 +6,6 @@ import { QueryProvider } from "@/shared/api/query/query-provider";
 import { RealtimeProvider } from "@/shared/realtime";
 
 import "@/shared/styles/globals.css";
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-  weight: ["100", "200", "300", "600"],
-});
 
 export const viewport: Viewport = {
   themeColor: "#af4b2b",
@@ -48,12 +36,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ru" className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}>
+    <html lang="ru" className="h-full antialiased">
       <head>
         <link rel="manifest" href="/manifest.json" />
       </head>
-      <body className="min-h-full flex flex-col">
+
+      <body className="min-h-full flex flex-col font-sans">
         <Toaster />
+
         <QueryProvider>
           <AuthProvider>
             <RealtimeProvider>{children}</RealtimeProvider>
