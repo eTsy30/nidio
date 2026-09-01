@@ -1,0 +1,88 @@
+# ------------------------------------------------------
+# THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+# ------------------------------------------------------
+
+input CreateEventInput {
+  allDay: Boolean! = false
+  description: String
+  endAt: DateTime
+  reminderAt: DateTime
+  repeat: EventRepeat! = NONE
+  scope: EventScope!
+  startAt: DateTime!
+  title: String!
+  type: EventType!
+}
+
+"""
+A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
+"""
+scalar DateTime
+
+type EventModel {
+  allDay: Boolean!
+  coupleId: String
+  createdAt: DateTime!
+  createdById: String!
+  description: String
+  endAt: DateTime
+  id: ID!
+  reminderAt: DateTime
+  repeat: EventRepeat!
+  scope: EventScope!
+  startAt: DateTime!
+  title: String!
+  type: EventType!
+  updatedAt: DateTime!
+  userId: String
+}
+
+enum EventRepeat {
+  DAILY
+  MONTHLY
+  NONE
+  WEEKLY
+  YEARLY
+}
+
+enum EventScope {
+  COUPLE
+  PERSONAL
+}
+
+enum EventType {
+  ANNIVERSARY
+  BIRTHDAY
+  DATE
+  OTHER
+}
+
+input EventsFilterInput {
+  scope: EventScope!
+  startFrom: DateTime
+  startTo: DateTime
+}
+
+type Mutation {
+  changeEventScope(id: ID!, scope: EventScope!): EventModel!
+  createEvent(input: CreateEventInput!): EventModel!
+  deleteEvent(id: ID!): EventModel!
+  updateEvent(id: ID!, input: UpdateEventInput!): EventModel!
+}
+
+type Query {
+  event(id: ID!): EventModel!
+  events(filter: EventsFilterInput!): [EventModel!]!
+}
+
+input UpdateEventInput {
+  allDay: Boolean = false
+  description: String
+  endAt: DateTime
+  reminderAt: DateTime
+  repeat: EventRepeat = NONE
+  scope: EventScope
+  startAt: DateTime
+  title: String
+  type: EventType
+}

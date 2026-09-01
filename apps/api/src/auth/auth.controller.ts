@@ -19,6 +19,8 @@ import { RegisterRequestDto } from './dto/register.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { AuthService } from './auth.service';
 
+const isDev = process.env.NODE_ENV !== 'production';
+
 @ApiTags('Auth')
 @Controller('auth')
 export class AuthController {
@@ -34,15 +36,13 @@ export class AuthController {
 
     res.cookie('refreshToken', refreshToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
+      secure: !isDev,
+      sameSite: isDev ? false : 'lax',
       path: '/auth/refresh',
       maxAge: 1000 * 60 * 60 * 24 * 30,
     });
 
-    return {
-      accessToken,
-    };
+    return { accessToken };
   }
 
   @Post('login')
@@ -55,15 +55,13 @@ export class AuthController {
 
     res.cookie('refreshToken', refreshToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
+      secure: !isDev,
+      sameSite: isDev ? false : 'lax',
       path: '/auth/refresh',
       maxAge: 1000 * 60 * 60 * 24 * 30,
     });
 
-    return {
-      accessToken,
-    };
+    return { accessToken };
   }
 
   @Post('refresh')
@@ -79,15 +77,13 @@ export class AuthController {
 
     res.cookie('refreshToken', newRefreshToken, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
+      secure: !isDev,
+      sameSite: isDev ? false : 'lax',
       path: '/auth/refresh',
       maxAge: 1000 * 60 * 60 * 24 * 30,
     });
 
-    return {
-      accessToken,
-    };
+    return { accessToken };
   }
 
   @Authorization()
@@ -101,14 +97,12 @@ export class AuthController {
 
     res.clearCookie('refreshToken', {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
+      secure: !isDev,
+      sameSite: isDev ? false : 'lax',
       path: '/auth/refresh',
     });
 
-    return {
-      success: true,
-    };
+    return { success: true };
   }
 
   @Post('forgot-password')

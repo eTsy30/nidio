@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Toaster } from "sonner";
 
+import { ApolloProviderWrapper } from "@/shared/api/provider/apollo-provider";
 import { AuthProvider } from "@/shared/api/provider/auth-provider";
 import { QueryProvider } from "@/shared/api/query/query-provider";
 import { RealtimeProvider } from "@/shared/realtime";
@@ -43,10 +44,11 @@ export default function RootLayout({
 
       <body className="min-h-full flex flex-col font-sans">
         <Toaster />
-
         <QueryProvider>
           <AuthProvider>
-            <RealtimeProvider>{children}</RealtimeProvider>
+            <ApolloProviderWrapper>
+              <RealtimeProvider>{children}</RealtimeProvider>
+            </ApolloProviderWrapper>
           </AuthProvider>
         </QueryProvider>
       </body>

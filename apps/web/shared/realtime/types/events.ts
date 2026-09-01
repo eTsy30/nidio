@@ -13,7 +13,6 @@ export type ChatMessageItem = {
     firstName: string;
     avatarUrl?: string | null;
   };
-
   createdAt: string;
   updatedAt?: string | null;
   reactions?: ChatReaction[];

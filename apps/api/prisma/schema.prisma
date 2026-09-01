@@ -24,6 +24,8 @@ model User {
   passwordResets     PasswordReset[]
   refreshTokens      RefreshToken[]
   workspaces         Workspace[]
+  createdEvents      Event[]             @relation("CreatedEvents")
+  personalEvents     Event[]             @relation("PersonalEvents")
 }
 
 model PasswordReset {
@@ -71,6 +73,7 @@ model Couple {
   members   CoupleMember[]
   invites   Invite[]
   workspace Workspace?
+  events    Event[]
 
   @@index([createdAt])
   @@index([deletedAt])
@@ -247,6 +250,48 @@ model Block {
   @@index([spaceId])
 }
 
+// ==========  Модель Event ==========
+
+model Event {
+  id          String      @id @default(cuid())
+  title       String      @db.VarChar(200)
+  description String?     @db.Text
+  startAt     DateTime
+  endAt       DateTime?
+  allDay      Boolean     @default(false)
+  repeat      EventRepeat @default(NONE)
+  type        EventType   @default(OTHER)
+  scope       EventScope
+
+  createdById String
+  createdBy   User   @relation("CreatedEvents", fields: [createdById], references: [id], onDelete: Cascade)
+
+  userId String?
+  user   User?   @relation("PersonalEvents", fields: [userId], references: [id], onDelete: Cascade)
+
+  coupleId String?
+  couple   Couple? @relation(fields: [coupleId], references: [id], onDelete: Cascade)
+
+  reminderAt DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  repeatUntil DateTime?
+  excludedDates DateTime[]
+
+  @@index([userId, startAt])
+  @@index([coupleId, startAt])
+  @@index([createdById])
+  @@index([startAt])
+}
+
+enum EventRepeat {
+  NONE
+  DAILY
+  WEEKLY
+  MONTHLY
+  YEARLY
+}
+
 enum Gender {
   MALE
   FEMALE
@@ -285,4 +330,16 @@ enum BlockType {
   IMAGE
   QUOTE
   DIVIDER
+}
+
+enum EventType {
+  DATE
+  BIRTHDAY
+  ANNIVERSARY
+  OTHER
+}
+
+enum EventScope {
+  PERSONAL
+  COUPLE
 }

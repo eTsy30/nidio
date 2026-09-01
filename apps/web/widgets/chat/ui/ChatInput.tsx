@@ -5,7 +5,7 @@ import { ArrowUpIcon } from "lucide-react";
 
 import { cn } from "@/shared/lib/cn";
 import type { ClientToServerEvents, ServerToClientEvents } from "@/shared/realtime/types/events";
-import { Button } from "@/shared/ui/button";
+import { Button } from "@/shared/ui";
 
 type ChatInputProps = {
   onMessageSent?: (message: { content: string }) => void;
@@ -148,7 +148,7 @@ export function ChatInput({
 
         <Button
           type="submit"
-          size="icon"
+          size="sm"
           className={cn(
             "shrink-0 rounded-full transition-all duration-200",
             message.trim()

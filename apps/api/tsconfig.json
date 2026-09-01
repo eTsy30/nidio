@@ -24,8 +24,9 @@
     "strictBindCallApply": true,
     "noFallthroughCasesInSwitch": true,
     "emitDeclarationOnly": false,
-    "noEmit": false
+    "noEmit": false,
+    "strictPropertyInitialization": false
   },
-  "include": ["src/**/*.ts", "prisma.config.ts"],
-  "exclude": ["node_modules", "dist", "prisma"]
+  "include": ["src/**/*.ts", "prisma.config.ts", "prisma/**/*.ts"],
+  "exclude": ["node_modules", "dist"]
 }

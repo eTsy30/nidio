@@ -1,4 +1,5 @@
 import { http } from "@/shared/api/client/api";
+import { apolloClient } from "@/shared/lib/apollo-client";
 import { removeAccessToken, setAccessToken } from "@/shared/lib/token";
 
 import {
@@ -38,6 +39,8 @@ export const logout = async (): Promise<void> => {
     await http.post<void>("/auth/logout");
   } finally {
     removeAccessToken();
+    // Сбрасываем Apollo cache при выходе
+    await apolloClient.resetStore().catch(() => {});
   }
 };
 

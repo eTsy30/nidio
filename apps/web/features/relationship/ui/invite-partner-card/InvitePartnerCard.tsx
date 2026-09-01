@@ -1,4 +1,3 @@
-import * as React from "react";
 import QRCode from "react-qr-code";
 
 import type { CurrentInviteResponse } from "@/features/relationship/model/relationship.types";

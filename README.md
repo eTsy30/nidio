@@ -152,7 +152,7 @@ DIRECT_URL="postgresql://postgres:postgres@localhost:5432/nidio"
 
 JWT_SECRET="your_secret"
 
-FRONTEND_URL="http://localhost:3000"
+FRONTEND_URL="http://localhost:4000"
 
 GMAIL_USER="your_email"
 GMAIL_APP_PASSWORD="your_password"

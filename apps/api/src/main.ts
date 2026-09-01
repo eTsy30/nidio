@@ -1,30 +1,29 @@
-import { Logger } from '@nestjs/common';
+import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import cookieParser from 'cookie-parser';
-import { config } from 'dotenv';
-import { resolve } from 'path';
+import { json } from 'express';
 
 import { AppModule } from './app.module';
-const envFile =
-  process.env.NODE_ENV === 'production'
-    ? '.env.production'
-    : '.env.development';
 
-config({ path: resolve(process.cwd(), envFile) });
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
   app.enableCors({
-    // ебучая корса !!!
-    origin: process.env.FRONTEND_URL,
+    origin: process.env.WEB_URL || 'http://localhost:3000',
     credentials: true,
   });
+
   app.use(cookieParser());
-  const port = Number(process.env.PORT) || 3001;
+  app.use(json({ limit: '10mb' }));
 
-  await app.listen(port);
+  app.useGlobalPipes(
+    new ValidationPipe({
+      transform: true,
+      whitelist: true,
+      forbidNonWhitelisted: true,
+    }),
+  );
 
-  Logger.log(`🚀 API: http://localhost:${port}`);
+  await app.listen(process.env.PORT || 4000);
 }
-
 bootstrap();
