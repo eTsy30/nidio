@@ -1,11 +1,9 @@
 "use client";
 
-import { useMemo } from "react";
-
 import { cn } from "@/shared/lib/cn";
 
 import { typeIcon, typeMeta } from "../model/constants";
-import { CalendarEvent } from "../model/types";
+import { type CalendarEvent } from "../model/types";
 import { formatEventTime } from "../model/utils";
 
 interface EventCardProps {
@@ -18,10 +16,7 @@ export function EventCard({ event, compact = false, onClick }: EventCardProps) {
   const meta = typeMeta[event.type];
   const Icon = typeIcon[event.type];
 
-  const time = useMemo(
-    () => formatEventTime(event.startAt, event.endAt),
-    [event.startAt, event.endAt],
-  );
+  const time = formatEventTime(event.startAt, event.endAt);
 
   return (
     <button

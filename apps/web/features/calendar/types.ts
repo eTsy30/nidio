@@ -28,7 +28,7 @@ export interface CalendarEventCreator {
 
 export interface CalendarEvent {
   id: string;
-
+  seriesId: string;
   title: string;
   description?: string | null;
 

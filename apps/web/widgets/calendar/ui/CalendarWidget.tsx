@@ -13,7 +13,9 @@ import {
 } from "date-fns";
 
 import { CreateEventForm } from "@/features/calendar/create-event/ui/CreateEventForm";
-import { CREATE_EVENT, GET_EVENTS } from "@/features/calendar/graphql";
+import { DeleteEventDialog } from "@/features/calendar/delete-event/ui/DeleteEventDialog";
+import { EditEventForm } from "@/features/calendar/edit-event/ui/EditEventForm";
+import { CREATE_EVENT, DELETE_EVENT, GET_EVENTS, UPDATE_EVENT } from "@/features/calendar/graphql";
 import {
   type CalendarEvent,
   EventRepeat,
@@ -22,6 +24,7 @@ import {
   type ViewMode,
 } from "@/features/calendar/types";
 import { SelectedDayDrawer } from "@/features/calendar/ui/SelectedDayDrawer";
+import { useAuth } from "@/shared/api/provider/auth-provider";
 import { cn } from "@/shared/lib/cn";
 
 import { getCalendarRange, getDateKey } from "../model/utils";
@@ -31,24 +34,25 @@ import { CalendarYear } from "./CalendarYear";
 import { MonthView } from "./MonthView";
 import { WeekView } from "./WeekView";
 
-interface CreateEventValues {
-  title: string;
-  description: string;
-  type: EventType;
-  startAt: Date;
-  endAt: Date | null;
-  allDay: boolean;
-  repeat: EventRepeat;
-}
-
 export default function CalendarWidget() {
+  const { user } = useAuth();
+
   const [scope, setScope] = useState<EventScope>(EventScope.PERSONAL);
 
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
 
-  const [month, setMonth] = useState(new Date());
+  const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
 
-  const [weekStart, setWeekStart] = useState(
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+
+  const [createEventOpen, setCreateEventOpen] = useState(false);
+
+  const [editEventOpen, setEditEventOpen] = useState(false);
+  const [selectedEditEvent, setSelectedEditEvent] = useState<CalendarEvent | null>(null);
+
+  const [month, setMonth] = useState<Date>(new Date());
+
+  const [weekStart, setWeekStart] = useState<Date>(
     startOfWeek(new Date(), {
       weekStartsOn: 1,
     }),
@@ -57,8 +61,6 @@ export default function CalendarWidget() {
   const [viewMode, setViewMode] = useState<ViewMode>("month");
 
   const [filter, setFilter] = useState<EventType | "ALL">("ALL");
-
-  const [createEventOpen, setCreateEventOpen] = useState(false);
 
   const currentDate = viewMode === "week" ? weekStart : month;
 
@@ -85,6 +87,7 @@ export default function CalendarWidget() {
   });
 
   const [createEvent, { loading: creating }] = useMutation(CREATE_EVENT);
+  const [updateEvent, { loading: updating }] = useMutation(UPDATE_EVENT);
 
   const events = useMemo<CalendarEvent[]>(() => data?.events ?? [], [data?.events]);
 
@@ -103,21 +106,19 @@ export default function CalendarWidget() {
       const date = new Date(event.startAt);
       const key = getDateKey(date);
 
-      const current = map.get(key);
+      const currentEvents = map.get(key);
 
-      if (!current) {
+      if (!currentEvents) {
         map.set(key, [event]);
         continue;
       }
 
-      // Защита от одинаковых occurrence,
-      // пришедших с backend.
-      const alreadyExists = current.some(
+      const alreadyExists = currentEvents.some(
         (existingEvent) => existingEvent.id === event.id && existingEvent.startAt === event.startAt,
       );
 
       if (!alreadyExists) {
-        current.push(event);
+        currentEvents.push(event);
       }
     }
 
@@ -185,15 +186,11 @@ export default function CalendarWidget() {
           weekStartsOn: 1,
         }),
       );
+
+      return;
     }
 
-    if (view === "year") {
-      setMonth(new Date(baseDate.getFullYear(), baseDate.getMonth(), 1));
-    }
-
-    if (view === "month") {
-      setMonth(new Date(baseDate.getFullYear(), baseDate.getMonth(), 1));
-    }
+    setMonth(new Date(baseDate.getFullYear(), baseDate.getMonth(), 1));
   };
 
   const handleSelectDate = (date: Date) => {
@@ -208,31 +205,101 @@ export default function CalendarWidget() {
   };
 
   const handleYearMonthClick = (date: Date) => {
-    setMonth(date);
+    setMonth(new Date(date.getFullYear(), date.getMonth(), 1));
+
+    setSelectedDate(null);
     setViewMode("month");
   };
 
   const handleYearDayClick = (date: Date) => {
     setSelectedDate(date);
+
+    setMonth(new Date(date.getFullYear(), date.getMonth(), 1));
   };
 
   const handleScopeChange = (nextScope: EventScope) => {
     setScope(nextScope);
     setSelectedDate(null);
+    setSelectedEvent(null);
+    setDeleteDialogOpen(false);
     setCreateEventOpen(false);
+    setEditEventOpen(false);
+    setSelectedEditEvent(null);
   };
 
-  const handleCreateEvent = async (values: CreateEventValues) => {
+  const handleDeleteEvent = (event: CalendarEvent) => {
+    setSelectedEvent(event);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleEventDeleted = async () => {
+    setDeleteDialogOpen(false);
+    setSelectedEvent(null);
+    setSelectedDate(null);
+    await refetch();
+  };
+
+  const handleEditEvent = (event: CalendarEvent) => {
+    setSelectedEditEvent(event);
+    setEditEventOpen(true);
+  };
+
+  const handleEventUpdated = async (values: {
+    title: string;
+    description: string;
+    type: EventType;
+    startAt: Date;
+    endAt: Date | null;
+    allDay: boolean;
+    repeat: EventRepeat;
+  }) => {
+    if (!selectedEditEvent) return;
+
+    try {
+      await updateEvent({
+        variables: {
+          id: selectedEditEvent.seriesId || selectedEditEvent.id,
+          input: {
+            title: values.title,
+            description: values.description || undefined,
+            type: values.type,
+            startAt: values.startAt.toISOString(),
+            endAt: values.endAt?.toISOString(),
+            allDay: values.allDay,
+            repeat: values.repeat,
+          },
+        },
+      });
+
+      setEditEventOpen(false);
+      setSelectedEditEvent(null);
+      await refetch();
+    } catch (error) {
+      console.error("Не удалось обновить событие:", error);
+    }
+  };
+
+  const handleCreateEvent = async (values: {
+    title: string;
+    description: string;
+    type: EventType;
+    startAt: Date;
+    endAt: Date | null;
+    allDay: boolean;
+    repeat: EventRepeat;
+  }) => {
     try {
       await createEvent({
         variables: {
           input: {
             title: values.title,
             description: values.description || undefined,
-            startAt: values.startAt.toISOString(),
-            endAt: values.endAt?.toISOString() ?? undefined,
             type: values.type,
             scope,
+            startAt: values.startAt.toISOString(),
+            endAt: values.endAt?.toISOString(),
+            allDay: values.allDay,
+            repeat: values.repeat,
           },
         },
       });
@@ -240,8 +307,8 @@ export default function CalendarWidget() {
       setCreateEventOpen(false);
 
       await refetch();
-    } catch (createError) {
-      console.error("Не удалось создать событие:", createError);
+    } catch (error) {
+      console.error("Не удалось создать событие:", error);
     }
   };
 
@@ -318,8 +385,8 @@ export default function CalendarWidget() {
               eventsByDate={eventsByDate}
               selectedDate={selectedDate}
               onSelectDate={handleSelectDate}
-              onEventClick={(event: CalendarEvent) => {
-                setSelectedDate(new Date(event.startAt));
+              onEventClick={(event) => {
+                handleSelectDate(new Date(event.startAt));
               }}
             />
           )}
@@ -337,16 +404,37 @@ export default function CalendarWidget() {
 
       {selectedDate && (
         <SelectedDayDrawer
+          currentUserId={user?.id}
           date={selectedDate}
           events={selectedEvents}
           scope={scope}
           onClose={() => {
             setSelectedDate(null);
+            setSelectedEvent(null);
           }}
           onAddEvent={() => {
             setCreateEventOpen(true);
           }}
-          onEventClick={() => {}}
+          onDeleteEvent={handleDeleteEvent}
+          onEditEvent={handleEditEvent}
+        />
+      )}
+
+      {selectedEvent && (
+        <DeleteEventDialog
+          key={selectedEvent.id}
+          event={selectedEvent}
+          open={deleteDialogOpen}
+          onOpenChange={(open) => {
+            setDeleteDialogOpen(open);
+
+            if (!open) {
+              setSelectedEvent(null);
+            }
+          }}
+          onDeleted={() => {
+            void handleEventDeleted();
+          }}
         />
       )}
 
@@ -363,33 +451,36 @@ export default function CalendarWidget() {
               scope={scope}
               date={selectedDate}
               onCancel={() => setCreateEventOpen(false)}
-              onSubmit={async (values) => {
-                try {
-                  await createEvent({
-                    variables: {
-                      input: {
-                        title: values.title,
-                        description: values.description || undefined,
-                        type: values.type,
-                        scope,
-                        startAt: values.startAt.toISOString(),
-                        endAt: values.endAt?.toISOString(),
-                        allDay: values.allDay,
-                        repeat: values.repeat,
-                      },
-                    },
-                  });
-
-                  setCreateEventOpen(false);
-                  await refetch();
-                } catch (error) {
-                  console.error("Не удалось создать событие:", error);
-                }
-              }}
+              onSubmit={handleCreateEvent}
             />
 
             {creating && (
               <p className="mt-3 text-center text-xs text-muted-foreground">Сохраняем событие…</p>
+            )}
+          </div>
+        </div>
+      )}
+
+      {editEventOpen && selectedEditEvent && (
+        <div className="fixed inset-0 z-[60] flex items-end justify-center bg-black/30 p-0 backdrop-blur-sm sm:items-center sm:p-4">
+          <div className="max-h-[90dvh] w-full max-w-lg overflow-auto rounded-t-3xl bg-background p-5 shadow-2xl sm:rounded-3xl">
+            <div className="mb-5">
+              <h2 className="text-xl font-bold">Редактировать событие</h2>
+
+              <p className="mt-1 text-sm text-muted-foreground">Измените детали события</p>
+            </div>
+
+            <EditEventForm
+              event={selectedEditEvent}
+              onCancel={() => {
+                setEditEventOpen(false);
+                setSelectedEditEvent(null);
+              }}
+              onSubmit={handleEventUpdated}
+            />
+
+            {updating && (
+              <p className="mt-3 text-center text-xs text-muted-foreground">Сохраняем изменения…</p>
             )}
           </div>
         </div>

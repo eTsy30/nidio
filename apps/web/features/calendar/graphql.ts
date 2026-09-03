@@ -4,6 +4,7 @@ export const GET_EVENTS = gql`
   query Events($filter: EventsFilterInput!) {
     events(filter: $filter) {
       id
+      seriesId
       title
       description
       startAt
@@ -41,18 +42,22 @@ export const UPDATE_EVENT = gql`
     updateEvent(id: $id, input: $input) {
       id
       title
+      description
       startAt
       endAt
+      allDay
+      repeat
       type
       scope
       reminderAt
+      createdById
     }
   }
 `;
 
 export const DELETE_EVENT = gql`
-  mutation DeleteEvent($id: ID!) {
-    deleteEvent(id: $id) {
+  mutation DeleteEvent($input: DeleteEventInput!) {
+    deleteEvent(input: $input) {
       id
     }
   }

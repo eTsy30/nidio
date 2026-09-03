@@ -12,18 +12,18 @@ import { typeMeta } from "@/widgets/calendar/model/constants";
 import { EmptyDayMessage } from "@/widgets/calendar/ui/EmptyDayMessage";
 import { EventCard } from "@/widgets/calendar/ui/EventCard";
 
-import { CalendarEvent, EventRepeat, EventScope, EventType } from "../types";
+import { type CalendarEvent, EventRepeat, EventScope, EventType } from "../types";
 
 interface SelectedDayDrawerProps {
   date: Date | null;
   events: CalendarEvent[];
   scope: EventScope;
-  currentUserId?: string;
+
+  currentUserId: string | undefined;
 
   onClose: () => void;
-  onAddEvent: () => void;
-  onEventClick: (event: CalendarEvent) => void;
   onEditEvent?: (event: CalendarEvent) => void;
+  onAddEvent: () => void;
   onDeleteEvent?: (event: CalendarEvent) => void;
 }
 
@@ -85,10 +85,9 @@ export function SelectedDayDrawer({
   events,
   scope,
   currentUserId,
+  onEditEvent,
   onClose,
   onAddEvent,
-  onEventClick,
-  onEditEvent,
   onDeleteEvent,
 }: SelectedDayDrawerProps) {
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
@@ -106,7 +105,6 @@ export function SelectedDayDrawer({
 
   const handleEventClick = (event: CalendarEvent) => {
     setSelectedEvent(event);
-    onEventClick(event);
   };
 
   const handleBack = () => {
@@ -221,23 +219,26 @@ export function SelectedDayDrawer({
             </ScrollArea>
 
             {/* ACTIONS */}
-            {isEventOwner && (
-              <div className="mt-auto space-y-2 border-t bg-background p-5">
-                {onEditEvent && (
-                  <Button className="w-full" onClick={() => onEditEvent(selectedEvent)}>
-                    Редактировать
-                  </Button>
-                )}
-
-                {onDeleteEvent && (
-                  <Button
-                    variant="ghost"
-                    className="w-full text-destructive hover:bg-destructive/10 hover:text-destructive"
-                    onClick={() => onDeleteEvent(selectedEvent)}
-                  >
-                    Удалить
-                  </Button>
-                )}
+            {isEventOwner && onDeleteEvent && (
+              <div className="flex mt-auto border-t gap-3 bg-background p-5">
+                <Button
+                  size="md"
+                  variant="primary"
+                  type="button"
+                  onClick={() => onDeleteEvent(selectedEvent)}
+                  className=" flex-1"
+                >
+                  Удалить
+                </Button>
+                <Button
+                  size="md"
+                  variant="secondary"
+                  type="button"
+                  onClick={() => onEditEvent?.(selectedEvent)}
+                  className=" flex-1 text-sm text-primary"
+                >
+                  Редактировать
+                </Button>
               </div>
             )}
           </>

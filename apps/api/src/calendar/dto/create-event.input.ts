@@ -12,14 +12,14 @@ import { EventRepeat, EventScope, EventType } from '../models/event.model';
 
 @InputType()
 export class CreateEventInput {
-  @Field()
+  @Field(() => String)
   @IsString()
   title!: string;
 
-  @Field({ nullable: true })
+  @Field(() => String, { nullable: true })
   @IsOptional()
   @IsString()
-  description?: string;
+  description?: string | null;
 
   @Field(() => GraphQLISODateTime)
   @Type(() => Date)
@@ -32,7 +32,7 @@ export class CreateEventInput {
   @Type(() => Date)
   @IsOptional()
   @IsDate()
-  endAt?: Date;
+  endAt?: Date | null;
 
   @Field(() => EventType)
   @IsEnum(EventType)
@@ -42,7 +42,7 @@ export class CreateEventInput {
   @IsEnum(EventScope)
   scope!: EventScope;
 
-  @Field({
+  @Field(() => Boolean, {
     defaultValue: false,
   })
   @IsBoolean()
@@ -60,5 +60,13 @@ export class CreateEventInput {
   @Type(() => Date)
   @IsOptional()
   @IsDate()
-  reminderAt?: Date;
+  reminderAt?: Date | null;
+
+  @Field(() => GraphQLISODateTime, {
+    nullable: true,
+  })
+  @Type(() => Date)
+  @IsOptional()
+  @IsDate()
+  repeatUntil?: Date | null;
 }

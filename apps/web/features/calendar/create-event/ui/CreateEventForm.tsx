@@ -7,7 +7,7 @@ import { ru } from "date-fns/locale";
 import { cn } from "@/shared/lib/cn";
 import { Button } from "@/shared/ui";
 import { repeatOptions, typeMeta } from "@/widgets/calendar/model/constants";
-import { EventScope, EventType } from "@/widgets/calendar/model/types";
+import { EventRepeat, EventScope, EventType } from "@/widgets/calendar/model/types";
 
 interface CreateEventFormProps {
   scope: EventScope;
@@ -20,8 +20,8 @@ interface CreateEventFormProps {
     startAt: Date;
     endAt: Date | null;
     allDay: boolean;
-    repeat: string;
-  }) => void;
+    repeat: EventRepeat;
+  }) => void | Promise<void>;
 }
 
 function parseTime(value: string): [number, number] {
@@ -33,6 +33,7 @@ function parseTime(value: string): [number, number] {
 export function CreateEventForm({ scope, date, onCancel, onSubmit }: CreateEventFormProps) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
+
   const [type, setType] = useState<EventType>(EventType.DATE);
 
   const [allDay, setAllDay] = useState(true);
@@ -40,7 +41,7 @@ export function CreateEventForm({ scope, date, onCancel, onSubmit }: CreateEvent
   const [startTime, setStartTime] = useState("19:00");
   const [endTime, setEndTime] = useState("21:00");
 
-  const [repeat, setRepeat] = useState("NONE");
+  const [repeat, setRepeat] = useState<EventRepeat>(EventRepeat.NONE);
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -71,7 +72,7 @@ export function CreateEventForm({ scope, date, onCancel, onSubmit }: CreateEvent
       endAt.setHours(hours, minutes, 0, 0);
     }
 
-    onSubmit?.({
+    void onSubmit?.({
       title: trimmedTitle,
       description: description.trim(),
       type,
@@ -182,7 +183,7 @@ export function CreateEventForm({ scope, date, onCancel, onSubmit }: CreateEvent
 
         <select
           value={repeat}
-          onChange={(event) => setRepeat(event.target.value)}
+          onChange={(event) => setRepeat(event.target.value as EventRepeat)}
           className="h-11 w-full rounded-xl border bg-background px-3 text-sm"
         >
           {repeatOptions.map((option) => (

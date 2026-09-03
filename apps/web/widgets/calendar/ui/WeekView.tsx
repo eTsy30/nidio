@@ -3,9 +3,9 @@
 import { format, isSameDay, isToday } from "date-fns";
 import { ru } from "date-fns/locale";
 
+import { type CalendarEvent } from "@/features/calendar/types";
 import { cn } from "@/shared/lib/cn";
 
-import { CalendarEvent } from "../model/types";
 import { getDateKey, getDaysForWeek } from "../model/utils";
 
 import { EventCard } from "./EventCard";
@@ -66,18 +66,23 @@ export function WeekView({
           const selected = selectedDate ? isSameDay(date, selectedDate) : false;
 
           return (
-            <button
+            <div
               key={date.toISOString()}
-              type="button"
-              onClick={() => onSelectDate(date)}
               className={cn(
-                "flex min-h-[180px] flex-col rounded-2xl border p-2 text-left transition-all",
+                "flex min-h-[180px] flex-col rounded-2xl border p-2 transition-all",
                 selected
                   ? "border-primary/20 bg-primary/[0.05]"
                   : "border-transparent hover:bg-muted/50",
               )}
             >
-              <div className="flex justify-center">
+              <button
+                type="button"
+                onClick={() => onSelectDate(date)}
+                className="flex w-full justify-center rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
+                aria-label={`Выбрать ${format(date, "d MMMM", {
+                  locale: ru,
+                })}`}
+              >
                 <span
                   className={cn(
                     "flex h-7 w-7 items-center justify-center rounded-full text-sm",
@@ -86,19 +91,19 @@ export function WeekView({
                 >
                   {format(date, "d")}
                 </span>
-              </div>
+              </button>
 
-              <div className="mt-2 flex flex-col gap-1">
-                {events.map((event, index) => (
+              <div className="mt-2 flex min-h-0 flex-col gap-1 overflow-y-auto">
+                {events.map((event) => (
                   <EventCard
-                    key={`${event.id}-${getDateKey(new Date(event.startAt))}-${index}`}
+                    key={`${event.id}-${event.startAt}`}
                     event={event}
                     compact
                     onClick={onEventClick}
                   />
                 ))}
               </div>
-            </button>
+            </div>
           );
         })}
       </div>

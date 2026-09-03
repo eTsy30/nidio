@@ -5,17 +5,18 @@ import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { GqlAuthGuard } from '../auth/guards/gql-auth.guard';
 
 import { CreateEventInput } from './dto/create-event.input';
+import { DeleteEventInput } from './dto/delete-event.input';
 import { EventsFilterInput } from './dto/events-filter.input';
 import { UpdateEventInput } from './dto/update-event.input';
 import { EventModel, EventScope } from './models/event.model';
 import { CalendarService } from './calendar.service';
 
 @Resolver(() => EventModel)
+@UseGuards(GqlAuthGuard)
 export class CalendarResolver {
   constructor(private readonly calendarService: CalendarService) {}
 
   @Query(() => [EventModel], { name: 'events' })
-  @UseGuards(GqlAuthGuard)
   async getEvents(
     @CurrentUser() user: { id: string },
     @Args('filter') filter: EventsFilterInput,
@@ -24,7 +25,6 @@ export class CalendarResolver {
   }
 
   @Query(() => EventModel, { name: 'event' })
-  @UseGuards(GqlAuthGuard)
   async getEvent(
     @CurrentUser() user: { id: string },
     @Args('id', { type: () => ID }) id: string,
@@ -33,7 +33,6 @@ export class CalendarResolver {
   }
 
   @Mutation(() => EventModel)
-  @UseGuards(GqlAuthGuard)
   async createEvent(
     @CurrentUser() user: { id: string },
     @Args('input') input: CreateEventInput,
@@ -42,7 +41,6 @@ export class CalendarResolver {
   }
 
   @Mutation(() => EventModel)
-  @UseGuards(GqlAuthGuard)
   async updateEvent(
     @CurrentUser() user: { id: string },
     @Args('id', { type: () => ID }) id: string,
@@ -55,13 +53,17 @@ export class CalendarResolver {
   @UseGuards(GqlAuthGuard)
   async deleteEvent(
     @CurrentUser() user: { id: string },
-    @Args('id', { type: () => ID }) id: string,
+    @Args('input') input: DeleteEventInput,
   ) {
-    return this.calendarService.delete(user.id, id);
+    return this.calendarService.delete(
+      user.id,
+      input.id,
+      input.mode,
+      input.occurrenceDate,
+    );
   }
 
   @Mutation(() => EventModel)
-  @UseGuards(GqlAuthGuard)
   async changeEventScope(
     @CurrentUser() user: { id: string },
     @Args('id', { type: () => ID }) id: string,

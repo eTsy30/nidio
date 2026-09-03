@@ -8,6 +8,7 @@ input CreateEventInput {
   endAt: DateTime
   reminderAt: DateTime
   repeat: EventRepeat! = NONE
+  repeatUntil: DateTime
   scope: EventScope!
   startAt: DateTime!
   title: String!
@@ -18,6 +19,19 @@ input CreateEventInput {
 A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
 """
 scalar DateTime
+
+input DeleteEventInput {
+  id: ID!
+  mode: EventDeleteMode! = ALL
+  occurrenceDate: DateTime
+}
+
+"""Режим удаления события"""
+enum EventDeleteMode {
+  ALL
+  FOLLOWING
+  THIS
+}
 
 type EventModel {
   allDay: Boolean!
@@ -30,6 +44,7 @@ type EventModel {
   reminderAt: DateTime
   repeat: EventRepeat!
   scope: EventScope!
+  seriesId: ID
   startAt: DateTime!
   title: String!
   type: EventType!
@@ -66,7 +81,7 @@ input EventsFilterInput {
 type Mutation {
   changeEventScope(id: ID!, scope: EventScope!): EventModel!
   createEvent(input: CreateEventInput!): EventModel!
-  deleteEvent(id: ID!): EventModel!
+  deleteEvent(input: DeleteEventInput!): EventModel!
   updateEvent(id: ID!, input: UpdateEventInput!): EventModel!
 }
 
@@ -81,6 +96,7 @@ input UpdateEventInput {
   endAt: DateTime
   reminderAt: DateTime
   repeat: EventRepeat = NONE
+  repeatUntil: DateTime
   scope: EventScope
   startAt: DateTime
   title: String

@@ -38,6 +38,9 @@ export class EventModel {
   @Field(() => ID)
   id!: string;
 
+  @Field(() => ID, { nullable: true })
+  seriesId?: string;
+
   @Field()
   title!: string;
 

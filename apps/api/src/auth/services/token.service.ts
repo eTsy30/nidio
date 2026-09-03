@@ -6,16 +6,14 @@ export class TokenService {
   constructor(private readonly jwt: JwtService) {}
 
   generateAccessToken(userId: string): string {
-    return this.jwt.sign({
-      sub: userId,
-    });
+    return this.jwt.sign({ sub: userId }, { expiresIn: '15m' });
   }
 
   generateRefreshToken(userId: string): string {
-    return this.jwt.sign({
-      sub: userId,
-      type: 'refresh',
-    });
+    return this.jwt.sign(
+      { sub: userId, type: 'refresh' },
+      { expiresIn: '30d' },
+    );
   }
 
   verify<T extends object>(token: string): T {
