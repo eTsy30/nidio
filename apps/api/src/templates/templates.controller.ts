@@ -16,12 +16,8 @@ export class TemplatesController {
   }
 
   @Post(':id/apply')
-  apply(
-    @Param('id') id: string,
-    @Body('columnId') columnId: string,
-    @CurrentUser('id') userId: string,
-  ) {
-    return this.templatesService.applyTemplate(id, columnId, userId);
+  apply(@Param('id') id: string, @CurrentUser('id') userId: string) {
+    return this.templatesService.applyTemplate(id, userId);
   }
 
   @Post('from-column')

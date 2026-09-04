@@ -37,15 +37,6 @@ export class BoardController {
     return this.boardService.createColumn(userId, dto);
   }
 
-  @Patch('columns/:id')
-  updateColumn(
-    @Param('id') id: string,
-    @Body() dto: UpdateColumnDto,
-    @CurrentUser('id') userId: string,
-  ) {
-    return this.boardService.updateColumn(userId, id, dto);
-  }
-
   @Delete('columns/:id')
   @HttpCode(HttpStatus.NO_CONTENT)
   async deleteColumn(
@@ -61,5 +52,13 @@ export class BoardController {
     @CurrentUser('id') userId: string,
   ) {
     return this.boardService.reorderColumns(userId, dto);
+  }
+  @Patch('columns/:id')
+  updateColumn(
+    @Param('id') id: string,
+    @Body() dto: UpdateColumnDto,
+    @CurrentUser('id') userId: string,
+  ) {
+    return this.boardService.updateColumn(userId, id, dto);
   }
 }

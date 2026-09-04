@@ -42,28 +42,19 @@ export function TogetherPage() {
       <header className="sticky top-0 z-10 bg-background/80 backdrop-blur-md border-b border-border/60 px-4 pt-safe-top">
         <div className="flex items-center justify-between py-4">
           <div>
-            <h1 className="text-xl font-bold tracking-tight">Together</h1>
+            <h1 className="text-xl font-bold tracking-tight">Nidio</h1>
             <p className="text-xs text-muted-foreground capitalize mt-0.5">
               {format(new Date(), "EEEE, d MMMM", { locale: ru })}
             </p>
           </div>
           <div className="flex gap-2">
             <Button
-              variant="ghost"
+              variant="primary"
               size="sm"
               className="rounded-full"
               onClick={() => setIsTemplateOpen(true)}
             >
               Шаблоны
-            </Button>
-            <Button
-              variant="primary"
-              size="md"
-              iconOnly
-              className="rounded-full"
-              onClick={() => setIsCreateOpen(true)}
-            >
-              <Plus className="w-5 h-5" />
             </Button>
           </div>
         </div>
@@ -124,11 +115,7 @@ export function TogetherPage() {
         columns={board?.columns ?? []}
       />
 
-      <TemplatePicker
-        open={isTemplateOpen}
-        onClose={() => setIsTemplateOpen(false)}
-        columns={board?.columns ?? []}
-      />
+      <TemplatePicker open={isTemplateOpen} onClose={() => setIsTemplateOpen(false)} />
     </div>
   );
 }

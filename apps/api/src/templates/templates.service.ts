@@ -30,45 +30,88 @@ export class TemplatesService {
     });
   }
 
-  async applyTemplate(templateId: string, columnId: string, userId: string) {
+  async applyTemplate(templateId: string, userId: string) {
     const couple = await this.relationshipService.getCurrentCouple(userId);
-    if (!couple) throw new ForbiddenException('User is not in a couple');
 
-    const column = await this.prisma.column.findFirst({
-      where: { id: columnId, board: { coupleId: couple.id } },
-    });
-    if (!column) throw new NotFoundException('Column not found');
+    if (!couple) {
+      throw new ForbiddenException('User is not in a couple');
+    }
 
-    const template = await this.prisma.template.findUnique({
-      where: { id: templateId },
-      include: { items: { orderBy: { order: 'asc' } } },
-    });
-    if (!template) throw new NotFoundException('Template not found');
-
-    const maxOrder = await this.prisma.task.aggregate({
-      where: { columnId },
-      _max: { order: true },
+    const board = await this.prisma.board.findUnique({
+      where: {
+        coupleId: couple.id,
+      },
     });
 
-    let currentOrder = (maxOrder._max.order ?? -1) + 1;
+    if (!board) {
+      throw new NotFoundException('Board not found');
+    }
 
-    const tasks = await this.prisma.$transaction(
-      template.items.map((item) =>
-        this.prisma.task.create({
-          data: {
-            title: item.title,
-            columnId,
-            coupleId: couple.id,
-            order: currentOrder++,
-            assigneeMode: item.assigneeMode,
-            repeat: item.repeat,
-            createdById: userId,
+    const template = await this.prisma.template.findFirst({
+      where: {
+        id: templateId,
+        OR: [
+          { isSystem: true },
+          { coupleId: couple.id },
+          { createdById: userId },
+        ],
+      },
+      include: {
+        items: {
+          orderBy: {
+            order: 'asc',
           },
-        }),
-      ),
-    );
+        },
+      },
+    });
 
-    return tasks;
+    if (!template) {
+      throw new NotFoundException('Template not found');
+    }
+
+    const maxColumnOrder = await this.prisma.column.aggregate({
+      where: {
+        boardId: board.id,
+      },
+      _max: {
+        order: true,
+      },
+    });
+
+    const columnOrder = (maxColumnOrder._max.order ?? -1) + 1;
+
+    return this.prisma.$transaction(async (tx) => {
+      const column = await tx.column.create({
+        data: {
+          boardId: board.id,
+          title: template.title,
+          icon: template.icon,
+          color: template.color,
+          order: columnOrder,
+        },
+      });
+
+      const tasks = await Promise.all(
+        template.items.map((item, index) =>
+          tx.task.create({
+            data: {
+              title: item.title,
+              columnId: column.id,
+              coupleId: couple.id,
+              order: index,
+              assigneeMode: item.assigneeMode,
+              repeat: item.repeat,
+              createdById: userId,
+            },
+          }),
+        ),
+      );
+
+      return {
+        column,
+        tasks,
+      };
+    });
   }
 
   async createCustomTemplate(userId: string, columnId: string, title: string) {

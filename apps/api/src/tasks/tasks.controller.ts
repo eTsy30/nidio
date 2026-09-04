@@ -8,6 +8,7 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 
@@ -17,6 +18,8 @@ import { JwtGuards } from '../auth/guards/auth.guard';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
 import { TasksService } from './tasks.service';
+
+type TaskDeleteMode = 'THIS' | 'FOLLOWING';
 
 @Controller('tasks')
 @UseGuards(JwtGuards)
@@ -69,14 +72,26 @@ export class TasksController {
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  async remove(@Param('id') id: string, @CurrentUser('id') userId: string) {
-    await this.tasksService.remove(id, userId);
+  async remove(
+    @Param('id') id: string,
+    @Query('mode') mode: TaskDeleteMode = 'THIS',
+    @CurrentUser('id') userId: string,
+  ) {
+    const normalizedMode = mode === 'FOLLOWING' ? 'FOLLOWING' : 'THIS';
+
+    await this.tasksService.remove(id, userId, normalizedMode);
   }
 
   @Post(':id/complete')
   @HttpCode(HttpStatus.OK)
   complete(@Param('id') id: string, @CurrentUser('id') userId: string) {
     return this.tasksService.complete(id, userId);
+  }
+
+  @Post(':id/activate')
+  @HttpCode(HttpStatus.OK)
+  activate(@Param('id') id: string, @CurrentUser('id') userId: string) {
+    return this.tasksService.activate(id, userId);
   }
 
   @Post(':id/nudge')

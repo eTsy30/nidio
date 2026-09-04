@@ -2,15 +2,16 @@
 
 import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { format, isPast, isToday, isTomorrow } from "date-fns";
+import { format, isToday, isTomorrow } from "date-fns";
 import { ru } from "date-fns/locale";
-import { Check, Heart, MoreVertical, Repeat } from "lucide-react";
+import { Heart, MoreVertical, Repeat } from "lucide-react";
 
 import { cn } from "@/shared/lib/cn";
 import { Checkbox } from "@/shared/ui/checkbox/Checkbox";
 
 import { togetherKeys } from "../api/query-keys";
 import { tasksApi } from "../api/tasks.api";
+import { formatFutureDate, formatOverdueStatus, getTaskTemporalState } from "../lib/task-utils";
 import { TogetherTask } from "../model/task.types";
 
 interface TaskItemProps {
@@ -25,9 +26,18 @@ interface TaskItemProps {
 
 function formatDue(dueAt: string): string {
   const d = new Date(dueAt);
-  if (isToday(d)) return `Сегодня, ${format(d, "HH:mm")}`;
-  if (isTomorrow(d)) return `Завтра, ${format(d, "HH:mm")}`;
-  return format(d, "d MMM, HH:mm", { locale: ru });
+
+  if (isToday(d)) {
+    return `Сегодня, ${format(d, "HH:mm")}`;
+  }
+
+  if (isTomorrow(d)) {
+    return `Завтра, ${format(d, "HH:mm")}`;
+  }
+
+  return format(d, "d MMM, HH:mm", {
+    locale: ru,
+  });
 }
 
 export function TaskItem({
@@ -39,54 +49,84 @@ export function TaskItem({
   disabled,
   isCelebrated,
 }: TaskItemProps) {
-  const isOverdue =
-    task.dueAt && !task.completed && isPast(new Date(task.dueAt)) && !isToday(new Date(task.dueAt));
   const [showMenu, setShowMenu] = useState(false);
 
   const queryClient = useQueryClient();
+
+  const temporalState = getTaskTemporalState(task);
+
+  const isCompleted = temporalState === "completed";
+  const isFuture = temporalState === "future";
+  const isOverdue = temporalState === "overdue";
+
   const nudgeMutation = useMutation({
     mutationFn: tasksApi.nudge,
+
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: togetherKeys.list() });
+      queryClient.invalidateQueries({
+        queryKey: togetherKeys.list(),
+      });
+
       setShowMenu(false);
     },
   });
 
   let assigneeLabel = "Вместе";
-  if (task.assigneeId === currentUserId) assigneeLabel = "Мне";
-  else if (task.assigneeId) assigneeLabel = partnerName || "Партнёру";
 
-  const myCompletion = task.completions?.some((c) => c.userId === currentUserId);
-  const partnerCompletion = task.completions?.some((c) => c.userId === partnerId);
+  if (task.assigneeId === currentUserId) {
+    assigneeLabel = "Мне";
+  } else if (task.assigneeId) {
+    assigneeLabel = partnerName || "Партнёру";
+  }
+
+  const myCompletion = task.completions?.some((completion) => completion.userId === currentUserId);
+
+  const partnerCompletion = task.completions?.some((completion) => completion.userId === partnerId);
+
   const isBoth = task.assigneeMode === "BOTH";
+
   const bothProgress = isBoth && !task.completed ? `${task.completions?.length ?? 0}/2` : null;
 
-  const canNudge = task.assigneeId && task.assigneeId !== currentUserId && !task.completed;
+  const canNudge = !!task.assigneeId && task.assigneeId !== currentUserId && !task.completed;
+
+  const handleToggle = () => {
+    if (isCompleted || isFuture || disabled) {
+      return;
+    }
+
+    onToggle(task.id);
+  };
 
   return (
     <div
       className={cn(
-        "group relative flex items-start gap-3 p-4",
-        "rounded-3xl border border-border/60 bg-card",
+        "group relative flex items-start gap-3 rounded-3xl border p-4",
+        "border-border/60 bg-card",
         "shadow-[0_10px_30px_rgba(15,23,42,0.05)]",
         "transition-[opacity,transform,box-shadow]",
         "duration-150 ease-out cursor-pointer select-none",
         "hover:shadow-[0_14px_36px_rgba(15,23,42,0.08)]",
         "active:scale-[0.99]",
-        task.completed && "opacity-60",
+
+        isCompleted && "opacity-60",
+
+        isFuture && "border-border/70 bg-muted/20",
+
+        isOverdue && "border-destructive/40 bg-destructive/5",
+
         isCelebrated && "ring-2 ring-primary/30 scale-[1.02]",
       )}
     >
-      <div className="shrink-0 mt-0.5" onClick={(e) => e.stopPropagation()}>
+      <div className="mt-0.5 shrink-0" onClick={(event) => event.stopPropagation()}>
         <Checkbox
           checked={task.completed || !!myCompletion}
-          onCheckedChange={() => onToggle(task.id)}
-          disabled={disabled}
+          onCheckedChange={handleToggle}
+          disabled={isCompleted || isFuture || disabled}
           size="md"
         />
       </div>
 
-      <div className="flex-1 min-w-0">
+      <div className="min-w-0 flex-1">
         <div className="flex items-start justify-between gap-2">
           <p
             className={cn(
@@ -100,26 +140,28 @@ export function TaskItem({
           {canNudge && (
             <div className="relative">
               <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setShowMenu((s) => !s);
+                type="button"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  setShowMenu((state) => !state);
                 }}
-                className="p-1.5 rounded-full hover:bg-muted transition-colors opacity-0 group-hover:opacity-100"
+                className="rounded-full p-1.5 opacity-0 transition-opacity hover:bg-muted group-hover:opacity-100"
               >
-                <MoreVertical className="w-4 h-4 text-muted-foreground" />
+                <MoreVertical className="h-4 w-4 text-muted-foreground" />
               </button>
 
               {showMenu && (
-                <div className="absolute right-0 top-8 z-20 w-40 bg-card border rounded-xl shadow-[var(--shadow-floating)] p-1">
+                <div className="absolute right-0 top-8 z-20 w-40 rounded-xl border bg-card p-1 shadow-[var(--shadow-floating)]">
                   <button
-                    onClick={(e) => {
-                      e.stopPropagation();
+                    type="button"
+                    onClick={(event) => {
+                      event.stopPropagation();
                       nudgeMutation.mutate(task.id);
                     }}
                     disabled={nudgeMutation.isPending}
-                    className="w-full flex items-center gap-2 px-3 py-2 text-sm rounded-lg hover:bg-muted transition-colors text-left"
+                    className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm transition-colors hover:bg-muted disabled:opacity-50"
                   >
-                    <Heart className="w-4 h-4 text-primary" />
+                    <Heart className="h-4 w-4 text-primary" />
                     Напомнить
                   </button>
                 </div>
@@ -128,26 +170,34 @@ export function TaskItem({
           )}
         </div>
 
-        <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 mt-2">
+        <div className="mt-2 flex flex-wrap items-center gap-x-2.5 gap-y-1">
           <span className="text-xs font-medium text-muted-foreground">
             {assigneeLabel}
             {bothProgress && ` · ${bothProgress}`}
           </span>
 
-          {task.dueAt && (
-            <span
-              className={cn(
-                "text-xs font-medium",
-                isOverdue ? "text-destructive" : "text-muted-foreground",
-              )}
-            >
+          {isFuture && task.dueAt && (
+            <span className="text-xs font-medium text-muted-foreground">
+              {formatFutureDate(task.dueAt)}
+            </span>
+          )}
+
+          {isOverdue && (
+            <span className="text-xs font-semibold text-destructive">
+              {formatOverdueStatus(task)}
+            </span>
+          )}
+
+          {!isFuture && !isOverdue && task.dueAt && (
+            <span className="text-xs font-medium text-muted-foreground">
               {formatDue(task.dueAt)}
             </span>
           )}
 
           {task.repeat !== "NONE" && (
             <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
-              <Repeat className="w-3 h-3" />
+              <Repeat className="h-3 w-3" />
+
               {task.repeat === "DAILY" && "Каждый день"}
               {task.repeat === "WEEKLY" && "Каждую неделю"}
               {task.repeat === "MONTHLY" && "Каждый месяц"}
@@ -156,22 +206,23 @@ export function TaskItem({
         </div>
 
         {isBoth && !task.completed && (
-          <div className="flex items-center gap-2 mt-2">
+          <div className="mt-2 flex items-center gap-2">
             <span
               className={cn(
-                "text-[10px] px-1.5 py-0.5 rounded-full border",
+                "rounded-full border px-1.5 py-0.5 text-[10px]",
                 myCompletion
-                  ? "bg-success/10 border-success text-success"
+                  ? "border-success bg-success/10 text-success"
                   : "border-muted text-muted-foreground",
               )}
             >
               {myCompletion ? "✓ Вы" : "○ Вы"}
             </span>
+
             <span
               className={cn(
-                "text-[10px] px-1.5 py-0.5 rounded-full border",
+                "rounded-full border px-1.5 py-0.5 text-[10px]",
                 partnerCompletion
-                  ? "bg-success/10 border-success text-success"
+                  ? "border-success bg-success/10 text-success"
                   : "border-muted text-muted-foreground",
               )}
             >
@@ -184,8 +235,8 @@ export function TaskItem({
       </div>
 
       {isCelebrated && (
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <div className="bg-primary text-primary-foreground px-4 py-2 rounded-full text-sm font-semibold shadow-lg animate-in zoom-in duration-300">
+        <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+          <div className="animate-in zoom-in rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-lg duration-300">
             {isBoth ? "❤️ Выполнено вместе" : "✓ Готово"}
           </div>
         </div>

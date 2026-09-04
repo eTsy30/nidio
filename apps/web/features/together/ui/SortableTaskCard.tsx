@@ -3,6 +3,7 @@
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 
+import { isTaskOverdue } from "../lib/task-utils";
 import { TogetherTask } from "../model/task.types";
 
 import { TaskCard } from "./TaskCard";
@@ -13,12 +14,20 @@ interface SortableTaskCardProps {
   partnerId?: string | undefined;
   partnerName?: string | undefined;
   partnerAvatarUrl?: string | null | undefined;
-  onEdit?: (task: TogetherTask) => void;
+  onEdit?: ((task: TogetherTask) => void) | undefined;
 }
+
 export function SortableTaskCard(props: SortableTaskCardProps) {
+  const disabled = props.task.completed || isTaskOverdue(props.task);
+
   const { setNodeRef, attributes, listeners, transform, transition, isDragging } = useSortable({
     id: props.task.id,
-    data: { type: "task", columnId: props.task.columnId, task: props.task },
+    disabled,
+    data: {
+      type: "task",
+      columnId: props.task.columnId,
+      task: props.task,
+    },
   });
 
   const style = {
@@ -28,7 +37,7 @@ export function SortableTaskCard(props: SortableTaskCardProps) {
   };
 
   return (
-    <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
+    <div ref={setNodeRef} style={style} {...attributes} {...(disabled ? {} : listeners)}>
       <TaskCard {...props} />
     </div>
   );
