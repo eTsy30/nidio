@@ -75,3 +75,29 @@
     transform: translateY(-6px);
   }
 }
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes celebrate-pop {
+    0% {
+      transform: scale(0.9);
+      opacity: 0;
+    }
+    50% {
+      transform: scale(1.05);
+      opacity: 1;
+    }
+    100% {
+      transform: scale(1);
+      opacity: 1;
+    }
+  }
+
+  .animate-celebrate {
+    animation: celebrate-pop 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-celebrate {
+    animation: none;
+  }
+}

@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 
 import { PrismaModule } from '../prisma/prisma.module';
 import { RelationshipModule } from '../relationship/relationship.module';
@@ -8,7 +8,7 @@ import { ChatRepository } from './chat.repository';
 import { ChatService } from './chat.service';
 
 @Module({
-  imports: [PrismaModule, RelationshipModule],
+  imports: [PrismaModule, forwardRef(() => RelationshipModule)],
   controllers: [ChatController],
   providers: [ChatService, ChatRepository],
   exports: [ChatService],

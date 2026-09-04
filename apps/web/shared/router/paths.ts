@@ -13,6 +13,7 @@ export const routes = {
   home: "/",
   chat: "/chat",
   calendar: "/calendar",
+  together: "/together",
   space: "/space",
   profile: "/profile",
 } satisfies Record<string, Route>;

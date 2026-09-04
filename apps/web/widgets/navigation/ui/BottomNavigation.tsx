@@ -22,8 +22,8 @@ const navigation = [
     icon: Home,
   },
   {
-    href: "/space",
-    label: "Место",
+    href: "/together",
+    label: "ToDo",
     icon: Users,
   },
   {
