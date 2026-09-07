@@ -40,10 +40,12 @@ enum Gender {
 // ==========  Couple & Relationship  ==========
 
 model Couple {
-  id        String         @id @default(cuid())
-  createdAt DateTime       @default(now())
-  updatedAt DateTime       @updatedAt
-  deletedAt DateTime?
+  id             String    @id @default(cuid())
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  deletedAt      DateTime?
+  relationshipAt DateTime?
+
   members   CoupleMember[]
   invites   Invite[]
   workspace Workspace?

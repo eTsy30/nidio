@@ -9,7 +9,9 @@ import {
   useRef,
   useState,
 } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 
+import { logout as logoutApi } from "@/features/auth/api/auth.api";
 import { User } from "@/features/auth/model/auth.types";
 import { http } from "@/shared/api/client/api";
 import {
@@ -33,16 +35,22 @@ const AuthContext = createContext<AuthContextValue>({
   logout: async () => {},
 });
 
-const REFRESH_INTERVAL_MS = 1000 * 60 * 10; // 10 минут
+const REFRESH_INTERVAL_MS = 1000 * 60 * 10;
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState<boolean>(true);
+
   const [user, setUser] = useState<User | null>(null);
+
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const queryClient = useQueryClient();
 
   const doRefresh = useCallback(async (): Promise<boolean> => {
     try {
-      const response = await http.post<{ accessToken: string }>("/auth/refresh");
+      const response = await http.post<{
+        accessToken: string;
+      }>("/auth/refresh");
 
       if (response.accessToken) {
         setAccessToken(response.accessToken);
@@ -57,18 +65,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const refreshUser = useCallback(async (): Promise<void> => {
     try {
-      const me = await http.get<User>("/auth/@me");
+      const me = await http.get<User>("/users/me");
+
       setUser(me);
+
+      queryClient.setQueryData(["auth", "user"], me);
     } catch (error: unknown) {
-      const status = (error as { response?: { status?: number } })?.response?.status;
+      const status = (
+        error as {
+          response?: {
+            status?: number;
+          };
+        }
+      )?.response?.status;
 
       if (status === 401) {
         const refreshed = await doRefresh();
 
         if (refreshed) {
           try {
-            const me = await http.get<User>("/auth/@me");
+            const me = await http.get<User>("/users/me");
+
             setUser(me);
+
+            queryClient.setQueryData(["auth", "user"], me);
+
             return;
           } catch {
             // fall through to cleanup
@@ -78,22 +99,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       removeAccessToken();
       setUser(null);
+      queryClient.removeQueries({
+        queryKey: ["auth", "user"],
+      });
     }
-  }, [doRefresh]);
+  }, [doRefresh, queryClient]);
 
   const logout = useCallback(async (): Promise<void> => {
     try {
-      await http.post("/auth/logout");
-    } catch {
-      // ignore
+      await logoutApi();
     } finally {
-      removeAccessToken();
+      queryClient.clear();
       setUser(null);
+
       if (typeof window !== "undefined") {
-        window.location.href = "/login";
+        window.location.replace("/login");
       }
     }
-  }, []);
+  }, [queryClient]);
 
   useEffect(() => {
     const bootstrap = async (): Promise<void> => {
@@ -126,19 +149,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         void refreshUser();
       } else {
         setUser(null);
+
+        queryClient.removeQueries({
+          queryKey: ["auth", "user"],
+        });
       }
     });
 
     return unsubscribe;
-  }, [refreshUser]);
+  }, [refreshUser, queryClient]);
 
-  // Периодически обновляем токен, чтобы он не истекал во время сессии
   useEffect(() => {
     if (!user) {
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
         intervalRef.current = null;
       }
+
       return;
     }
 
@@ -147,8 +174,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (!ok) {
           removeAccessToken();
           setUser(null);
+
+          queryClient.clear();
+
           if (typeof window !== "undefined") {
-            window.location.href = "/login";
+            window.location.replace("/login");
           }
         }
       });
@@ -160,7 +190,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         intervalRef.current = null;
       }
     };
-  }, [user, doRefresh]);
+  }, [user, doRefresh, queryClient]);
 
   if (isLoading) {
     return null;

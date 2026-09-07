@@ -17,15 +17,21 @@ export const api = axios.create({
   },
 });
 
-api.interceptors.response.use(responseInterceptor, responseErrorInterceptor);
-
 api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
   const accessToken = getAccessToken();
+
   if (accessToken) {
     config.headers.set("Authorization", `Bearer ${accessToken}`);
   }
+
+  if (config.data instanceof FormData) {
+    config.headers.delete("Content-Type");
+  }
+
   return config;
 });
+
+api.interceptors.response.use(responseInterceptor, responseErrorInterceptor);
 
 export const http = {
   get: <T>(url: string, config?: Parameters<typeof api.get>[1]) =>
@@ -44,4 +50,7 @@ export const http = {
     api.delete<T>(url, config).then((response: AxiosResponse<T>) => response.data),
 };
 
-export type ApiError = AxiosError<{ message?: string; code?: string }>;
+export type ApiError = AxiosError<{
+  message?: string;
+  code?: string;
+}>;

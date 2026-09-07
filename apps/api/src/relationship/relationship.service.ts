@@ -84,6 +84,7 @@ export class RelationshipService {
       expiresAt: invite.expiresAt,
     };
   }
+
   async acceptInvite(userId: string, token: string) {
     return this.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
       const invite = await this.ensureInviteIsValid(token);
@@ -93,15 +94,21 @@ export class RelationshipService {
       }
 
       const creatorMembership = await tx.coupleMember.findFirst({
-        where: { userId: invite.creatorId },
+        where: {
+          userId: invite.creatorId,
+        },
       });
+
       if (creatorMembership) {
         throw new ConflictException('Invitation owner is already in a couple.');
       }
 
       const receiverMembership = await tx.coupleMember.findFirst({
-        where: { userId },
+        where: {
+          userId,
+        },
       });
+
       if (receiverMembership) {
         throw new ConflictException('User is already in a couple.');
       }
@@ -177,7 +184,9 @@ export class RelationshipService {
         },
       });
 
-      return { success: true };
+      return {
+        success: true,
+      };
     });
   }
 
@@ -200,11 +209,14 @@ export class RelationshipService {
       },
     });
 
-    if (!membership) return null;
+    if (!membership) {
+      return null;
+    }
 
     if (!membership.couple || membership.couple.deletedAt) {
       return null;
     }
+
     if (!membership.couple.workspace) {
       throw new NotFoundException('Workspace not found.');
     }
@@ -224,7 +236,39 @@ export class RelationshipService {
       partnerFirstName: partner.user.firstName,
       partnerAvatarUrl: partner.user.avatarUrl,
       createdAt: membership.couple.createdAt,
+      relationshipAt: membership.couple.relationshipAt,
     };
+  }
+
+  async updateRelationship(userId: string, relationshipAt: string | null) {
+    const membership = await this.prisma.coupleMember.findFirst({
+      where: {
+        userId,
+        couple: {
+          deletedAt: null,
+        },
+      },
+      select: {
+        coupleId: true,
+      },
+    });
+
+    if (!membership) {
+      throw new NotFoundException('Couple not found.');
+    }
+
+    return this.prisma.couple.update({
+      where: {
+        id: membership.coupleId,
+      },
+      select: {
+        id: true,
+        relationshipAt: true,
+      },
+      data: {
+        relationshipAt: relationshipAt ? new Date(relationshipAt) : null,
+      },
+    });
   }
 
   async getWorkspaceId(userId: string): Promise<string> {
@@ -259,14 +303,14 @@ export class RelationshipService {
     return workspace.id;
   }
 
-  // private хелпер потом вынести
-
   private async ensureUserHasNoCouple(userId: string) {
     const membership = await this.prisma.coupleMember.findUnique({
       where: {
         userId,
       },
-      include: { couple: true },
+      include: {
+        couple: true,
+      },
     });
 
     if (membership && !membership.couple?.deletedAt) {
@@ -368,6 +412,7 @@ export class RelationshipService {
 
   private buildInviteUrl(token: string): string {
     const frontendUrl = this.configService.getOrThrow<string>('FRONTEND_URL');
+
     return `${frontendUrl}/invite/${token}`;
   }
 

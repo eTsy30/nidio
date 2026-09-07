@@ -1,7 +1,6 @@
 import {
   Body,
   Controller,
-  Get,
   HttpCode,
   HttpStatus,
   Post,
@@ -21,6 +20,7 @@ import { AuthService } from './auth.service';
 
 const isDev = process.env.NODE_ENV !== 'production';
 
+import { ChangePasswordDto } from './dto/change-password.dto';
 @ApiTags('Auth')
 @Controller('auth')
 export class AuthController {
@@ -104,6 +104,15 @@ export class AuthController {
 
     return { success: true };
   }
+  @Authorization()
+  @Post('change-password')
+  @HttpCode(HttpStatus.OK)
+  changePassword(
+    @Authorized('id') userId: string,
+    @Body() dto: ChangePasswordDto,
+  ) {
+    return this.authService.changePassword(userId, dto);
+  }
 
   @Post('forgot-password')
   @HttpCode(HttpStatus.OK)
@@ -117,9 +126,9 @@ export class AuthController {
     return this.authService.resetPassword(dto.token, dto.newPassword);
   }
 
-  @Authorization()
-  @Get('@me')
-  me(@Authorized() user: unknown) {
-    return user;
-  }
+  // @Authorization()
+  // @Get('@me')
+  // me(@Authorized() user: unknown) {
+  //   return user;
+  // }
 }

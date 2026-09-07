@@ -36,7 +36,7 @@ import { WeekView } from "./WeekView";
 
 export default function CalendarWidget() {
   const { user } = useAuth();
-
+  console.log(user);
   const [scope, setScope] = useState<EventScope>(EventScope.PERSONAL);
 
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);

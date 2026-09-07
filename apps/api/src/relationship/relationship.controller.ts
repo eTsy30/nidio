@@ -1,9 +1,18 @@
-import { Controller, Delete, Get, Param, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+} from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 
 import { Authorization } from '../auth/decorators/Authorization.decorator';
 import { Authorized } from '../auth/decorators/authorized.decorator';
 
+import { UpdateRelationshipDto } from './dto/update-relationship.dto';
 import { RelationshipService } from './relationship.service';
 
 @ApiTags('Relationship')
@@ -41,6 +50,18 @@ export class RelationshipController {
   @Get('couple')
   getCurrentCouple(@Authorized('id') userId: string) {
     return this.relationshipService.getCurrentCouple(userId);
+  }
+
+  @Authorization()
+  @Patch('couple')
+  updateRelationship(
+    @Authorized('id') userId: string,
+    @Body() dto: UpdateRelationshipDto,
+  ) {
+    return this.relationshipService.updateRelationship(
+      userId,
+      dto.relationshipAt ?? null,
+    );
   }
 
   @Authorization()

@@ -8,6 +8,7 @@ import {
 import { EmailService } from '../email/email.service';
 import { PrismaService } from '../prisma/prisma.service';
 
+import { ChangePasswordDto } from './dto/change-password.dto';
 import { LoginDto } from './dto/login.dto';
 import { RegisterRequestDto } from './dto/register.dto';
 import { PasswordService } from './services/password.service';
@@ -273,6 +274,59 @@ export class AuthService {
       this.prisma.refreshToken.deleteMany({
         where: {
           userId: reset.userId,
+        },
+      }),
+    ]);
+
+    return {
+      message: 'Password successfully changed',
+    };
+  }
+  async changePassword(userId: string, dto: ChangePasswordDto) {
+    const user = await this.prisma.user.findUnique({
+      where: {
+        id: userId,
+      },
+      select: {
+        id: true,
+        passwordHash: true,
+      },
+    });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    const isCurrentPasswordValid = await this.passwordService.verify(
+      user.passwordHash,
+      dto.currentPassword,
+    );
+
+    if (!isCurrentPasswordValid) {
+      throw new UnauthorizedException('Current password is incorrect');
+    }
+
+    if (dto.currentPassword === dto.newPassword) {
+      throw new ConflictException(
+        'New password must differ from the current password',
+      );
+    }
+
+    const passwordHash = await this.passwordService.hash(dto.newPassword);
+
+    await this.prisma.$transaction([
+      this.prisma.user.update({
+        where: {
+          id: userId,
+        },
+        data: {
+          passwordHash,
+        },
+      }),
+
+      this.prisma.refreshToken.deleteMany({
+        where: {
+          userId,
         },
       }),
     ]);

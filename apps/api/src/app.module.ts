@@ -12,8 +12,10 @@ import { EmailModule } from './email/email.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { RealtimeModule } from './realtime/realtime.module';
 import { RelationshipModule } from './relationship/relationship.module';
+import { StorageModule } from './storage/storage.module';
 import { TasksModule } from './tasks/tasks.module';
 import { TemplatesModule } from './templates/templates.module';
+import { UsersModule } from './users/users.module';
 
 @Module({
   imports: [
@@ -33,6 +35,8 @@ import { TemplatesModule } from './templates/templates.module';
     TasksModule,
     BoardModule,
     TemplatesModule,
+    UsersModule,
+    StorageModule,
     GraphQLModule.forRoot<ApolloDriverConfig>({
       driver: ApolloDriver,
       autoSchemaFile: join(process.cwd(), 'src/schema.gql'),

@@ -10,23 +10,33 @@ import {
   getCurrentInvite,
   getInvite,
   leaveCouple,
+  updateRelationship,
 } from "../api/relationship.api";
 import {
-  CoupleResponse,
+  AcceptInviteResponse,
   CreateInviteResponse,
+  CurrentCoupleResponse,
   CurrentInviteResponse,
   InviteResponse,
   LeaveCoupleResponse,
+  UpdateRelationshipRequest,
+  UpdateRelationshipResponse,
 } from "../model/relationship.types";
 
-type ApiError = AxiosError<{ message?: string }>;
+type ApiError = AxiosError<{
+  message?: string;
+}>;
 
 export const useCreateInvite = () => {
   const queryClient = useQueryClient();
+
   return useMutation<CreateInviteResponse, ApiError, void>({
     mutationFn: createInvite,
+
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.relationship.invite });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.relationship.invite,
+      });
     },
   });
 };
@@ -48,29 +58,57 @@ export const useInvite = (token: string) => {
 
 export const useAcceptInvite = () => {
   const queryClient = useQueryClient();
-  return useMutation<CoupleResponse, ApiError, string>({
+
+  return useMutation<AcceptInviteResponse, ApiError, string>({
     mutationFn: acceptInvite,
+
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.relationship.couple });
-      queryClient.invalidateQueries({ queryKey: queryKeys.relationship.invite });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.relationship.couple,
+      });
+
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.relationship.invite,
+      });
     },
   });
 };
 
 export const useCurrentCouple = () => {
-  return useQuery<CoupleResponse, ApiError>({
+  return useQuery<CurrentCoupleResponse, ApiError>({
     queryKey: queryKeys.relationship.couple,
     queryFn: getCurrentCouple,
   });
 };
 
+export const useUpdateRelationship = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation<UpdateRelationshipResponse, ApiError, UpdateRelationshipRequest>({
+    mutationFn: updateRelationship,
+
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.relationship.couple,
+      });
+    },
+  });
+};
+
 export const useLeaveCouple = () => {
   const queryClient = useQueryClient();
+
   return useMutation<LeaveCoupleResponse, ApiError, void>({
     mutationFn: leaveCouple,
+
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.relationship.couple });
-      queryClient.invalidateQueries({ queryKey: queryKeys.relationship.invite });
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.relationship.couple,
+      });
+
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.relationship.invite,
+      });
     },
   });
 };

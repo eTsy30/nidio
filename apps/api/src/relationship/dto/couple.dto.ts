@@ -22,4 +22,10 @@ export class CoupleDto {
 
   @ApiProperty()
   createdAt!: Date;
+
+  @ApiProperty({
+    nullable: true,
+    description: 'Дата начала отношений',
+  })
+  relationshipAt!: Date | null;
 }

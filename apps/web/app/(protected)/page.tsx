@@ -3,22 +3,26 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 
-import { useMe } from "@/features/auth";
+import { useCurrentCouple } from "@/features/relationship/hook/use-relationship";
 import { HomeView } from "@/screens/home";
 import { routes } from "@/shared/router/paths";
 
 export default function HomePage() {
   const router = useRouter();
 
-  const { data: user, isLoading } = useMe();
+  const { data: couple, isLoading } = useCurrentCouple();
 
   useEffect(() => {
-    if (!isLoading && user && !user.relationship?.connected) {
+    if (!isLoading && !couple) {
       router.replace(routes.invite);
     }
-  }, [user, isLoading, router]);
+  }, [couple, isLoading, router]);
 
   if (isLoading) {
+    return null;
+  }
+
+  if (!couple) {
     return null;
   }
 

@@ -1,6 +1,8 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { AxiosError } from "axios";
 
+import { queryKeys } from "@/shared/api/query/query-keys";
+
 import {
   forgotPassword,
   login,
@@ -57,7 +59,7 @@ export const useLogout = () => {
 
 export const useMe = () => {
   return useQuery<User, AxiosError>({
-    queryKey: ["auth", "me"],
+    queryKey: queryKeys.auth.user,
     queryFn: me,
     retry: false,
     refetchOnWindowFocus: true,
