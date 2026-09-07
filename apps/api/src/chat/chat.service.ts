@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 
+import { LinkPreviewService } from '../link-preview/link-preview.service';
 import { RelationshipService } from '../relationship/relationship.service';
 
 import { AddReactionDto } from './dto/add-reaction.dto';
@@ -12,6 +13,7 @@ export class ChatService {
   constructor(
     private readonly chatRepository: ChatRepository,
     private readonly relationshipService: RelationshipService,
+    private readonly linkPreviewService: LinkPreviewService,
   ) {}
 
   async getMessages(userId: string, cursor?: string, limit = 20) {
@@ -40,10 +42,12 @@ export class ChatService {
 
   async sendMessage(userId: string, dto: CreateMessageDto) {
     const workspaceId = await this.relationshipService.getWorkspaceId(userId);
-
     if (!dto.content) {
       throw new Error('Message content is required.');
     }
+
+    const url = dto.content.match(/https?:\/\/[^\s]+/)?.[0];
+    const preview = url ? await this.linkPreviewService.get(url) : null;
 
     if (dto.replyToId) {
       const replyMessage = await this.chatRepository.findMessageById(
@@ -59,6 +63,7 @@ export class ChatService {
       workspaceId,
       senderId: userId,
       content: dto.content,
+      ...(preview ? { metadata: { linkPreview: preview } } : {}),
       ...(dto.replyToId ? { replyToId: dto.replyToId } : {}),
     });
   }

@@ -1,5 +1,6 @@
 import { forwardRef, Module } from '@nestjs/common';
 
+import { LinkPreviewService } from '../link-preview/link-preview.service';
 import { PrismaModule } from '../prisma/prisma.module';
 import { RelationshipModule } from '../relationship/relationship.module';
 
@@ -10,7 +11,7 @@ import { ChatService } from './chat.service';
 @Module({
   imports: [PrismaModule, forwardRef(() => RelationshipModule)],
   controllers: [ChatController],
-  providers: [ChatService, ChatRepository],
+  providers: [ChatService, ChatRepository, LinkPreviewService],
   exports: [ChatService],
 })
 export class ChatModule {}

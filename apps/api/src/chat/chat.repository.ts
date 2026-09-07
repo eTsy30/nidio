@@ -72,6 +72,14 @@ export class ChatRepository {
     workspaceId: string;
     senderId: string;
     content: string;
+    metadata?: {
+      linkPreview: {
+        title: string;
+        description: string;
+        image: string;
+        url: string;
+      };
+    };
     replyToId?: string;
     clientId?: string;
   }) {
@@ -80,6 +88,7 @@ export class ChatRepository {
         workspaceId: data.workspaceId,
         senderId: data.senderId,
         content: data.content,
+        ...(data.metadata ? { metadata: data.metadata } : {}),
         ...(data.clientId ? { clientId: data.clientId } : {}),
         ...(data.replyToId ? { replyToId: data.replyToId } : {}),
       },

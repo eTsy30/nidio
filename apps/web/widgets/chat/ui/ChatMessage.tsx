@@ -45,6 +45,7 @@ export function ChatMessage({
     new Date(message.updatedAt).getTime() !== new Date(message.createdAt).getTime();
 
   const hasReactions = message.reactions && message.reactions.length > 0;
+  const linkPreview = message.metadata?.linkPreview;
 
   return (
     <Message align={isMine ? "end" : "start"}>
@@ -108,6 +109,43 @@ export function ChatMessage({
                 )}
               </span>
             </div>
+
+            {linkPreview && (
+              <a
+                href={linkPreview.url}
+                target="_blank"
+                rel="noreferrer"
+                className={cn(
+                  "mt-3 block overflow-hidden rounded-lg border transition-colors hover:bg-black/5",
+                  isMine ? "border-primary-foreground/20" : "border-border",
+                )}
+              >
+                {linkPreview.image && (
+                  <img src={linkPreview.image} alt="" className="h-36 w-full object-cover" />
+                )}
+                <div className="p-3">
+                  <p className="line-clamp-1 text-sm font-medium">{linkPreview.title}</p>
+                  {linkPreview.description && (
+                    <p
+                      className={cn(
+                        "mt-1 line-clamp-2 text-xs",
+                        isMine ? "text-primary-foreground/70" : "text-muted-foreground",
+                      )}
+                    >
+                      {linkPreview.description}
+                    </p>
+                  )}
+                  <p
+                    className={cn(
+                      "mt-2 truncate text-xs",
+                      isMine ? "text-primary-foreground/70" : "text-muted-foreground",
+                    )}
+                  >
+                    {linkPreview.url}
+                  </p>
+                </div>
+              </a>
+            )}
           </BubbleContent>
 
           {hasReactions && (

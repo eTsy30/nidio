@@ -5,6 +5,13 @@ export type ChatReaction = {
   userId: string;
 };
 
+export type LinkPreview = {
+  title: string;
+  description: string;
+  image: string;
+  url: string;
+};
+
 export type ChatMessageItem = {
   id: string;
   content: string | null;
@@ -17,6 +24,9 @@ export type ChatMessageItem = {
   updatedAt?: string | null;
   reactions?: ChatReaction[];
   clientId?: string;
+  metadata?: {
+    linkPreview?: LinkPreview;
+  } | null;
   status: ChatMessageStatus;
 };
 
