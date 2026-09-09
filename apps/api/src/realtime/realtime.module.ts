@@ -3,6 +3,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 
 import { ChatModule } from '../chat/chat.module';
+import { PushModule } from '../push/push.module';
 import { RelationshipModule } from '../relationship/relationship.module';
 
 import { RealtimeGateway } from './realtime.gateway';
@@ -10,11 +11,12 @@ import { RealtimeService } from './realtime.service';
 
 @Module({
   imports: [
+    PushModule,
     forwardRef(() => RelationshipModule),
     forwardRef(() => ChatModule),
     ConfigModule,
     JwtModule.registerAsync({
-      imports: [ConfigModule],
+      imports: [PushModule, ConfigModule],
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => ({
         secret: configService.getOrThrow<string>('JWT_SECRET'),

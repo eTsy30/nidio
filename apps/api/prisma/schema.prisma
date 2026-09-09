@@ -18,6 +18,8 @@ model User {
   emailVerifiedAt    DateTime?
   createdAt          DateTime            @default(now())
   updatedAt          DateTime            @updatedAt
+  pushSubscriptions  PushSubscription[]
+  chatPresence       ChatPresence[]
   memberships        CoupleMember[]
   emailVerifications EmailVerification[]
   createdInvites     Invite[]
@@ -291,6 +293,7 @@ model Message {
   replyTo Message?  @relation("MessageReply", fields: [replyToId], references: [id])
   replies Message[] @relation("MessageReply")
 
+  pushDeliveries PushDelivery[]
   attachments MessageAttachment[]
   reactions   MessageReaction[]
 
@@ -479,4 +482,34 @@ model RefreshToken {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
+}
+
+model PushSubscription {
+  id        String @id @default(cuid())
+  userId    String
+  endpoint  String @unique
+  p256dh    String
+  auth      String
+  createdAt DateTime @default(now())
+  user      User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  deliveries PushDelivery[]
+  @@index([userId])
+}
+
+model PushDelivery {
+  subscriptionId String
+  messageId String
+  createdAt DateTime @default(now())
+  subscription PushSubscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+  message Message @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  @@id([subscriptionId, messageId])
+}
+
+model ChatPresence {
+  socketId String @id
+  userId String
+  workspaceId String
+  expiresAt DateTime
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@index([userId, workspaceId, expiresAt])
 }

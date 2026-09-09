@@ -13,6 +13,7 @@ import { useQueryClient } from "@tanstack/react-query";
 
 import { logout as logoutApi } from "@/features/auth/api/auth.api";
 import { User } from "@/features/auth/model/auth.types";
+import { disablePush } from "@/features/push/push-client";
 import { http } from "@/shared/api/client/api";
 import {
   getAccessToken,
@@ -107,6 +108,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = useCallback(async (): Promise<void> => {
     try {
+      await disablePush().catch(() => undefined);
       await logoutApi();
     } finally {
       queryClient.clear();

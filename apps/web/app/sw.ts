@@ -1,8 +1,8 @@
+/// <reference lib="webworker" />
 import { defaultCache } from "@serwist/next/worker";
 import { Serwist } from "serwist";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-declare const self: any;
+declare const self: ServiceWorkerGlobalScope & { __SW_MANIFEST: import("serwist").PrecacheEntry[] };
 
 const serwist = new Serwist({
   precacheEntries: self.__SW_MANIFEST,
@@ -13,3 +13,38 @@ const serwist = new Serwist({
 });
 
 serwist.addEventListeners();
+
+self.addEventListener("push", (event: PushEvent) => {
+  if (!event.data) return;
+  let payload: { title?: string; body?: string; tag?: string };
+  try {
+    payload = event.data.json();
+  } catch {
+    return;
+  }
+  event.waitUntil(
+    self.registration.showNotification(payload.title || "Nidio", {
+      body: payload.body || "Новое сообщение",
+      icon: "/icons/icon-192x192.png",
+      ...(payload.tag ? { tag: payload.tag } : {}),
+      data: { url: "/chat" },
+    }),
+  );
+});
+
+self.addEventListener("notificationclick", (event: NotificationEvent) => {
+  event.notification.close();
+  event.waitUntil(
+    (async () => {
+      const url = new URL("/chat", self.location.origin).href;
+      const windows = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
+      for (const client of windows) {
+        if (new URL(client.url).origin !== self.location.origin) continue;
+        await client.navigate(url);
+        await client.focus();
+        return;
+      }
+      await self.clients.openWindow(url);
+    })(),
+  );
+});

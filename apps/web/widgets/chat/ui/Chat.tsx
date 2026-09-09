@@ -6,6 +6,7 @@ import { useAuth } from "@/shared/api/provider/auth-provider";
 import { useRealtime } from "@/shared/realtime";
 
 import { useAddReaction } from "../model/useAddReaction";
+import { useChatPresence } from "../model/useChatPresence";
 import { useChatRealtime } from "../model/useChatRealtime";
 import { useDeleteMessage } from "../model/useDeleteMessage";
 import { useEditMessage } from "../model/useEditMessage";
@@ -20,6 +21,7 @@ import { ChatInput } from "./ChatInput";
 import { ChatMessages } from "./ChatMessages";
 
 export function Chat() {
+  useChatPresence();
   const [messages, setMessages] = useState<ChatMessageItem[]>([]);
   const [editingMessage, setEditingMessage] = useState<{ id: string; content: string } | null>(
     null,

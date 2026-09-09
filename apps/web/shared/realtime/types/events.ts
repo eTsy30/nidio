@@ -46,6 +46,7 @@ export interface ServerToClientEvents {
 }
 
 export interface ClientToServerEvents {
+  "chat:presence": (data: { active: boolean }) => void;
   "chat:send": (message: { content: string }) => void;
   "chat:edit": (payload: { messageId: string; dto: { content: string } }) => void;
   "chat:delete": (payload: { messageId: string }) => void;

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Bell, Info, Lock, LogOut, Mail, Palette } from "lucide-react";
+import { Info, Lock, LogOut, Mail, Palette } from "lucide-react";
 
 import { useMe } from "@/features/auth";
 import {
@@ -12,6 +12,7 @@ import {
   ProfileRow,
   ProfileSection,
 } from "@/features/profile";
+import { PushSettings } from "@/features/push/PushSettings";
 import { useCurrentCouple } from "@/features/relationship/hook/use-relationship";
 import { useAuth } from "@/shared/api/provider/auth-provider";
 import { Button } from "@/shared/ui/button/Button";
@@ -43,12 +44,7 @@ export function ProfileView() {
         <CoupleCard couple={couple} isLoading={isCoupleLoading} />
 
         <ProfileSection title="Настройки">
-          <ProfileRow
-            label="Уведомления"
-            description="Настройки уведомлений"
-            icon={<Bell className="size-4" />}
-            disabled
-          />
+          <PushSettings />
 
           <ProfileRow
             label="Внешний вид"

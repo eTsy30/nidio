@@ -13,6 +13,7 @@ import { ChatService } from '../chat/chat.service';
 import { AddReactionDto } from '../chat/dto/add-reaction.dto';
 import { CreateMessageDto } from '../chat/dto/create-message.dto';
 import { EditMessageDto } from '../chat/dto/edit-message.dto';
+import { PushService } from '../push/push.service';
 import { RelationshipService } from '../relationship/relationship.service';
 
 import { RealtimeService } from './realtime.service';
@@ -29,6 +30,7 @@ export class RealtimeGateway
   server!: Server;
 
   constructor(
+    private readonly pushService: PushService,
     private readonly jwtService: JwtService,
 
     private readonly realtimeService: RealtimeService,
@@ -133,6 +135,21 @@ export class RealtimeGateway
   //     online: true,
   //   });
   // }
+
+  @SubscribeMessage('chat:presence')
+  async handleChatPresence(client: Socket, payload: { active?: boolean }) {
+    const userId = client.data.user?.sub;
+    if (!userId || typeof payload?.active !== 'boolean') return;
+    const relationship =
+      await this.relationshipService.getCurrentCouple(userId);
+    if (!relationship) return;
+    await this.pushService.setPresence(
+      client.id,
+      userId,
+      relationship.workspaceId,
+      payload.active,
+    );
+  }
 
   @SubscribeMessage('chat:send')
   async handleChatSend(client: Socket, dto: CreateMessageDto) {
@@ -342,6 +359,7 @@ export class RealtimeGateway
   }
 
   async handleDisconnect(client: Socket) {
+    await this.pushService.clearPresence(client.id);
     const userId = client.data.user?.sub;
     if (!userId) {
       return;

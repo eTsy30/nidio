@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 
 import { LinkPreviewService } from '../link-preview/link-preview.service';
+import { PushService } from '../push/push.service';
 import { RelationshipService } from '../relationship/relationship.service';
 
 import { AddReactionDto } from './dto/add-reaction.dto';
@@ -11,6 +12,7 @@ import { ChatRepository } from './chat.repository';
 @Injectable()
 export class ChatService {
   constructor(
+    private readonly pushService: PushService,
     private readonly chatRepository: ChatRepository,
     private readonly relationshipService: RelationshipService,
     private readonly linkPreviewService: LinkPreviewService,
@@ -59,13 +61,15 @@ export class ChatService {
       }
     }
 
-    return this.chatRepository.createMessage({
+    const message = await this.chatRepository.createMessage({
       workspaceId,
       senderId: userId,
       content: dto.content,
       ...(preview ? { metadata: { linkPreview: preview } } : {}),
       ...(dto.replyToId ? { replyToId: dto.replyToId } : {}),
     });
+    void this.pushService.notifyMessage(message.id);
+    return message;
   }
 
   /** Обновить текст сообщения. */

@@ -16,10 +16,10 @@ import { TogetherTask } from "../model/task.types";
 interface TaskCardProps {
   task: TogetherTask;
   currentUserId: string;
-  partnerId?: string;
-  partnerName?: string;
-  partnerAvatarUrl?: string | null;
-  onEdit?: (task: TogetherTask) => void;
+  partnerId?: string | undefined;
+  partnerName?: string | undefined;
+  partnerAvatarUrl?: string | null | undefined;
+  onEdit?: ((task: TogetherTask) => void) | undefined;
 }
 
 function formatDue(dueAt: string | null): string {
