@@ -1,26 +1,23 @@
 "use client";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 
+import type { ApiError } from "@/shared/api/client/api";
+
+import { togetherKeys } from "../api/query-keys";
 import { tasksApi } from "../api/tasks.api";
 
 export function useNudge() {
   const queryClient = useQueryClient();
-
   return useMutation({
-    mutationFn: (taskId: string) => tasksApi.nudge(taskId),
-    onMutate: async (taskId) => {
-      // Защита от спама: можно добавить локальную блокировку через timestamp в кеше
-      const key = ["nudge-cooldown", taskId];
-      const last = queryClient.getQueryData<number>(key);
-      const now = Date.now();
-      if (last && now - last < 5 * 60 * 1000) {
-        throw new Error("Cooldown");
-      }
-      queryClient.setQueryData(key, now);
-    },
+    retry: false,
+    mutationFn: tasksApi.nudge,
     onSuccess: () => {
-      // Realtime event должен прийти от бэкенда и обновить UI
+      void queryClient.invalidateQueries({ queryKey: togetherKeys.all });
+      toast.success("Напоминание отправлено");
     },
+    onError: (error: ApiError) =>
+      toast.error(error.response?.data?.message ?? "Не удалось отправить напоминание"),
   });
 }

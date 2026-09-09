@@ -2,21 +2,23 @@ import { api } from "@/shared/api/client/api";
 
 import { TaskRepeat, TodaySummary, TogetherTask } from "../model/task.types";
 
+export type AssigneeType = "ME" | "PARTNER" | "BOTH" | "ROTATE";
+
 export interface CreateTaskPayload {
   title: string;
-  description?: string | undefined;
+  description?: string | null;
   columnId: string;
-  assigneeId?: string | null | undefined;
-  assigneeMode?: AssigneeType | undefined;
-  rotationFirstAssigneeId?: string | undefined;
-  dueAt?: string | undefined;
-  repeat?: TaskRepeat | undefined;
-  repeatUntil?: string | undefined;
-  repeatConfig?: Record<string, unknown> | undefined;
-  priority?: boolean | undefined;
+  assigneeId?: string | null;
+  assigneeMode?: AssigneeType;
+  rotationFirstAssigneeId?: string | null;
+  dueAt?: string | null;
+  repeat?: TaskRepeat;
+  repeatUntil?: string | null;
+  repeatConfig?: Record<string, unknown>;
+  priority?: boolean;
 }
 
-export type AssigneeType = "ME" | "PARTNER" | "BOTH" | "ROTATE";
+export type UpdateTaskPayload = Partial<CreateTaskPayload>;
 
 export const tasksApi = {
   getAll: () => api.get<TogetherTask[]>("/tasks").then((res) => res.data),
@@ -28,7 +30,7 @@ export const tasksApi = {
   create: (payload: CreateTaskPayload) =>
     api.post<TogetherTask>("/tasks", payload).then((res) => res.data),
 
-  update: (id: string, payload: Partial<CreateTaskPayload>) =>
+  update: (id: string, payload: UpdateTaskPayload) =>
     api.patch<TogetherTask>(`/tasks/${id}`, payload).then((res) => res.data),
 
   move: (id: string, columnId: string, order: number) =>

@@ -181,6 +181,7 @@ enum AssigneeMode {
 }
 
 model Task {
+  overdueNotifiedAt DateTime?
   id          String  @id @default(cuid())
   title       String
   description String?
@@ -213,6 +214,7 @@ model Task {
   completions TaskCompletion[]
   nudges      Nudge[]
 
+  @@index([completed, overdueNotifiedAt, dueAt])
   @@index([columnId])
   @@index([coupleId])
   @@index([assigneeId])

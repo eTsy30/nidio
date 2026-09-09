@@ -1,6 +1,7 @@
 import {
   ForbiddenException,
   Injectable,
+  Logger,
   NotFoundException,
   OnModuleDestroy,
   OnModuleInit,
@@ -14,22 +15,27 @@ import {
   startOfDay,
   subDays,
 } from 'date-fns';
+import { randomUUID } from 'node:crypto';
 
 import { PrismaService } from '../prisma/prisma.service';
+import { PushService } from '../push/push.service';
 import { RelationshipService } from '../relationship/relationship.service';
 
 import { CreateTaskDto } from './dto/create-task.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
+import { assignedTaskUsers, resolveTaskAssignment } from './task-assignment';
 
 type TaskDeleteMode = 'THIS' | 'FOLLOWING';
 
 @Injectable()
 export class TasksService implements OnModuleInit, OnModuleDestroy {
+  private readonly logger = new Logger(TasksService.name);
   private cleanupTimer?: NodeJS.Timeout | undefined;
 
   constructor(
     private readonly prisma: PrismaService,
     private readonly relationshipService: RelationshipService,
+    private readonly pushService: PushService,
   ) {}
 
   // ─── BACKEND CLEANUP ─────────────────────────────────
@@ -204,6 +210,8 @@ export class TasksService implements OnModuleInit, OnModuleDestroy {
       _max: { order: true },
     });
 
+    const members = await this.getCoupleMemberIds(coupleId);
+    const assignment = resolveTaskAssignment(dto, userId, members);
     const isRecurring = dto.repeat !== undefined && dto.repeat !== 'NONE';
 
     const data: Prisma.TaskUncheckedCreateInput = {
@@ -213,9 +221,7 @@ export class TasksService implements OnModuleInit, OnModuleDestroy {
       coupleId,
       order: (maxOrder._max.order ?? -1) + 1,
       priority: dto.priority ?? false,
-      assigneeId: dto.assigneeId ?? null,
-      assigneeMode: dto.assigneeMode ?? 'ME',
-      rotationFirstAssigneeId: dto.rotationFirstAssigneeId ?? null,
+      ...assignment,
       dueAt: dto.dueAt ? new Date(dto.dueAt) : null,
       repeat: dto.repeat ?? 'NONE',
       repeatUntil: dto.repeatUntil ? new Date(dto.repeatUntil) : null,
@@ -227,7 +233,7 @@ export class TasksService implements OnModuleInit, OnModuleDestroy {
       createdById: userId,
     };
 
-    return this.prisma.task.create({
+    const task = await this.prisma.task.create({
       data,
       include: {
         completions: {
@@ -235,6 +241,14 @@ export class TasksService implements OnModuleInit, OnModuleDestroy {
         },
       },
     });
+
+    await this.notifyAssigned(
+      task,
+      assignedTaskUsers(task, members).filter((id) => id !== userId),
+      `task-created:${task.id}`,
+    );
+
+    return task;
   }
 
   /**
@@ -274,7 +288,7 @@ export class TasksService implements OnModuleInit, OnModuleDestroy {
   async update(taskId: string, dto: UpdateTaskDto, userId: string) {
     const coupleId = await this.getUserCoupleId(userId);
 
-    await this.assertTaskInCouple(taskId, coupleId);
+    const oldTask = await this.assertTaskInCouple(taskId, coupleId);
 
     if (dto.columnId) {
       const column = await this.prisma.column.findFirst({
@@ -289,7 +303,17 @@ export class TasksService implements OnModuleInit, OnModuleDestroy {
       }
     }
 
-    const data: Prisma.TaskUncheckedUpdateInput = {};
+    const members = await this.getCoupleMemberIds(coupleId);
+    const changesAssignment =
+      dto.assigneeMode !== undefined ||
+      dto.assigneeId !== undefined ||
+      dto.rotationFirstAssigneeId !== undefined;
+    const assignment = changesAssignment
+      ? resolveTaskAssignment(dto, oldTask.createdById, members, oldTask)
+      : null;
+    const data: Prisma.TaskUncheckedUpdateInput = assignment
+      ? { ...assignment }
+      : {};
 
     if (dto.title !== undefined) {
       data.title = dto.title;
@@ -307,24 +331,18 @@ export class TasksService implements OnModuleInit, OnModuleDestroy {
       data.priority = dto.priority;
     }
 
-    if (dto.assigneeId !== undefined) {
-      data.assigneeId = dto.assigneeId;
-    }
-
-    if (dto.assigneeMode !== undefined) {
-      data.assigneeMode = dto.assigneeMode;
-    }
-
-    if (dto.rotationFirstAssigneeId !== undefined) {
-      data.rotationFirstAssigneeId = dto.rotationFirstAssigneeId;
-    }
-
     if (dto.dueAt !== undefined) {
       data.dueAt = dto.dueAt ? new Date(dto.dueAt) : null;
     }
 
     if (dto.repeat !== undefined) {
       data.repeat = dto.repeat;
+      if (dto.repeat !== 'NONE' && !oldTask.recurringGroupId)
+        data.recurringGroupId = randomUUID();
+      if (dto.repeat === 'NONE') {
+        data.recurringGroupId = null;
+        data.occurrenceIndex = 0;
+      }
     }
 
     if (dto.repeatUntil !== undefined) {
@@ -337,15 +355,47 @@ export class TasksService implements OnModuleInit, OnModuleDestroy {
         : Prisma.DbNull;
     }
 
-    return this.prisma.task.update({
-      where: { id: taskId },
-      data,
-      include: {
-        completions: {
-          select: { userId: true },
-        },
-      },
+    const oldAssignees = assignedTaskUsers(oldTask, members);
+    const newAssignees = assignedTaskUsers(assignment ?? oldTask, members);
+    const assignmentChanged =
+      oldAssignees.length !== newAssignees.length ||
+      oldAssignees.some((id) => !newAssignees.includes(id));
+    const updatedTask = await this.prisma.$transaction(async (tx) => {
+      if (assignmentChanged && !oldTask.completed)
+        await tx.taskCompletion.deleteMany({ where: { taskId } });
+      return tx.task.update({
+        where: { id: taskId },
+        data,
+        include: { completions: { select: { userId: true } } },
+      });
     });
+    if (!updatedTask.completed) {
+      await this.notifyAssigned(
+        updatedTask,
+        newAssignees.filter(
+          (id) => id !== userId && !oldAssignees.includes(id),
+        ),
+        `task-assigned:${taskId}:${randomUUID()}`,
+      );
+    }
+
+    return updatedTask;
+  }
+
+  private async notifyAssigned(task: Task, recipients: string[], key: string) {
+    const results = await Promise.allSettled(
+      recipients.map((userId) =>
+        this.pushService.notifyUser(userId, key, {
+          title: 'Вам назначена задача',
+          body: task.title,
+          url: '/together',
+          tag: `task:${task.id}`,
+        }),
+      ),
+    );
+    // Saving the task succeeded; a notification failure must not cause duplicate task creation on retry.
+    if (results.some((result) => result.status === 'rejected'))
+      this.logger.error('Task assignment push failed');
   }
 
   async moveTask(
@@ -530,6 +580,17 @@ export class TasksService implements OnModuleInit, OnModuleDestroy {
     }
 
     const updated = await this.prisma.$transaction(async (tx) => {
+      await tx.$queryRaw`SELECT "id" FROM "Task" WHERE "id" = ${taskId} FOR UPDATE`;
+      const current = await tx.task.findUniqueOrThrow({
+        where: { id: taskId },
+      });
+      if (current.completed) return null;
+      if (this.isFutureTask(current.dueAt))
+        throw new ForbiddenException('Нельзя выполнить задачу раньше её даты');
+      if (current.assigneeMode !== 'BOTH' && current.assigneeId !== userId)
+        throw new ForbiddenException(
+          'Выполнить задачу может только исполнитель',
+        );
       const existing = await tx.taskCompletion.findUnique({
         where: {
           taskId_userId: {
@@ -561,7 +622,7 @@ export class TasksService implements OnModuleInit, OnModuleDestroy {
 
       const memberIds = members.map((member) => member.userId);
 
-      const isBoth = task.assigneeMode === 'BOTH';
+      const isBoth = current.assigneeMode === 'BOTH';
       const required = isBoth ? memberIds.length : 1;
 
       if (count >= required) {
@@ -721,44 +782,54 @@ export class TasksService implements OnModuleInit, OnModuleDestroy {
 
   async nudge(taskId: string, userId: string) {
     const coupleId = await this.getUserCoupleId(userId);
-
-    const task = await this.assertTaskInCouple(taskId, coupleId);
-
-    if (task.assigneeId === userId) {
-      throw new ForbiddenException('Cannot nudge yourself');
-    }
-
-    if (!task.assigneeId) {
-      throw new ForbiddenException(
-        'Cannot nudge a shared task without assignee',
-      );
-    }
-
-    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
-
-    const recent = await this.prisma.nudge.findFirst({
-      where: {
-        taskId,
-        senderId: userId,
-        createdAt: {
-          gte: oneHourAgo,
+    await this.assertTaskInCouple(taskId, coupleId);
+    const members = await this.getCoupleMemberIds(coupleId);
+    const result = await this.prisma.$transaction(async (tx) => {
+      await tx.$queryRaw`SELECT "id" FROM "Task" WHERE "id" = ${taskId} FOR UPDATE`;
+      const task = await tx.task.findUniqueOrThrow({ where: { id: taskId } });
+      if (
+        task.createdById !== userId ||
+        task.completed ||
+        task.assigneeMode === 'BOTH' ||
+        !task.assigneeId ||
+        task.assigneeId === userId ||
+        !members.includes(task.assigneeId)
+      ) {
+        throw new ForbiddenException(
+          'Напомнить может только создатель невыполненной задачи, назначенной партнёру',
+        );
+      }
+      const recent = await tx.nudge.findFirst({
+        where: {
+          taskId,
+          senderId: userId,
+          createdAt: { gte: new Date(Date.now() - 3_600_000) },
         },
-      },
+      });
+      if (recent)
+        throw new ForbiddenException(
+          'Вы уже напомнили об этой задаче. Повторить можно через час.',
+        );
+      const nudge = await tx.nudge.create({
+        data: { taskId, senderId: userId, recipientId: task.assigneeId },
+      });
+      return { nudge, task };
     });
-
-    if (recent) {
-      throw new ForbiddenException(
-        'Nudge already sent recently. Try again later.',
+    try {
+      await this.pushService.notifyUser(
+        result.nudge.recipientId,
+        `task-nudge:${result.nudge.id}`,
+        {
+          title: 'Партнёр напоминает о задаче',
+          body: result.task.title,
+          url: '/together',
+          tag: `task-nudge:${taskId}`,
+        },
       );
+    } catch {
+      this.logger.error('Task nudge push failed');
     }
-
-    return this.prisma.nudge.create({
-      data: {
-        taskId,
-        senderId: userId,
-        recipientId: task.assigneeId,
-      },
-    });
+    return result.nudge;
   }
 
   // ─── TODAY INTELLIGENCE ─────────────────────────────

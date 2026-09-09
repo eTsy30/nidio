@@ -3,13 +3,14 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { format, isToday } from "date-fns";
 import { ru } from "date-fns/locale";
-import { CheckCircle2, CircleCheck, Flag, Pencil, Repeat, Trash2 } from "lucide-react";
+import { BellRing, CheckCircle2, CircleCheck, Flag, Pencil, Repeat, Trash2 } from "lucide-react";
 
 import { togetherKeys } from "@/features/together/api/query-keys";
 import { tasksApi } from "@/features/together/api/tasks.api";
 import { cn } from "@/shared/lib/cn";
 import { Checkbox } from "@/shared/ui/checkbox/Checkbox";
 
+import { useNudge } from "../hooks/use-nudge";
 import { formatFutureDate, formatOverdueStatus, getTaskTemporalState } from "../lib/task-utils";
 import { TogetherTask } from "../model/task.types";
 
@@ -81,6 +82,7 @@ export function TaskCard({ task, currentUserId, partnerId, onEdit }: TaskCardPro
     !isCompleted && !isFuture && (isTogetherTask || task.assigneeId === currentUserId);
 
   const completeMutation = useMutation({
+    retry: false,
     mutationFn: tasksApi.complete,
 
     onSuccess: () => {
@@ -91,6 +93,7 @@ export function TaskCard({ task, currentUserId, partnerId, onEdit }: TaskCardPro
   });
 
   const activateMutation = useMutation({
+    retry: false,
     mutationFn: tasksApi.activate,
 
     onSuccess: () => {
@@ -101,6 +104,7 @@ export function TaskCard({ task, currentUserId, partnerId, onEdit }: TaskCardPro
   });
 
   const deleteMutation = useMutation({
+    retry: false,
     mutationFn: tasksApi.remove,
 
     onSuccess: () => {
@@ -109,6 +113,14 @@ export function TaskCard({ task, currentUserId, partnerId, onEdit }: TaskCardPro
       });
     },
   });
+
+  const canNudge =
+    isCreator &&
+    !isCompleted &&
+    !isTogetherTask &&
+    Boolean(task.assigneeId) &&
+    task.assigneeId !== currentUserId;
+  const nudgeMutation = useNudge();
 
   const canActivate = isCompleted && task.repeat === "NONE" && task.recurringGroupId === null;
 
@@ -327,6 +339,22 @@ export function TaskCard({ task, currentUserId, partnerId, onEdit }: TaskCardPro
               <Flag className="h-3 w-3 fill-amber-500 text-amber-500" />
             )}
           </div>
+
+          {canNudge && (
+            <button
+              type="button"
+              disabled={nudgeMutation.isPending}
+              onPointerDown={(event) => event.stopPropagation()}
+              onClick={(event) => {
+                event.stopPropagation();
+                nudgeMutation.mutate(task.id);
+              }}
+              className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-primary disabled:opacity-50"
+            >
+              <BellRing className="h-3.5 w-3.5" />
+              {nudgeMutation.isPending ? "Отправляем…" : "Пни меня"}
+            </button>
+          )}
 
           {/* BOTH participants status */}
           {isTogetherTask && (

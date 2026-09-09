@@ -159,7 +159,7 @@ export class PushService {
               where: { id: subscription.id },
             });
           this.logger.warn(
-            `Calendar push failed (status: ${status ?? 'network'})`,
+            `Push delivery failed (status: ${status ?? 'network'})`,
           );
         }
       }),

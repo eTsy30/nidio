@@ -27,19 +27,12 @@ export function TemplatePicker({ open, onClose }: TemplatePickerProps) {
   });
 
   const applyMutation = useMutation({
+    retry: false,
     mutationFn: (templateId: string) => templatesApi.apply(templateId),
 
     onSuccess: async () => {
       await queryClient.invalidateQueries({
-        queryKey: togetherKeys.board(),
-      });
-
-      await queryClient.invalidateQueries({
-        queryKey: togetherKeys.today(),
-      });
-
-      await queryClient.invalidateQueries({
-        queryKey: togetherKeys.summary(),
+        queryKey: togetherKeys.all,
       });
 
       setSelectedTemplate(null);

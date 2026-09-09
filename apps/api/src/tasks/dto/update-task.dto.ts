@@ -18,7 +18,7 @@ export class UpdateTaskDto {
 
   @IsString()
   @IsOptional()
-  description?: string;
+  description?: string | null;
 
   @IsString()
   @IsOptional()
@@ -26,7 +26,7 @@ export class UpdateTaskDto {
 
   @IsString()
   @IsOptional()
-  assigneeId?: string;
+  assigneeId?: string | null;
 
   @IsEnum(AssigneeMode)
   @IsOptional()
@@ -34,11 +34,11 @@ export class UpdateTaskDto {
 
   @IsString()
   @IsOptional()
-  rotationFirstAssigneeId?: string;
+  rotationFirstAssigneeId?: string | null;
 
   @IsDateString()
   @IsOptional()
-  dueAt?: string;
+  dueAt?: string | null;
 
   @IsEnum(Repeat)
   @IsOptional()
@@ -46,7 +46,7 @@ export class UpdateTaskDto {
 
   @IsDateString()
   @IsOptional()
-  repeatUntil?: string;
+  repeatUntil?: string | null;
 
   @IsOptional()
   repeatConfig?: Record<string, unknown>;

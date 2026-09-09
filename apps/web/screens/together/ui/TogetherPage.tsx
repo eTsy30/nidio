@@ -4,7 +4,6 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { ru } from "date-fns/locale";
-import { Plus } from "lucide-react";
 
 import { useCurrentCouple } from "@/features/relationship/hook/use-relationship";
 import { boardApi } from "@/features/together/api/board.api";
@@ -32,7 +31,10 @@ export function TogetherPage() {
   const { data: board, isLoading: boardLoading } = useQuery({
     queryKey: togetherKeys.board(),
     queryFn: boardApi.getBoard,
-    refetchInterval: 5_000,
+    staleTime: 0,
+    refetchOnMount: "always",
+    refetchOnWindowFocus: "always",
+    refetchOnReconnect: "always",
   });
 
   const partnerName = user?.relationship?.partner?.firstName;

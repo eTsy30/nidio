@@ -1,20 +1,21 @@
 "use client";
 
 import { useEffect } from "react";
-import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { format } from "date-fns";
 import { Flag, X } from "lucide-react";
-import { type SubmitHandler, useForm } from "react-hook-form";
+import { type SubmitHandler, useForm, useWatch } from "react-hook-form";
 import { z } from "zod";
 
+import { useCurrentCouple } from "@/features/relationship/hook/use-relationship";
 import { useAuth } from "@/shared/api/provider/auth-provider";
 import { cn } from "@/shared/lib/cn";
 import { Button } from "@/shared/ui";
 
 import { Column } from "../api/board.api";
 import { togetherKeys } from "../api/query-keys";
-import { tasksApi } from "../api/tasks.api";
+import { tasksApi, UpdateTaskPayload } from "../api/tasks.api";
 import { TogetherTask } from "../model/task.types";
 
 interface EditTaskSheetProps {
@@ -25,13 +26,14 @@ interface EditTaskSheetProps {
 }
 
 const assigneeValues = ["ME", "PARTNER", "BOTH", "ROTATE"] as const;
-const repeatValues = ["NONE", "DAILY", "WEEKLY", "MONTHLY"] as const;
+const repeatValues = ["NONE", "DAILY", "WEEKLY", "MONTHLY", "CUSTOM"] as const;
 
 const editTaskSchema = z.object({
-  title: z.string().min(1, "Введите название").max(255),
-  assigneeMode: z.enum(assigneeValues), // ← было assignee
+  title: z.string().trim().min(1, "Введите название").max(255),
+  description: z.string(),
+  dueDate: z.string(),
+  assigneeMode: z.enum(assigneeValues),
   repeat: z.enum(repeatValues),
-  hasDueDate: z.boolean(),
   columnId: z.string().min(1),
   priority: z.boolean(),
   rotationFirst: z.string().optional(),
@@ -51,16 +53,18 @@ const repeatOptions = [
   { value: "DAILY" as const, label: "Каждый день" },
   { value: "WEEKLY" as const, label: "Каждую неделю" },
   { value: "MONTHLY" as const, label: "Каждый месяц" },
+  { value: "CUSTOM" as const, label: "Своё повторение" },
 ];
 
 export function EditTaskSheet({ task, open, onClose, columns }: EditTaskSheetProps) {
   const queryClient = useQueryClient();
   const { user } = useAuth();
+  const { data: relationship } = useCurrentCouple();
 
   const {
     register,
     handleSubmit,
-    watch,
+    control,
     setValue,
     reset,
     formState: { isValid },
@@ -68,9 +72,10 @@ export function EditTaskSheet({ task, open, onClose, columns }: EditTaskSheetPro
     resolver: zodResolver(editTaskSchema),
     defaultValues: {
       title: "",
+      description: "",
+      dueDate: "",
       assigneeMode: "ME",
       repeat: "NONE",
-      hasDueDate: true,
       columnId: "",
       priority: false,
     },
@@ -81,9 +86,11 @@ export function EditTaskSheet({ task, open, onClose, columns }: EditTaskSheetPro
     if (task) {
       reset({
         title: task.title,
+        description: task.description ?? "",
+        dueDate: task.dueAt ? format(new Date(task.dueAt), "yyyy-MM-dd") : "",
+        rotationFirst: task.rotationFirstAssigneeId ?? task.createdById,
         assigneeMode: task.assigneeMode,
-        repeat: task.repeat === "CUSTOM" ? "NONE" : task.repeat,
-        hasDueDate: !!task.dueAt,
+        repeat: task.repeat,
         columnId: task.columnId,
         priority: task.priority,
       });
@@ -99,10 +106,15 @@ export function EditTaskSheet({ task, open, onClose, columns }: EditTaskSheetPro
   }, [open]);
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, payload }: { id: string; payload: Partial<EditTaskFormData> }) =>
+    retry: false,
+    mutationFn: ({ id, payload }: { id: string; payload: UpdateTaskPayload }) =>
       tasksApi.update(id, payload),
+
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: togetherKeys.board() });
+      queryClient.invalidateQueries({
+        queryKey: togetherKeys.all,
+      });
+
       onClose();
     },
   });
@@ -113,6 +125,13 @@ export function EditTaskSheet({ task, open, onClose, columns }: EditTaskSheetPro
       id: task.id,
       payload: {
         title: data.title.trim(),
+        description: data.description.trim() || null,
+        dueAt: data.dueDate ? new Date(`${data.dueDate}T00:00:00`).toISOString() : null,
+        ...(data.assigneeMode === "ROTATE" &&
+        data.rotationFirst &&
+        data.rotationFirst !== task.rotationFirstAssigneeId
+          ? { rotationFirstAssigneeId: data.rotationFirst }
+          : {}),
         columnId: data.columnId,
         assigneeMode: data.assigneeMode,
         repeat: data.repeat,
@@ -121,8 +140,7 @@ export function EditTaskSheet({ task, open, onClose, columns }: EditTaskSheetPro
     });
   };
 
-  const assignee = watch("assigneeMode");
-  const priority = watch("priority");
+  const [assignee, priority] = useWatch({ control, name: ["assigneeMode", "priority"] });
 
   if (!open || !task) return null;
 
@@ -180,6 +198,26 @@ export function EditTaskSheet({ task, open, onClose, columns }: EditTaskSheetPro
             />
           </div>
 
+          <label className="block">
+            <span className="mb-1.5 block text-sm font-medium">Описание</span>
+            <textarea
+              {...register("description")}
+              rows={3}
+              className="w-full rounded-xl border bg-background p-3 text-sm"
+            />
+          </label>
+          <label className="block">
+            <span className="mb-1.5 block text-sm font-medium">Дата задачи</span>
+            <input
+              type="date"
+              {...register("dueDate")}
+              className="h-11 w-full rounded-xl border bg-background px-3 text-sm"
+            />
+            <span className="mt-1 block text-xs text-muted-foreground">
+              Оставьте пустым, если срока нет.
+            </span>
+          </label>
+
           <button
             type="button"
             onClick={() => setValue("priority", !priority, { shouldValidate: true })}
@@ -213,19 +251,40 @@ export function EditTaskSheet({ task, open, onClose, columns }: EditTaskSheetPro
             </div>
           </div>
 
+          {assignee === "ROTATE" && (
+            <label className="block">
+              <span className="mb-1.5 block text-sm font-medium">Первым выполняет</span>
+              <select
+                {...register("rotationFirst")}
+                className="h-11 w-full rounded-xl border bg-background px-3 text-sm"
+              >
+                <option value={user?.id}>Я</option>
+                <option value={relationship?.partnerId}>Партнёр</option>
+              </select>
+            </label>
+          )}
+
           <div>
             <label className="mb-2 block text-sm font-medium">Повторение</label>
             <select
               {...register("repeat")}
               className="h-11 w-full rounded-xl border bg-background px-3 text-sm outline-none focus:border-primary"
             >
-              {repeatOptions.map((opt) => (
-                <option key={opt.value} value={opt.value}>
-                  {opt.label}
-                </option>
-              ))}
+              {repeatOptions
+                .filter((opt) => opt.value !== "CUSTOM" || task.repeat === "CUSTOM")
+                .map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
             </select>
           </div>
+
+          {updateMutation.isError && (
+            <p role="alert" className="text-sm text-destructive">
+              Не удалось сохранить задачу. Проверьте данные и попробуйте ещё раз.
+            </p>
+          )}
 
           <div className="flex flex-col-reverse sm:flex-row gap-2 sm:justify-end pt-2">
             <Button

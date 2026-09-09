@@ -5,8 +5,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { addDays, format } from "date-fns";
 import { ru } from "date-fns/locale";
-import { ChevronDown, Flag, X } from "lucide-react";
-import { type SubmitHandler, useForm } from "react-hook-form";
+import { Flag, X } from "lucide-react";
+import { type SubmitHandler, useForm, useWatch } from "react-hook-form";
 
 import { useCurrentCouple } from "@/features/relationship/hook/use-relationship";
 import { useAuth } from "@/shared/api/provider/auth-provider";
@@ -53,7 +53,7 @@ export function CreateTaskSheet({ open, onClose, defaultColumnId, columns }: Cre
   const {
     register,
     handleSubmit,
-    watch,
+    control,
     setValue,
     reset,
     setFocus,
@@ -91,11 +91,10 @@ export function CreateTaskSheet({ open, onClose, defaultColumnId, columns }: Cre
   }, [open]);
 
   const createMutation = useMutation({
+    retry: false,
     mutationFn: tasksApi.create,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: togetherKeys.board() });
-      queryClient.invalidateQueries({ queryKey: togetherKeys.today() });
-      queryClient.invalidateQueries({ queryKey: togetherKeys.summary() });
+      queryClient.invalidateQueries({ queryKey: togetherKeys.all });
       reset();
       setDueMode("today");
       setCustomDate("");
@@ -107,7 +106,7 @@ export function CreateTaskSheet({ open, onClose, defaultColumnId, columns }: Cre
     if (dueMode === "none") return undefined;
     if (dueMode === "today") return new Date().toISOString();
     if (dueMode === "tomorrow") return addDays(new Date(), 1).toISOString();
-    return customDate ? new Date(customDate).toISOString() : undefined;
+    return customDate ? new Date(`${customDate}T00:00:00`).toISOString() : undefined;
   };
 
   const onSubmit: SubmitHandler<CreateTaskFormData> = (data) => {
@@ -117,10 +116,10 @@ export function CreateTaskSheet({ open, onClose, defaultColumnId, columns }: Cre
     let rotationFirstAssigneeId: string | undefined = undefined;
 
     if (data.assignee === "ME") assigneeId = user.id;
-    else if (data.assignee === "PARTNER") assigneeId = relationship.id;
+    else if (data.assignee === "PARTNER") assigneeId = relationship.partnerId;
     else if (data.assignee === "ROTATE") {
-      rotationFirstAssigneeId = user.id;
-      assigneeId = user.id;
+      rotationFirstAssigneeId = data.rotationFirst || user.id;
+      assigneeId = rotationFirstAssigneeId;
     }
 
     createMutation.mutate({
@@ -128,15 +127,17 @@ export function CreateTaskSheet({ open, onClose, defaultColumnId, columns }: Cre
       columnId: data.columnId,
       assigneeId,
       assigneeMode: data.assignee,
-      rotationFirstAssigneeId,
-      dueAt: getDueAt(),
+      ...(rotationFirstAssigneeId ? { rotationFirstAssigneeId } : {}),
+      dueAt: getDueAt() ?? null,
       repeat: data.repeat as RepeatOption,
       priority: data.priority,
     });
   };
 
-  const assignee = watch("assignee");
-  const priority = watch("priority");
+  const [assignee, priority, rotationFirst] = useWatch({
+    control,
+    name: ["assignee", "priority", "rotationFirst"],
+  });
   const isRotate = assignee === "ROTATE";
 
   if (!open) return null;
@@ -271,12 +272,12 @@ export function CreateTaskSheet({ open, onClose, defaultColumnId, columns }: Cre
                       type="button"
                       onClick={() => {
                         if (opt.value === "ME") setValue("rotationFirst", user?.id ?? "");
-                        else setValue("rotationFirst", relationship?.id ?? "");
+                        else setValue("rotationFirst", relationship?.partnerId ?? "");
                       }}
                       className={cn(
                         "h-9 rounded-lg border text-sm font-medium transition-all",
-                        (opt.value === "ME" && watch("rotationFirst") === user?.id) ||
-                          (opt.value === "PARTNER" && watch("rotationFirst") === relationship?.id)
+                        (opt.value === "ME" && rotationFirst === user?.id) ||
+                          (opt.value === "PARTNER" && rotationFirst === relationship?.partnerId)
                           ? "border-primary bg-primary/5 text-primary"
                           : "hover:bg-muted",
                       )}

@@ -97,15 +97,17 @@ export function ColumnCard({
   }, [showMenu]);
 
   const deleteMutation = useMutation({
+    retry: false,
     mutationFn: boardApi.deleteColumn,
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: togetherKeys.board(),
+        queryKey: togetherKeys.all,
       });
     },
   });
 
   const saveTemplateMutation = useMutation({
+    retry: false,
     mutationFn: () => templatesApi.createFromColumn(column.id, templateName.trim() || column.title),
 
     onSuccess: () => {

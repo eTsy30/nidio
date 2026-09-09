@@ -41,7 +41,10 @@ export function TodayView() {
   const { data: tasks = [] } = useQuery({
     queryKey: togetherKeys.today(),
     queryFn: tasksApi.getToday,
-    refetchInterval: 5_000,
+    staleTime: 0,
+    refetchOnMount: "always",
+    refetchOnWindowFocus: "always",
+    refetchOnReconnect: "always",
   });
 
   const overdue = tasks.filter(isOverdue);

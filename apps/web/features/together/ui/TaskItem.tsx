@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { format, isToday, isTomorrow } from "date-fns";
 import { ru } from "date-fns/locale";
 import { Heart, MoreVertical, Repeat } from "lucide-react";
@@ -9,8 +8,7 @@ import { Heart, MoreVertical, Repeat } from "lucide-react";
 import { cn } from "@/shared/lib/cn";
 import { Checkbox } from "@/shared/ui/checkbox/Checkbox";
 
-import { togetherKeys } from "../api/query-keys";
-import { tasksApi } from "../api/tasks.api";
+import { useNudge } from "../hooks/use-nudge";
 import { formatFutureDate, formatOverdueStatus, getTaskTemporalState } from "../lib/task-utils";
 import { TogetherTask } from "../model/task.types";
 
@@ -51,25 +49,13 @@ export function TaskItem({
 }: TaskItemProps) {
   const [showMenu, setShowMenu] = useState(false);
 
-  const queryClient = useQueryClient();
-
   const temporalState = getTaskTemporalState(task);
 
   const isCompleted = temporalState === "completed";
   const isFuture = temporalState === "future";
   const isOverdue = temporalState === "overdue";
 
-  const nudgeMutation = useMutation({
-    mutationFn: tasksApi.nudge,
-
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: togetherKeys.list(),
-      });
-
-      setShowMenu(false);
-    },
-  });
+  const nudgeMutation = useNudge();
 
   let assigneeLabel = "Вместе";
 
@@ -87,7 +73,12 @@ export function TaskItem({
 
   const bothProgress = isBoth && !task.completed ? `${task.completions?.length ?? 0}/2` : null;
 
-  const canNudge = !!task.assigneeId && task.assigneeId !== currentUserId && !task.completed;
+  const canNudge =
+    task.createdById === currentUserId &&
+    !isBoth &&
+    !!task.assigneeId &&
+    task.assigneeId !== currentUserId &&
+    !task.completed;
 
   const handleToggle = () => {
     if (isCompleted || isFuture || disabled) {
@@ -156,13 +147,13 @@ export function TaskItem({
                     type="button"
                     onClick={(event) => {
                       event.stopPropagation();
-                      nudgeMutation.mutate(task.id);
+                      nudgeMutation.mutate(task.id, { onSuccess: () => setShowMenu(false) });
                     }}
                     disabled={nudgeMutation.isPending}
                     className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-sm transition-colors hover:bg-muted disabled:opacity-50"
                   >
                     <Heart className="h-4 w-4 text-primary" />
-                    Напомнить
+                    Пни меня
                   </button>
                 </div>
               )}

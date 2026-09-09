@@ -28,7 +28,9 @@ self.addEventListener("push", (event: PushEvent) => {
       icon: "/icons/icon-192x192.png",
       ...(payload.tag ? { tag: payload.tag } : {}),
       data: {
-        url: ["/chat", "/calendar", "/profile"].includes(payload.url ?? "") ? payload.url : "/chat",
+        url: ["/chat", "/calendar", "/profile", "/together"].includes(payload.url ?? "")
+          ? payload.url
+          : "/chat",
       },
     }),
   );
@@ -39,7 +41,9 @@ self.addEventListener("notificationclick", (event: NotificationEvent) => {
   event.waitUntil(
     (async () => {
       const target = event.notification.data?.url;
-      const path = ["/chat", "/calendar", "/profile"].includes(target) ? target : "/chat";
+      const path = ["/chat", "/calendar", "/profile", "/together"].includes(target)
+        ? target
+        : "/chat";
       const url = new URL(path, self.location.origin).href;
       const windows = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
       for (const client of windows) {

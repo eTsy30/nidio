@@ -120,11 +120,12 @@ export function BoardView({
    * Создание колонки.
    */
   const createColumnMutation = useMutation({
+    retry: false,
     mutationFn: boardApi.createColumn,
 
     onSuccess: () => {
       queryClient.invalidateQueries({
-        queryKey: togetherKeys.board(),
+        queryKey: togetherKeys.all,
       });
 
       setNewColumnTitle("");
@@ -141,6 +142,7 @@ export function BoardView({
    * - после запроса синхронизируем board.
    */
   const moveTaskMutation = useMutation({
+    retry: false,
     mutationFn: ({
       taskId,
       columnId,
@@ -222,7 +224,7 @@ export function BoardView({
 
     onSettled: () => {
       queryClient.invalidateQueries({
-        queryKey: togetherKeys.board(),
+        queryKey: togetherKeys.all,
       });
     },
   });
@@ -231,6 +233,7 @@ export function BoardView({
    * Перемещение колонок.
    */
   const reorderColumnsMutation = useMutation({
+    retry: false,
     mutationFn: boardApi.reorderColumns,
 
     onMutate: async (orderedIds) => {
@@ -268,7 +271,7 @@ export function BoardView({
 
     onSettled: () => {
       queryClient.invalidateQueries({
-        queryKey: togetherKeys.board(),
+        queryKey: togetherKeys.all,
       });
     },
   });
