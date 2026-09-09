@@ -1,8 +1,6 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { format } from "date-fns";
-import { ru } from "date-fns/locale";
 
 import { useCurrentCouple } from "@/features/relationship/hook/use-relationship";
 import { togetherKeys } from "@/features/together/api/query-keys";
@@ -10,7 +8,6 @@ import { tasksApi } from "@/features/together/api/tasks.api";
 import { useAuth } from "@/shared/api/provider/auth-provider";
 import { cn } from "@/shared/lib/cn";
 
-import { useTaskCompletion } from "../hooks/use-task-completion";
 import { TogetherTask } from "../model/task.types";
 
 import { TaskCard } from "./TaskCard";
@@ -37,14 +34,14 @@ function isDueToday(task: TogetherTask): boolean {
 export function TodayView() {
   const { user } = useAuth();
   const { data: relationship } = useCurrentCouple();
-  const { handleComplete, celebratedTaskId } = useTaskCompletion();
 
   const currentUserId = user?.id ?? "";
-  const partnerId = relationship?.id;
+  const partnerId = relationship?.partnerId;
 
   const { data: tasks = [] } = useQuery({
     queryKey: togetherKeys.today(),
     queryFn: tasksApi.getToday,
+    refetchInterval: 5_000,
   });
 
   const overdue = tasks.filter(isOverdue);
@@ -67,7 +64,12 @@ export function TodayView() {
         </h3>
         <div className="space-y-3">
           {items.map((task) => (
-            <TaskCard key={task.id} task={task} currentUserId={currentUserId} />
+            <TaskCard
+              key={task.id}
+              task={task}
+              currentUserId={currentUserId}
+              partnerId={partnerId}
+            />
           ))}
         </div>
       </section>

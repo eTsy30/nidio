@@ -32,6 +32,7 @@ export function TogetherPage() {
   const { data: board, isLoading: boardLoading } = useQuery({
     queryKey: togetherKeys.board(),
     queryFn: boardApi.getBoard,
+    refetchInterval: 5_000,
   });
 
   const partnerName = user?.relationship?.partner?.firstName;
@@ -74,7 +75,7 @@ export function TogetherPage() {
               board={board}
               filter={filter}
               currentUserId={user?.id ?? ""}
-              partnerId={relationship?.id}
+              partnerId={relationship?.partnerId}
               partnerName={partnerName}
               partnerAvatarUrl={partnerAvatarUrl}
               onCreateTask={(columnId) => {
