@@ -20,6 +20,7 @@ describe('Chat push', () => {
       upsert: mockAsync(),
     },
     pushDelivery: { create: mockAsync() },
+    notificationAttempt: { create: mockAsync() },
     chatPresence: {
       findFirst: mockAsync(),
       deleteMany: mockAsync(),
@@ -162,6 +163,28 @@ describe('Chat push', () => {
       where: { socketId: 'socket' },
     });
     expect(prisma.chatPresence.upsert).not.toHaveBeenCalled();
+  });
+
+  it('deduplicates calendar notifications independently on each device', async () => {
+    prisma.notificationAttempt.create
+      .mockResolvedValueOnce({})
+      .mockResolvedValueOnce({});
+    const payload = {
+      title: 'Напоминание',
+      body: 'Встреча',
+      url: '/calendar',
+      tag: 'event',
+    };
+    await service.notifyUser('partner', 'event:occurrence', payload);
+    expect(webPush.sendNotification).toHaveBeenCalledTimes(2);
+    prisma.notificationAttempt.create.mockRejectedValue(
+      new Prisma.PrismaClientKnownRequestError('duplicate', {
+        code: 'P2002',
+        clientVersion: '7',
+      }),
+    );
+    await service.notifyUser('partner', 'event:occurrence', payload);
+    expect(webPush.sendNotification).toHaveBeenCalledTimes(2);
   });
 
   it('uses attachment labels and limits preview size', () => {

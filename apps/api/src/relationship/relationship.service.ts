@@ -181,6 +181,7 @@ export class RelationshipService {
         },
         data: {
           deletedAt: new Date(),
+          notificationDirty: true,
         },
       });
 
@@ -267,6 +268,7 @@ export class RelationshipService {
       },
       data: {
         relationshipAt: relationshipAt ? new Date(relationshipAt) : null,
+        notificationDirty: true,
       },
     });
   }

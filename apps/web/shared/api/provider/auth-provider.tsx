@@ -194,6 +194,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, [user, doRefresh, queryClient]);
 
+  useEffect(() => {
+    if (!user?.id) return;
+    const syncTimeZone = () => {
+      const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      void http.post("/push/timezone", { timeZone }).catch(() => {
+        // Retry on next focus/login if the device is offline.
+      });
+    };
+    syncTimeZone();
+    window.addEventListener("focus", syncTimeZone);
+    return () => window.removeEventListener("focus", syncTimeZone);
+  }, [user?.id]);
+
   if (isLoading) {
     return null;
   }

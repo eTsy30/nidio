@@ -16,7 +16,7 @@ serwist.addEventListeners();
 
 self.addEventListener("push", (event: PushEvent) => {
   if (!event.data) return;
-  let payload: { title?: string; body?: string; tag?: string };
+  let payload: { title?: string; body?: string; tag?: string; url?: string };
   try {
     payload = event.data.json();
   } catch {
@@ -27,7 +27,9 @@ self.addEventListener("push", (event: PushEvent) => {
       body: payload.body || "Новое сообщение",
       icon: "/icons/icon-192x192.png",
       ...(payload.tag ? { tag: payload.tag } : {}),
-      data: { url: "/chat" },
+      data: {
+        url: ["/chat", "/calendar", "/profile"].includes(payload.url ?? "") ? payload.url : "/chat",
+      },
     }),
   );
 });
@@ -36,7 +38,9 @@ self.addEventListener("notificationclick", (event: NotificationEvent) => {
   event.notification.close();
   event.waitUntil(
     (async () => {
-      const url = new URL("/chat", self.location.origin).href;
+      const target = event.notification.data?.url;
+      const path = ["/chat", "/calendar", "/profile"].includes(target) ? target : "/chat";
+      const url = new URL(path, self.location.origin).href;
       const windows = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
       for (const client of windows) {
         if (new URL(client.url).origin !== self.location.origin) continue;

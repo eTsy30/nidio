@@ -1,15 +1,19 @@
 import {
+  BadRequestException,
   ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
 import {
+  Event,
   EventRepeat,
   EventScope as PrismaEventScope,
   Prisma,
 } from '@prisma/client';
 
 import { PrismaService } from '../prisma/prisma.service';
+import { validTimeZone } from '../push/calendar-notification-time';
+import { CalendarPushService } from '../push/calendar-push.service';
 
 import { CreateEventInput } from './dto/create-event.input';
 import { EventsFilterInput } from './dto/events-filter.input';
@@ -41,7 +45,10 @@ type CalendarEvent = {
 
 @Injectable()
 export class CalendarService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly calendarPush: CalendarPushService,
+  ) {}
 
   async findMany(
     userId: string,
@@ -131,10 +138,13 @@ export class CalendarService {
     userId: string,
     input: CreateEventInput,
   ): Promise<CalendarEvent> {
+    if (input.timeZone && !validTimeZone(input.timeZone))
+      throw new BadRequestException('Некорректный часовой пояс');
     const scope = this.toPrismaScope(input.scope);
 
     const data: Prisma.EventCreateInput = {
       title: input.title,
+      timeZone: input.timeZone ?? null,
 
       description: input.description ?? null,
 
@@ -195,8 +205,9 @@ export class CalendarService {
   async update(
     userId: string,
     id: string,
-    input: UpdateEventInput,
+    incomingInput: UpdateEventInput,
   ): Promise<CalendarEvent> {
+    let input = incomingInput;
     const event = await this.prisma.event.findUnique({
       where: {
         id,
@@ -209,7 +220,27 @@ export class CalendarService {
 
     await this.checkAccess(userId, event);
 
-    const data: Prisma.EventUpdateInput = {};
+    if (input.timeZone && !validTimeZone(input.timeZone))
+      throw new BadRequestException('Некорректный часовой пояс');
+    if (input.occurrenceDate && event.repeat !== EventRepeat.NONE) {
+      if (!this.isRecurringOccurrence(event, input.occurrenceDate))
+        throw new BadRequestException('Некорректный экземпляр серии');
+      const offset = input.occurrenceDate.getTime() - event.startAt.getTime();
+      input = {
+        ...input,
+        ...(input.startAt
+          ? { startAt: new Date(input.startAt.getTime() - offset) }
+          : {}),
+        ...(input.endAt
+          ? { endAt: new Date(input.endAt.getTime() - offset) }
+          : {}),
+        ...(input.reminderAt
+          ? { reminderAt: new Date(input.reminderAt.getTime() - offset) }
+          : {}),
+      };
+    }
+    const data: Prisma.EventUpdateInput = { notificationDirty: true };
+    if (input.timeZone !== undefined) data.timeZone = input.timeZone;
 
     if (input.title !== undefined) {
       data.title = input.title;
@@ -288,11 +319,23 @@ export class CalendarService {
       }
     }
 
-    return this.prisma.event.update({
-      where: {
-        id,
-      },
-      data,
+    return this.prisma.$transaction(async (tx) => {
+      const updated = await tx.event.update({ where: { id }, data });
+      const timeChanged =
+        updated.startAt.getTime() !== event.startAt.getTime() ||
+        updated.endAt?.getTime() !== event.endAt?.getTime() ||
+        updated.allDay !== event.allDay;
+      if (timeChanged && updated.scope === PrismaEventScope.COUPLE) {
+        await this.calendarPush.enqueueChange(
+          tx,
+          updated,
+          userId,
+          'Партнёр изменил время события',
+          '',
+          updated.updatedAt.toISOString(),
+        );
+      }
+      return updated;
     });
   }
 
@@ -302,20 +345,11 @@ export class CalendarService {
     mode: EventDeleteMode = EventDeleteMode.ALL,
     occurrenceDate?: Date,
   ): Promise<CalendarEvent> {
-    console.log('[DELETE EVENT]', {
-      userId,
-      id,
-      mode,
-      occurrenceDate,
-    });
-
     const event = await this.prisma.event.findUnique({
       where: {
         id,
       },
     });
-
-    console.log('[DELETE EVENT FOUND]', event?.id);
 
     if (!event) {
       throw new NotFoundException('Событие не найдено');
@@ -329,11 +363,7 @@ export class CalendarService {
      * поэтому удаляем его целиком.
      */
     if (event.repeat === EventRepeat.NONE) {
-      return this.prisma.event.delete({
-        where: {
-          id,
-        },
-      });
+      return this.deleteWithNotification(event, userId, mode);
     }
 
     /*
@@ -353,11 +383,7 @@ export class CalendarService {
      * Удалить всю серию.
      */
     if (mode === EventDeleteMode.ALL) {
-      return this.prisma.event.delete({
-        where: {
-          id,
-        },
-      });
+      return this.deleteWithNotification(event, userId, mode);
     }
 
     const occurrence = new Date(occurrenceDate!);
@@ -392,13 +418,21 @@ export class CalendarService {
         excludedDates.push(occurrence);
       }
 
-      return this.prisma.event.update({
-        where: {
-          id,
-        },
-        data: {
-          excludedDates,
-        },
+      if (alreadyExcluded) return event;
+      return this.prisma.$transaction(async (tx) => {
+        const updated = await tx.event.update({
+          where: { id },
+          data: { excludedDates, notificationDirty: true },
+        });
+        await this.calendarPush.enqueueChange(
+          tx,
+          event,
+          userId,
+          'Партнёр отменил событие',
+          'только выбранное повторение',
+          `THIS:${occurrence.toISOString()}`,
+        );
+        return updated;
       });
     }
 
@@ -416,17 +450,49 @@ export class CalendarService {
     if (mode === EventDeleteMode.FOLLOWING) {
       const repeatUntil = this.getPreviousOccurrence(occurrence, event.repeat);
 
-      return this.prisma.event.update({
-        where: {
-          id,
-        },
-        data: {
-          repeatUntil,
-        },
+      return this.prisma.$transaction(async (tx) => {
+        const updated = await tx.event.update({
+          where: { id },
+          data: { repeatUntil, notificationDirty: true },
+        });
+        await this.calendarPush.enqueueChange(
+          tx,
+          event,
+          userId,
+          'Партнёр отменил события',
+          'выбранное и все последующие повторения',
+          `FOLLOWING:${occurrence.toISOString()}`,
+        );
+        return updated;
       });
     }
 
     return event;
+  }
+
+  private async deleteWithNotification(
+    event: Event,
+    actorId: string,
+    mode: EventDeleteMode,
+  ) {
+    return this.prisma.$transaction(async (tx) => {
+      await tx.scheduledNotification.deleteMany({
+        where: {
+          sourceId: event.id,
+          kind: { in: ['EVENT_REMINDER', 'EVENT_DAY'] },
+        },
+      });
+      const deleted = await tx.event.delete({ where: { id: event.id } });
+      await this.calendarPush.enqueueChange(
+        tx,
+        event,
+        actorId,
+        'Партнёр отменил событие',
+        event.repeat === EventRepeat.NONE ? '' : 'вся серия',
+        `DELETE:${mode}`,
+      );
+      return deleted;
+    });
   }
 
   async changeScope(
@@ -514,6 +580,13 @@ export class CalendarService {
           id: occurrenceId,
           seriesId: event.id,
           startAt: new Date(occurrenceStart),
+          reminderAt: event.reminderAt
+            ? new Date(
+                event.reminderAt.getTime() +
+                  occurrenceStart.getTime() -
+                  event.startAt.getTime(),
+              )
+            : null,
           endAt: occurrenceEnd,
         });
       }

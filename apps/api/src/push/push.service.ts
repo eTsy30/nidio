@@ -22,6 +22,13 @@ export function chatPushBody(message: {
     : 'Отправил(а) файл';
 }
 
+export type NotificationPayload = {
+  title: string;
+  body: string;
+  url: string;
+  tag: string;
+};
+
 @Injectable()
 export class PushService {
   private readonly logger = new Logger(PushService.name);
@@ -107,6 +114,58 @@ export class PushService {
 
   async clearPresence(socketId: string) {
     await this.prisma.chatPresence.deleteMany({ where: { socketId } });
+  }
+
+  async notifyUser(userId: string, key: string, payload: NotificationPayload) {
+    if (!this.publicKey) return;
+    const subscriptions = await this.prisma.pushSubscription.findMany({
+      where: { userId },
+    });
+    const results = await Promise.allSettled(
+      subscriptions.map(async (subscription) => {
+        try {
+          await this.prisma.notificationAttempt.create({
+            data: { subscriptionId: subscription.id, key },
+          });
+        } catch (error) {
+          if (
+            error instanceof Prisma.PrismaClientKnownRequestError &&
+            error.code === 'P2002'
+          )
+            return;
+          throw error;
+        }
+        try {
+          await webPush.sendNotification(
+            {
+              endpoint: subscription.endpoint,
+              keys: { p256dh: subscription.p256dh, auth: subscription.auth },
+            },
+            JSON.stringify({ ...payload, body: payload.body.slice(0, 500) }),
+            {
+              TTL: 3600,
+              timeout: 10_000,
+              vapidDetails: {
+                subject: this.config.getOrThrow<string>('VAPID_SUBJECT'),
+                publicKey: this.publicKey!,
+                privateKey: this.config.getOrThrow<string>('VAPID_PRIVATE_KEY'),
+              },
+            },
+          );
+        } catch (error) {
+          const status = (error as { statusCode?: number }).statusCode;
+          if (status === 404 || status === 410)
+            await this.prisma.pushSubscription.deleteMany({
+              where: { id: subscription.id },
+            });
+          this.logger.warn(
+            `Calendar push failed (status: ${status ?? 'network'})`,
+          );
+        }
+      }),
+    );
+    if (results.some((result) => result.status === 'rejected'))
+      throw new Error('Unable to claim calendar push delivery');
   }
 
   async notifyMessage(messageId: string) {

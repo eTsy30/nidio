@@ -15,7 +15,7 @@ import {
 import { CreateEventForm } from "@/features/calendar/create-event/ui/CreateEventForm";
 import { DeleteEventDialog } from "@/features/calendar/delete-event/ui/DeleteEventDialog";
 import { EditEventForm } from "@/features/calendar/edit-event/ui/EditEventForm";
-import { CREATE_EVENT, DELETE_EVENT, GET_EVENTS, UPDATE_EVENT } from "@/features/calendar/graphql";
+import { CREATE_EVENT, GET_EVENTS, UPDATE_EVENT } from "@/features/calendar/graphql";
 import {
   type CalendarEvent,
   EventRepeat,
@@ -36,7 +36,6 @@ import { WeekView } from "./WeekView";
 
 export default function CalendarWidget() {
   const { user } = useAuth();
-  console.log(user);
   const [scope, setScope] = useState<EventScope>(EventScope.PERSONAL);
 
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
@@ -252,6 +251,7 @@ export default function CalendarWidget() {
     endAt: Date | null;
     allDay: boolean;
     repeat: EventRepeat;
+    reminderAt: Date | null;
   }) => {
     if (!selectedEditEvent) return;
 
@@ -260,13 +260,18 @@ export default function CalendarWidget() {
         variables: {
           id: selectedEditEvent.seriesId || selectedEditEvent.id,
           input: {
+            occurrenceDate: selectedEditEvent.startAt,
+            ...(values.startAt.getTime() !== new Date(selectedEditEvent.startAt).getTime()
+              ? { timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone }
+              : {}),
             title: values.title,
             description: values.description || undefined,
             type: values.type,
             startAt: values.startAt.toISOString(),
-            endAt: values.endAt?.toISOString(),
+            endAt: values.endAt?.toISOString() ?? null,
             allDay: values.allDay,
             repeat: values.repeat,
+            reminderAt: values.reminderAt?.toISOString() ?? null,
           },
         },
       });
@@ -287,6 +292,7 @@ export default function CalendarWidget() {
     endAt: Date | null;
     allDay: boolean;
     repeat: EventRepeat;
+    reminderAt: Date | null;
   }) => {
     try {
       await createEvent({
@@ -296,10 +302,12 @@ export default function CalendarWidget() {
             description: values.description || undefined,
             type: values.type,
             scope,
+            timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
             startAt: values.startAt.toISOString(),
-            endAt: values.endAt?.toISOString(),
+            endAt: values.endAt?.toISOString() ?? null,
             allDay: values.allDay,
             repeat: values.repeat,
+            reminderAt: values.reminderAt?.toISOString() ?? null,
           },
         },
       });

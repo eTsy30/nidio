@@ -21,6 +21,7 @@ interface CreateEventFormProps {
     endAt: Date | null;
     allDay: boolean;
     repeat: EventRepeat;
+    reminderAt: Date | null;
   }) => void | Promise<void>;
 }
 
@@ -31,6 +32,7 @@ function parseTime(value: string): [number, number] {
 }
 
 export function CreateEventForm({ scope, date, onCancel, onSubmit }: CreateEventFormProps) {
+  const [reminder, setReminder] = useState("");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
 
@@ -80,6 +82,7 @@ export function CreateEventForm({ scope, date, onCancel, onSubmit }: CreateEvent
       endAt,
       allDay,
       repeat,
+      reminderAt: reminder ? new Date(reminder) : null,
     });
   };
 
@@ -193,6 +196,34 @@ export function CreateEventForm({ scope, date, onCancel, onSubmit }: CreateEvent
           ))}
         </select>
       </div>
+
+      <label className="block">
+        <span className="mb-1.5 block text-sm font-medium">Напомнить</span>
+        <input
+          type="datetime-local"
+          value={reminder}
+          onChange={(e) => setReminder(e.target.value)}
+          className="h-11 w-full rounded-xl border bg-background px-3 text-sm"
+        />
+        <span className="mt-1.5 block text-xs text-muted-foreground">
+          Необязательно. Время в вашем часовом поясе. Для повторов сохраняется интервал до события.
+        </span>
+        {reminder && (
+          <button
+            type="button"
+            onClick={() => setReminder("")}
+            className="mt-2 text-xs text-muted-foreground underline"
+          >
+            Убрать напоминание
+          </button>
+        )}
+      </label>
+
+      {(type === EventType.BIRTHDAY || type === EventType.ANNIVERSARY) && (
+        <p className="text-xs text-muted-foreground">
+          В день события также придёт уведомление в 12:00 по часовому поясу получателя.
+        </p>
+      )}
 
       {/* Описание */}
       <div>

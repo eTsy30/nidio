@@ -10,6 +10,8 @@ datasource db {
 
 model User {
   id                 String              @id @default(cuid())
+  timeZone           String?
+  scheduledNotifications ScheduledNotification[]
   email              String              @unique
   passwordHash       String
   firstName          String              @db.VarChar(50)
@@ -46,6 +48,7 @@ model Couple {
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
   deletedAt      DateTime?
+  notificationDirty Boolean @default(true)
   relationshipAt DateTime?
 
   members   CoupleMember[]
@@ -57,6 +60,7 @@ model Couple {
 
   @@index([createdAt])
   @@index([deletedAt])
+  @@index([notificationDirty])
 }
 
 model CoupleMember {
@@ -394,6 +398,8 @@ enum BlockType {
 // ==========  Event  ==========
 
 model Event {
+  timeZone String?
+  notificationDirty Boolean @default(true)
   id          String      @id @default(cuid())
   title       String      @db.VarChar(200)
   description String?     @db.Text
@@ -419,6 +425,7 @@ model Event {
   repeatUntil   DateTime?
   excludedDates DateTime[]
 
+  @@index([notificationDirty])
   @@index([userId, startAt])
   @@index([coupleId, startAt])
   @@index([createdById])
@@ -493,6 +500,7 @@ model PushSubscription {
   createdAt DateTime @default(now())
   user      User @relation(fields: [userId], references: [id], onDelete: Cascade)
   deliveries PushDelivery[]
+  notificationAttempts NotificationAttempt[]
   @@index([userId])
 }
 
@@ -512,4 +520,31 @@ model ChatPresence {
   expiresAt DateTime
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
   @@index([userId, workspaceId, expiresAt])
+}
+
+
+model ScheduledNotification {
+  id String @id @default(cuid())
+  key String @unique
+  kind String
+  sourceId String
+  userId String
+  coupleId String?
+  runAt DateTime
+  occurrenceAt DateTime?
+  sourceVersion DateTime?
+  payload Json
+  leaseUntil DateTime @default(dbgenerated("'1970-01-01 00:00:00'::timestamp"))
+  leaseToken String?
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@index([runAt, leaseUntil])
+  @@index([sourceId])
+}
+
+model NotificationAttempt {
+  subscriptionId String
+  key String
+  createdAt DateTime @default(now())
+  subscription PushSubscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+  @@id([subscriptionId, key])
 }

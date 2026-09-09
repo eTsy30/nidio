@@ -28,3 +28,9 @@ export class SubscribePushDto extends PushEndpointDto {
   @Type(() => PushKeysDto)
   keys!: PushKeysDto;
 }
+
+export class PushTimeZoneDto {
+  @IsString()
+  @MaxLength(100)
+  timeZone!: string;
+}

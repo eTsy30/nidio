@@ -12,6 +12,11 @@ import { EventRepeat, EventScope, EventType } from '../models/event.model';
 
 @InputType()
 export class CreateEventInput {
+  @Field(() => String, { nullable: true })
+  @IsOptional()
+  @IsString()
+  timeZone?: string;
+
   @Field(() => String)
   @IsString()
   title!: string;

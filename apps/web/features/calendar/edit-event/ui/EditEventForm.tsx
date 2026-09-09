@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { format } from "date-fns";
-import { ru } from "date-fns/locale";
 
 import { CalendarEvent } from "@/features/calendar/types";
 import { cn } from "@/shared/lib/cn";
@@ -21,6 +20,7 @@ interface EditEventFormProps {
     endAt: Date | null;
     allDay: boolean;
     repeat: EventRepeat;
+    reminderAt: Date | null;
   }) => void | Promise<void>;
 }
 
@@ -36,6 +36,10 @@ function formatTime(date: Date): string {
 }
 
 export function EditEventForm({ event, onCancel, onSubmit }: EditEventFormProps) {
+  const [reminder, setReminder] = useState(
+    event.reminderAt ? format(new Date(event.reminderAt), "yyyy-MM-dd'T'HH:mm") : "",
+  );
+  const [eventDate, setEventDate] = useState(format(new Date(event.startAt), "yyyy-MM-dd"));
   const [title, setTitle] = useState(event.title);
   const [description, setDescription] = useState(event.description ?? "");
   const [type, setType] = useState<EventType>(event.type);
@@ -54,7 +58,7 @@ export function EditEventForm({ event, onCancel, onSubmit }: EditEventFormProps)
     const trimmedTitle = title.trim();
     if (!trimmedTitle) return;
 
-    const startAt = new Date(initialStart);
+    const startAt = new Date(`${eventDate}T00:00:00`);
 
     if (allDay) {
       startAt.setHours(0, 0, 0, 0);
@@ -65,7 +69,7 @@ export function EditEventForm({ event, onCancel, onSubmit }: EditEventFormProps)
 
     let endAt: Date | null = null;
     if (!allDay) {
-      endAt = new Date(initialStart);
+      endAt = new Date(`${eventDate}T00:00:00`);
       const [hours, minutes] = parseTime(endTime);
       endAt.setHours(hours, minutes, 0, 0);
     }
@@ -78,6 +82,7 @@ export function EditEventForm({ event, onCancel, onSubmit }: EditEventFormProps)
       endAt,
       allDay,
       repeat,
+      reminderAt: reminder ? new Date(reminder) : null,
     });
   };
 
@@ -121,9 +126,19 @@ export function EditEventForm({ event, onCancel, onSubmit }: EditEventFormProps)
       {/* Дата */}
       <div>
         <label className="mb-1.5 block text-sm font-medium">Дата</label>
-        <div className="rounded-xl bg-muted px-3 py-3 text-sm">
-          {format(initialStart, "d MMMM yyyy", { locale: ru })}
-        </div>
+        <input
+          type="date"
+          aria-label="Дата события"
+          required
+          value={eventDate}
+          onChange={(e) => setEventDate(e.target.value)}
+          className="h-11 w-full rounded-xl border bg-background px-3 text-sm"
+        />
+        {event.repeat !== EventRepeat.NONE && (
+          <p className="mt-2 text-xs text-muted-foreground">
+            Изменения применяются ко всей серии повторений.
+          </p>
+        )}
       </div>
 
       {/* Весь день */}
@@ -179,6 +194,34 @@ export function EditEventForm({ event, onCancel, onSubmit }: EditEventFormProps)
           ))}
         </select>
       </div>
+
+      <label className="block">
+        <span className="mb-1.5 block text-sm font-medium">Напомнить</span>
+        <input
+          type="datetime-local"
+          value={reminder}
+          onChange={(e) => setReminder(e.target.value)}
+          className="h-11 w-full rounded-xl border bg-background px-3 text-sm"
+        />
+        <span className="mt-1.5 block text-xs text-muted-foreground">
+          Необязательно. Время в вашем часовом поясе. Для повторов сохраняется интервал до события.
+        </span>
+        {reminder && (
+          <button
+            type="button"
+            onClick={() => setReminder("")}
+            className="mt-2 text-xs text-muted-foreground underline"
+          >
+            Убрать напоминание
+          </button>
+        )}
+      </label>
+
+      {(type === EventType.BIRTHDAY || type === EventType.ANNIVERSARY) && (
+        <p className="text-xs text-muted-foreground">
+          В день события также придёт уведомление в 12:00 по часовому поясу получателя.
+        </p>
+      )}
 
       {/* Описание */}
       <div>

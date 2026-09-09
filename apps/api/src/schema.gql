@@ -11,6 +11,7 @@ input CreateEventInput {
   repeatUntil: DateTime
   scope: EventScope!
   startAt: DateTime!
+  timeZone: String
   title: String!
   type: EventType!
 }
@@ -94,11 +95,13 @@ input UpdateEventInput {
   allDay: Boolean = false
   description: String
   endAt: DateTime
+  occurrenceDate: DateTime
   reminderAt: DateTime
   repeat: EventRepeat = NONE
   repeatUntil: DateTime
   scope: EventScope
   startAt: DateTime
+  timeZone: String
   title: String
   type: EventType
 }
