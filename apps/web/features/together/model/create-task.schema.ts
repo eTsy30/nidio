@@ -4,7 +4,7 @@ export const assigneeValues = ["ME", "PARTNER", "BOTH", "ROTATE"] as const;
 export const repeatValues = ["NONE", "DAILY", "WEEKLY", "MONTHLY"] as const;
 
 export const createTaskSchema = z.object({
-  title: z.string().min(1, "Введите название задачи").max(255),
+  title: z.string().trim().min(1, "Введите название задачи").max(255),
   assignee: z.enum(assigneeValues),
   repeat: z.enum(repeatValues),
   hasDueDate: z.boolean(),

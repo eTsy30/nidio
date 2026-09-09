@@ -131,10 +131,10 @@ export function SelectedDayDrawer({
 
       <aside
         className={cn(
-          "fixed inset-x-0 bottom-0 z-50 flex h-[88dvh]",
+          "fixed inset-x-0 bottom-[calc(60px+env(safe-area-inset-bottom))] z-40 flex h-[min(78dvh,640px)] max-h-[calc(100dvh-76px-env(safe-area-inset-bottom))]",
           "flex-col rounded-t-3xl bg-background shadow-2xl",
           "transition-transform duration-300",
-          "lg:static lg:h-full lg:w-[380px]",
+          "lg:static lg:h-full lg:max-h-full lg:w-[380px] lg:shrink-0",
           "lg:rounded-none lg:border-l lg:shadow-none",
         )}
       >
@@ -155,14 +155,14 @@ export function SelectedDayDrawer({
           <>
             <div
               className={cn(
-                "mx-5 mt-2 flex h-32 items-center justify-center rounded-2xl",
+                "mx-5 mt-2 flex h-16 shrink-0 sm:h-32 items-center justify-center rounded-2xl",
                 selectedMeta?.bg,
               )}
             >
               <DayIllustration type={selectedEvent.type} />
             </div>
 
-            <ScrollArea className="flex-1">
+            <ScrollArea className="min-h-0 flex-1">
               <div className="px-5 pt-5">
                 <p className={cn("text-xs font-medium", selectedMeta?.color)}>
                   {selectedMeta?.label}
@@ -220,7 +220,7 @@ export function SelectedDayDrawer({
 
             {/* ACTIONS */}
             {isEventOwner && onDeleteEvent && (
-              <div className="flex mt-auto border-t gap-3 bg-background p-5">
+              <div className="flex shrink-0 mt-auto border-t gap-3 bg-background p-3 sm:p-5">
                 <Button
                   size="md"
                   variant="primary"
@@ -247,7 +247,7 @@ export function SelectedDayDrawer({
             {/* DAY ILLUSTRATION */}
             <div
               className={cn(
-                "mx-5 mt-2 flex h-28 items-center justify-center rounded-2xl",
+                "mx-5 mt-2 flex h-16 shrink-0 sm:h-28 items-center justify-center rounded-2xl",
                 firstEventType ? typeMeta[firstEventType].bg : "bg-muted/40",
               )}
             >
@@ -298,7 +298,7 @@ export function SelectedDayDrawer({
             </ScrollArea>
 
             {/* ADD */}
-            <div className="border-t bg-background p-5">
+            <div className="shrink-0 border-t bg-background p-3 sm:p-5">
               <Button className="h-12 w-full gap-2 rounded-xl" onClick={onAddEvent}>
                 <Plus className="h-5 w-5" />
                 Добавить событие

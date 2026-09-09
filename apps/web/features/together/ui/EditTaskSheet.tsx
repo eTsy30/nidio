@@ -154,7 +154,7 @@ export function EditTaskSheet({ task, open, onClose, columns }: EditTaskSheetPro
         className={cn(
           "relative w-full bg-card shadow-[var(--shadow-modal)]",
           "rounded-t-[var(--radius-lg)] sm:rounded-[var(--radius-lg)] sm:max-w-md sm:mx-4",
-          "max-h-[85vh] overflow-y-auto",
+          "max-h-[85dvh] overflow-y-auto",
           "animate-in slide-in-from-bottom duration-300 sm:animate-none",
           "px-4 pt-5 pb-8 sm:p-6",
         )}

@@ -53,14 +53,9 @@ export function CalendarHeader({
     onMonthChange(date);
   };
 
-  const closeAllPopovers = () => {
-    setMonthPickerOpen(false);
-    setFilterOpen(false);
-  };
-
   return (
     <header className="border-b bg-background px-3 py-3 sm:px-5">
-      <div className="grid min-h-10 grid-cols-[auto_1fr_auto] items-center gap-2">
+      <div className="grid min-h-10 grid-cols-[1fr_auto] items-center gap-2 xl:grid-cols-[auto_1fr_auto]">
         {/* LEFT: PERIOD NAVIGATION */}
         <div className="flex shrink-0 items-center rounded-xl bg-muted p-1">
           <Button
@@ -92,7 +87,7 @@ export function CalendarHeader({
         </div>
 
         {/* CENTER */}
-        <div className="flex min-w-0 items-center justify-center gap-2">
+        <div className="order-3 col-span-2 flex min-w-0 flex-wrap items-center justify-between gap-2 xl:order-none xl:col-span-1 xl:justify-center">
           {/* MONTH / YEAR PICKER */}
           <div className="relative">
             <button
@@ -136,7 +131,7 @@ export function CalendarHeader({
 
                 {/* PICKER */}
                 <div
-                  className="absolute left-0 top-full z-50 mt-2 w-72 rounded-2xl border bg-background p-3 shadow-xl"
+                  className="absolute left-0 top-full z-50 mt-2 w-72 max-w-[calc(100vw-24px)] rounded-2xl border bg-background p-3 shadow-xl"
                   onClick={(event) => event.stopPropagation()}
                 >
                   {/* YEAR NAVIGATION */}

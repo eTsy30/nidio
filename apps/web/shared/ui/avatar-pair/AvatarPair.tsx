@@ -28,11 +28,8 @@ export function AvatarPair({
   return (
     <div className={["inline-flex items-center gap-3", className].filter(Boolean).join(" ")}>
       <Avatar size={size}>
-        {leftAvatar ? (
-          <AvatarImage src={leftAvatar} alt={leftAlt} />
-        ) : (
-          <AvatarFallback>{leftFallback ?? <User className="size-4" />}</AvatarFallback>
-        )}
+        {leftAvatar && <AvatarImage src={leftAvatar} alt={leftAlt} />}
+        <AvatarFallback>{leftFallback ?? <User className="size-4" />}</AvatarFallback>
       </Avatar>
 
       {showHeart && (
@@ -40,11 +37,8 @@ export function AvatarPair({
       )}
 
       <Avatar size={size}>
-        {rightAvatar ? (
-          <AvatarImage src={rightAvatar} alt={rightAlt} />
-        ) : (
-          <AvatarFallback>{rightFallback ?? <User className="size-4" />}</AvatarFallback>
-        )}
+        {rightAvatar && <AvatarImage src={rightAvatar} alt={rightAlt} />}
+        <AvatarFallback>{rightFallback ?? <User className="size-4" />}</AvatarFallback>
       </Avatar>
     </div>
   );

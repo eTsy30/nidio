@@ -2,6 +2,7 @@
 
 import { useCallback, useState } from "react";
 
+import { useCurrentCouple } from "@/features/relationship/hook/use-relationship";
 import { useAuth } from "@/shared/api/provider/auth-provider";
 import { useRealtime } from "@/shared/realtime";
 
@@ -32,7 +33,14 @@ export function Chat() {
   const { user } = useAuth();
 
   const currentUserId = user?.id ?? "";
-  const partner = user?.relationship?.partner ?? null;
+  const { data: couple } = useCurrentCouple();
+  const partner = couple?.partnerId
+    ? {
+        id: couple.partnerId,
+        firstName: couple.partnerFirstName || "Партнёр",
+        avatarUrl: couple.partnerAvatarUrl,
+      }
+    : (user?.relationship?.partner ?? null);
 
   useLoadMessages(setMessages);
 

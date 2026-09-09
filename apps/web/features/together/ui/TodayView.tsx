@@ -65,7 +65,7 @@ export function TodayView() {
         >
           {title} · {items.length}
         </h3>
-        <div className="space-y-3">
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
           {items.map((task) => (
             <TaskCard
               key={task.id}

@@ -136,7 +136,7 @@ export function ColumnCard({
   };
 
   return (
-    <div ref={setSortableRef} style={style} className="w-72 shrink-0 flex flex-col">
+    <div ref={setSortableRef} style={style} className="w-[min(82vw,320px)] shrink-0 flex flex-col">
       <div
         className={cn(
           "rounded-3xl border p-3 flex flex-col gap-3 transition-colors",

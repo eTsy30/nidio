@@ -26,6 +26,7 @@ import {
 import { SelectedDayDrawer } from "@/features/calendar/ui/SelectedDayDrawer";
 import { useAuth } from "@/shared/api/provider/auth-provider";
 import { cn } from "@/shared/lib/cn";
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/shared/ui/dialog/dialog";
 
 import { getCalendarRange, getDateKey } from "../model/utils";
 
@@ -85,7 +86,7 @@ export default function CalendarWidget() {
     notifyOnNetworkStatusChange: true,
   });
 
-  const [createEvent, { loading: creating }] = useMutation(CREATE_EVENT);
+  const [createEvent] = useMutation(CREATE_EVENT);
   const [updateEvent, { loading: updating }] = useMutation(UPDATE_EVENT);
 
   const events = useMemo<CalendarEvent[]>(() => data?.events ?? [], [data?.events]);
@@ -294,30 +295,26 @@ export default function CalendarWidget() {
     repeat: EventRepeat;
     reminderAt: Date | null;
   }) => {
-    try {
-      await createEvent({
-        variables: {
-          input: {
-            title: values.title,
-            description: values.description || undefined,
-            type: values.type,
-            scope,
-            timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-            startAt: values.startAt.toISOString(),
-            endAt: values.endAt?.toISOString() ?? null,
-            allDay: values.allDay,
-            repeat: values.repeat,
-            reminderAt: values.reminderAt?.toISOString() ?? null,
-          },
+    await createEvent({
+      variables: {
+        input: {
+          title: values.title,
+          description: values.description || undefined,
+          type: values.type,
+          scope,
+          timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+          startAt: values.startAt.toISOString(),
+          endAt: values.endAt?.toISOString() ?? null,
+          allDay: values.allDay,
+          repeat: values.repeat,
+          reminderAt: values.reminderAt?.toISOString() ?? null,
         },
-      });
+      },
+    });
 
-      setCreateEventOpen(false);
+    setCreateEventOpen(false);
 
-      await refetch();
-    } catch (error) {
-      console.error("Не удалось создать событие:", error);
-    }
+    await refetch();
   };
 
   if (loading && !data) {
@@ -447,26 +444,20 @@ export default function CalendarWidget() {
       )}
 
       {createEventOpen && selectedDate && (
-        <div className="fixed inset-0 z-[60] flex items-end justify-center bg-black/30 p-0 backdrop-blur-sm sm:items-center sm:p-4">
-          <div className="max-h-[90dvh] w-full max-w-lg overflow-auto rounded-t-3xl bg-background p-5 shadow-2xl sm:rounded-3xl">
-            <div className="mb-5">
-              <h2 className="text-xl font-bold">Новое событие</h2>
-
-              <p className="mt-1 text-sm text-muted-foreground">Добавьте момент в календарь</p>
+        <Dialog open={createEventOpen} onOpenChange={setCreateEventOpen}>
+          <DialogContent className="z-[60] flex max-h-[calc(100dvh-32px-env(safe-area-inset-bottom))] flex-col gap-3 overflow-hidden rounded-2xl sm:max-w-lg">
+            <div className="shrink-0 pr-8">
+              <DialogTitle>Новое событие</DialogTitle>
+              <DialogDescription>Добавьте момент в календарь</DialogDescription>
             </div>
-
             <CreateEventForm
               scope={scope}
               date={selectedDate}
               onCancel={() => setCreateEventOpen(false)}
               onSubmit={handleCreateEvent}
             />
-
-            {creating && (
-              <p className="mt-3 text-center text-xs text-muted-foreground">Сохраняем событие…</p>
-            )}
-          </div>
-        </div>
+          </DialogContent>
+        </Dialog>
       )}
 
       {editEventOpen && selectedEditEvent && (

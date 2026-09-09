@@ -37,11 +37,11 @@ export function TogetherPage() {
     refetchOnReconnect: "always",
   });
 
-  const partnerName = user?.relationship?.partner?.firstName;
-  const partnerAvatarUrl = user?.relationship?.partner?.avatarUrl;
+  const partnerName = relationship?.partnerFirstName ?? user?.relationship?.partner?.firstName;
+  const partnerAvatarUrl = relationship?.partnerAvatarUrl ?? user?.relationship?.partner?.avatarUrl;
 
   return (
-    <div className="min-h-screen bg-background pb-8">
+    <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-background">
       <header className="sticky top-0 z-10 bg-background/80 backdrop-blur-md border-b border-border/60 px-4 pt-safe-top">
         <div className="flex items-center justify-between py-4">
           <div>
@@ -63,8 +63,8 @@ export function TogetherPage() {
         </div>
       </header>
 
-      <main className="px-4 pt-4">
-        <div className="space-y-4">
+      <main className="flex min-h-0 min-w-0 flex-1 flex-col px-3 pt-3 sm:px-6 lg:px-8">
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-3">
           <TaskFilters active={filter} onChange={setFilter} />
           {boardLoading ? (
             <div className="flex gap-4 overflow-x-auto pb-4">

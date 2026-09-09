@@ -6,7 +6,8 @@ import {
   DragEndEvent,
   DragOverlay,
   DragStartEvent,
-  PointerSensor,
+  MouseSensor,
+  TouchSensor,
   useSensor,
   useSensors,
 } from "@dnd-kit/core";
@@ -69,11 +70,12 @@ export function BoardView({
   const [isAdding, setIsAdding] = useState(false);
 
   const sensors = useSensors(
-    useSensor(PointerSensor, {
+    useSensor(MouseSensor, {
       activationConstraint: {
         distance: 5,
       },
     }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 250, tolerance: 8 } }),
   );
 
   /**
@@ -445,7 +447,7 @@ export function BoardView({
 
   return (
     <>
-      <div className="mb-4 flex items-center gap-1 rounded-xl border bg-muted/40 p-1 w-fit">
+      <div className="shrink-0 flex items-center gap-1 rounded-xl border bg-muted/40 p-1 w-fit">
         <button
           type="button"
           onClick={() => setTaskViewMode("active")}
@@ -482,7 +484,7 @@ export function BoardView({
           items={board.columns.map((column) => column.id)}
           strategy={horizontalListSortingStrategy}
         >
-          <div className="flex gap-4 overflow-x-auto pb-4 -mx-4 px-4 scrollbar-hide">
+          <div className="flex min-h-0 flex-1 items-start gap-3 overflow-auto overscroll-contain pb-4 sm:gap-4">
             {board.columns.map((column) => (
               <ColumnCard
                 key={column.id}
@@ -497,7 +499,7 @@ export function BoardView({
               />
             ))}
 
-            <div className="w-72 shrink-0">
+            <div className="w-[min(82vw,320px)] shrink-0">
               {isAdding ? (
                 <div className="bg-card border rounded-3xl p-4 space-y-3">
                   <input

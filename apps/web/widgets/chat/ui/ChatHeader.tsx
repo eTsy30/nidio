@@ -23,7 +23,7 @@ export function ChatHeader({ partner, isOnline, isTyping }: ChatHeaderProps) {
   return (
     <header className="sticky top-0 z-20 border-b border-border bg-card/90 backdrop-blur-xl">
       <div className="flex h-18 items-center justify-between px-4 pt-[env(safe-area-inset-top)]">
-        <div className="flex items-center gap-3">
+        <div className="flex min-w-0 flex-1 items-center gap-3">
           <button
             type="button"
             aria-label="Назад"
@@ -42,7 +42,7 @@ export function ChatHeader({ partner, isOnline, isTyping }: ChatHeaderProps) {
               <AvatarFallback>{partner?.firstName?.charAt(0).toUpperCase() ?? "?"}</AvatarFallback>
             </Avatar>
 
-            {isOnline && (
+            {partner && isOnline && (
               <span
                 className="absolute bottom-0 right-0 size-3 rounded-full border-2 border-card bg-success"
                 aria-hidden
@@ -51,13 +51,19 @@ export function ChatHeader({ partner, isOnline, isTyping }: ChatHeaderProps) {
           </div>
 
           <div className="flex min-w-0 flex-col">
-            <h4 className="truncate leading-tight">{partner?.firstName ?? "Неизвестно"}</h4>
+            <h4 className="truncate leading-tight">{partner?.firstName ?? "Чат"}</h4>
             <span
               className={`body-sm transition-colors duration-200 ${
                 isTyping ? "text-primary" : isOnline ? "text-success" : "text-muted-foreground"
               }`}
             >
-              {isTyping ? "печатает…" : isOnline ? "В сети" : "Не в сети"}
+              {!partner
+                ? "Загрузка профиля…"
+                : isTyping
+                  ? "печатает…"
+                  : isOnline
+                    ? "В сети"
+                    : "Не в сети"}
             </span>
           </div>
         </div>
