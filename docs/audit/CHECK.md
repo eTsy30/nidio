@@ -13,7 +13,7 @@
 | 5 — Контракты и API            |  [x]   | REST contracts профиля, auth и couple подтверждены                                     |
 | 6 — State management           |  [x]   | Общий server cache, invalidation и URL state Todo/Calendar                             |
 | 7 — FSD                        |  [x]   | Границы `app → screens → widgets → features → shared` проверяются в lint, без entities |
-| 8 — Календарь                  |  [ ]   | Не начат                                                                               |
+| 8 — Календарь                  |  [x]   | UTC recurrence engine, bounded reads, widget model и единый modal state готовы         |
 | 9 — Чат: offline/reconnect     |  [ ]   | Не начат                                                                               |
 | 10 — Todo                      |  [ ]   | Не начат                                                                               |
 | 11 — Push                      |  [ ]   | Не начат                                                                               |
@@ -38,6 +38,17 @@
 - `apps/web/scripts/check-architecture.mjs` проверяет алиас-импорты вверх по слоям и между feature-slices. Он запускается в `pnpm --filter web lint` и в CI.
 
 Проверки: `pnpm --filter web typecheck` — PASS; `pnpm --filter web lint` — PASS, 0 errors / 4 существующих warnings; `pnpm --filter web build` — PASS, включая Serwist; `git diff --check` — PASS.
+
+## Этап 8 — закрыт
+
+- Добавлен единый `calendar/domain/recurrence.ts`: calendar read и push scheduler используют одинаковый UTC-расчёт следующего экземпляра.
+- Тестами зафиксированы действующие правила: UTC-арифметика, DST для instant, overflow `31 января → 3 марта`, leap-day yearly и `NONE`.
+- `CalendarService.findMany` использует SQL pre-filter: одноразовые события ограничены запрошенным диапазоном, recurring series отбираются только если серия может пересечь диапазон. Исключения и точные occurrences по-прежнему раскрываются сервисом.
+- Семантика month-end и local wall-clock при DST пока не менялась: это отдельное продуктово-совместимое решение перед миграцией старых данных.
+- Диапазон API календаря ограничен одним годом; UI month/week/year остаётся в этом диапазоне.
+- `useCalendarEvents` отделяет GraphQL query/mutations от `CalendarWidget`; `useCalendarModal` заменяет независимые create/edit/delete boolean state на один discriminated union.
+
+Проверки: `pnpm --filter api test -- calendar` — PASS, 26 tests / 4 suites; API typecheck/lint/build — PASS; web typecheck/lint/build — PASS; `git diff --check` — PASS. Web lint: 0 errors / 4 ранее известных warnings.
 
 ## Этап 1 — закрыт
 

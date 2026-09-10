@@ -4,9 +4,7 @@ import { useState } from "react";
 import { format } from "date-fns";
 
 import { repeatOptions, typeMeta } from "@/features/calendar/model/constants";
-import { CalendarEvent } from "@/features/calendar/types";
-import { EventRepeat, EventType } from "@/features/calendar/types";
-import { cn } from "@/shared/lib/cn";
+import { type CalendarEvent, EventRepeat, EventType } from "@/features/calendar/types";
 import { Button } from "@/shared/ui";
 
 interface EditEventFormProps {
@@ -30,39 +28,41 @@ function parseTime(value: string): [number, number] {
 }
 
 function formatTime(date: Date): string {
-  const h = String(date.getHours()).padStart(2, "0");
-  const m = String(date.getMinutes()).padStart(2, "0");
-  return `${h}:${m}`;
+  return format(date, "HH:mm");
 }
 
 export function EditEventForm({ event, onCancel, onSubmit }: EditEventFormProps) {
-  const [reminder, setReminder] = useState(
-    event.reminderAt ? format(new Date(event.reminderAt), "yyyy-MM-dd'T'HH:mm") : "",
-  );
-  const [eventDate, setEventDate] = useState(format(new Date(event.startAt), "yyyy-MM-dd"));
+  const initialStart = new Date(event.startAt);
+  const initialEnd = event.endAt ? new Date(event.endAt) : null;
+  const [step, setStep] = useState(0);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+  const [eventDate, setEventDate] = useState(format(initialStart, "yyyy-MM-dd"));
   const [title, setTitle] = useState(event.title);
   const [description, setDescription] = useState(event.description ?? "");
   const [type, setType] = useState<EventType>(event.type);
-
-  const initialStart = new Date(event.startAt);
-  const initialEnd = event.endAt ? new Date(event.endAt) : null;
-
   const [allDay, setAllDay] = useState(event.allDay);
   const [startTime, setStartTime] = useState(formatTime(initialStart));
   const [endTime, setEndTime] = useState(initialEnd ? formatTime(initialEnd) : "21:00");
   const [repeat, setRepeat] = useState<EventRepeat>(event.repeat);
+  const [reminder, setReminder] = useState(
+    event.reminderAt ? format(new Date(event.reminderAt), "yyyy-MM-dd'T'HH:mm") : "",
+  );
 
-  const handleSubmit = (formEvent: React.FormEvent<HTMLFormElement>) => {
+  const inputClass =
+    "h-11 min-w-0 w-full rounded-xl border bg-background px-3 text-base outline-none focus:border-primary";
+
+  const handleSubmit = async (formEvent: React.FormEvent<HTMLFormElement>) => {
     formEvent.preventDefault();
-
-    const trimmedTitle = title.trim();
-    if (!trimmedTitle) return;
+    if (step === 0) {
+      setStep(1);
+      return;
+    }
+    if (saving || !title.trim()) return;
 
     const startAt = new Date(`${eventDate}T00:00:00`);
-
-    if (allDay) {
-      startAt.setHours(0, 0, 0, 0);
-    } else {
+    if (allDay) startAt.setHours(0, 0, 0, 0);
+    else {
       const [hours, minutes] = parseTime(startTime);
       startAt.setHours(hours, minutes, 0, 0);
     }
@@ -73,175 +73,172 @@ export function EditEventForm({ event, onCancel, onSubmit }: EditEventFormProps)
       const [hours, minutes] = parseTime(endTime);
       endAt.setHours(hours, minutes, 0, 0);
     }
+    if (endAt && endAt <= startAt) {
+      setError("Конец должен быть позже начала");
+      setStep(0);
+      return;
+    }
 
-    void onSubmit?.({
-      title: trimmedTitle,
-      description: description.trim(),
-      type,
-      startAt,
-      endAt,
-      allDay,
-      repeat,
-      reminderAt: reminder ? new Date(reminder) : null,
-    });
+    setSaving(true);
+    setError("");
+    try {
+      await onSubmit?.({
+        title: title.trim(),
+        description: description.trim(),
+        type,
+        startAt,
+        endAt,
+        allDay,
+        repeat,
+        reminderAt: reminder ? new Date(reminder) : null,
+      });
+    } catch {
+      setError("Не удалось сохранить событие. Попробуйте ещё раз.");
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-5">
-      {/* Название */}
-      <div>
-        <label className="mb-1.5 block text-sm font-medium">Название</label>
-        <input
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          placeholder="Например, вечер в кино"
-          className="h-11 w-full rounded-xl border bg-background px-3 text-sm outline-none focus:border-primary"
-          autoFocus
-        />
-      </div>
+    <form onSubmit={handleSubmit} className="flex min-h-0 flex-col gap-3 px-1 pb-1">
+      <p className="text-sm text-muted-foreground">Шаг {step + 1} из 2</p>
 
-      {/* Тип */}
-      <div>
-        <label className="mb-2 block text-sm font-medium">Тип</label>
-        <div className="grid grid-cols-2 gap-2">
-          {Object.values(EventType).map((eventType) => {
-            const meta = typeMeta[eventType];
-            return (
-              <button
-                key={eventType}
-                type="button"
-                onClick={() => setType(eventType)}
-                className={cn(
-                  "rounded-xl border p-3 text-left text-sm transition-all",
-                  type === eventType ? "border-primary bg-primary/5" : "hover:bg-muted",
-                )}
+      <div className="min-h-0 space-y-3 overflow-y-auto overscroll-contain px-1">
+        {step === 0 ? (
+          <>
+            <label className="block space-y-1 text-sm font-medium">
+              <span>Название</span>
+              <input
+                required
+                maxLength={200}
+                autoFocus
+                value={title}
+                onChange={(event) => setTitle(event.target.value)}
+                className={inputClass}
+              />
+            </label>
+            <label className="block space-y-1 text-sm font-medium">
+              <span>Тип события</span>
+              <select
+                value={type}
+                onChange={(event) => setType(event.target.value as EventType)}
+                className={inputClass}
               >
-                <span className={cn("block text-xs font-medium", meta.color)}>{meta.label}</span>
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* Дата */}
-      <div>
-        <label className="mb-1.5 block text-sm font-medium">Дата</label>
-        <input
-          type="date"
-          aria-label="Дата события"
-          required
-          value={eventDate}
-          onChange={(e) => setEventDate(e.target.value)}
-          className="h-11 w-full rounded-xl border bg-background px-3 text-sm"
-        />
-        {event.repeat !== EventRepeat.NONE && (
-          <p className="mt-2 text-xs text-muted-foreground">
-            Изменения применяются ко всей серии повторений.
-          </p>
+                {Object.values(EventType).map((value) => (
+                  <option key={value} value={value}>
+                    {typeMeta[value].label}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="block space-y-1 text-sm font-medium">
+              <span>Дата</span>
+              <input
+                required
+                type="date"
+                value={eventDate}
+                onChange={(event) => setEventDate(event.target.value)}
+                className={inputClass}
+              />
+            </label>
+            <label className="flex min-h-11 items-center justify-between gap-3 rounded-xl border px-3 text-sm">
+              Весь день
+              <input
+                type="checkbox"
+                checked={allDay}
+                onChange={(event) => setAllDay(event.target.checked)}
+                className="size-5"
+              />
+            </label>
+            {!allDay && (
+              <div className="grid grid-cols-2 gap-3">
+                <label className="min-w-0 space-y-1 text-sm">
+                  <span>Начало</span>
+                  <input
+                    required
+                    type="time"
+                    value={startTime}
+                    onChange={(event) => setStartTime(event.target.value)}
+                    className={inputClass}
+                  />
+                </label>
+                <label className="min-w-0 space-y-1 text-sm">
+                  <span>Конец</span>
+                  <input
+                    required
+                    type="time"
+                    value={endTime}
+                    onChange={(event) => setEndTime(event.target.value)}
+                    className={inputClass}
+                  />
+                </label>
+              </div>
+            )}
+          </>
+        ) : (
+          <>
+            <label className="block space-y-1 text-sm font-medium">
+              <span>Повторение</span>
+              <select
+                value={repeat}
+                onChange={(event) => setRepeat(event.target.value as EventRepeat)}
+                className={inputClass}
+              >
+                {repeatOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+            {event.repeat !== EventRepeat.NONE && (
+              <p className="rounded-xl bg-muted px-3 py-2 text-xs text-muted-foreground">
+                Изменения применяются ко всей серии повторений.
+              </p>
+            )}
+            <label className="block space-y-1 text-sm font-medium">
+              <span>Напоминание · необязательно</span>
+              <input
+                type="datetime-local"
+                value={reminder}
+                onChange={(event) => setReminder(event.target.value)}
+                className={inputClass}
+              />
+              <span className="block text-xs font-normal text-muted-foreground">
+                Время в вашем часовом поясе.
+              </span>
+            </label>
+            <label className="block space-y-1 text-sm font-medium">
+              <span>Описание · необязательно</span>
+              <textarea
+                value={description}
+                onChange={(event) => setDescription(event.target.value)}
+                rows={3}
+                className="w-full resize-none rounded-xl border bg-background p-3 text-base"
+              />
+            </label>
+            {(type === EventType.BIRTHDAY || type === EventType.ANNIVERSARY) && (
+              <p className="text-xs text-muted-foreground">
+                В день события также придёт push в 12:00 по часовому поясу получателя.
+              </p>
+            )}
+          </>
         )}
+        {error && <p className="text-sm text-destructive">{error}</p>}
       </div>
 
-      {/* Весь день */}
-      <label className="flex items-center justify-between rounded-xl border p-3">
-        <span>
-          <span className="block text-sm font-medium">Весь день</span>
-          <span className="text-xs text-muted-foreground">Без конкретного времени</span>
-        </span>
-        <input
-          type="checkbox"
-          checked={allDay}
-          onChange={(e) => setAllDay(e.target.checked)}
-          className="h-4 w-4"
-        />
-      </label>
-
-      {/* Время */}
-      {!allDay && (
-        <div className="grid grid-cols-2 gap-3">
-          <label>
-            <span className="mb-1.5 block text-xs text-muted-foreground">Начало</span>
-            <input
-              type="time"
-              value={startTime}
-              onChange={(e) => setStartTime(e.target.value)}
-              className="h-11 w-full rounded-xl border px-3"
-            />
-          </label>
-          <label>
-            <span className="mb-1.5 block text-xs text-muted-foreground">Конец</span>
-            <input
-              type="time"
-              value={endTime}
-              onChange={(e) => setEndTime(e.target.value)}
-              className="h-11 w-full rounded-xl border px-3"
-            />
-          </label>
-        </div>
-      )}
-
-      {/* Повторение */}
-      <div>
-        <label className="mb-1.5 block text-sm font-medium">Повторение</label>
-        <select
-          value={repeat}
-          onChange={(e) => setRepeat(e.target.value as EventRepeat)}
-          className="h-11 w-full rounded-xl border bg-background px-3 text-sm"
+      <div className="flex shrink-0 gap-2 border-t pt-3">
+        <Button
+          type="button"
+          variant="ghost"
+          disabled={saving}
+          className="flex-1"
+          onClick={() => (step === 0 ? onCancel() : setStep(0))}
         >
-          {repeatOptions.map((option) => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))}
-        </select>
-      </div>
-
-      <label className="block">
-        <span className="mb-1.5 block text-sm font-medium">Напомнить</span>
-        <input
-          type="datetime-local"
-          value={reminder}
-          onChange={(e) => setReminder(e.target.value)}
-          className="h-11 w-full rounded-xl border bg-background px-3 text-sm"
-        />
-        <span className="mt-1.5 block text-xs text-muted-foreground">
-          Необязательно. Время в вашем часовом поясе. Для повторов сохраняется интервал до события.
-        </span>
-        {reminder && (
-          <button
-            type="button"
-            onClick={() => setReminder("")}
-            className="mt-2 text-xs text-muted-foreground underline"
-          >
-            Убрать напоминание
-          </button>
-        )}
-      </label>
-
-      {(type === EventType.BIRTHDAY || type === EventType.ANNIVERSARY) && (
-        <p className="text-xs text-muted-foreground">
-          В день события также придёт уведомление в 12:00 по часовому поясу получателя.
-        </p>
-      )}
-
-      {/* Описание */}
-      <div>
-        <label className="mb-1.5 block text-sm font-medium">Описание</label>
-        <textarea
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          placeholder="Что-нибудь важное..."
-          rows={3}
-          className="w-full resize-none rounded-xl border bg-background p-3 text-sm outline-none focus:border-primary"
-        />
-      </div>
-
-      {/* Actions */}
-      <div className="flex gap-2">
-        <Button type="button" variant="ghost" className="flex-1" onClick={onCancel}>
-          Отмена
+          {step === 0 ? "Отмена" : "Назад"}
         </Button>
-        <Button type="submit" className="flex-1" disabled={!title.trim()}>
-          Сохранить
+        <Button type="submit" disabled={!title.trim() || saving} className="flex-1">
+          {saving ? "Сохраняем…" : step === 0 ? "Далее" : "Сохранить"}
         </Button>
       </div>
     </form>

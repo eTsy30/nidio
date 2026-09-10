@@ -2,7 +2,6 @@
 
 import { useMemo, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { useMutation, useQuery } from "@apollo/client/react";
 import {
   addMonths,
   addWeeks,
@@ -12,14 +11,13 @@ import {
   subWeeks,
   subYears,
 } from "date-fns";
+import { X } from "lucide-react";
 
 import { CreateEventForm } from "@/features/calendar/create-event/ui/CreateEventForm";
 import { DeleteEventDialog } from "@/features/calendar/delete-event/ui/DeleteEventDialog";
 import { EditEventForm } from "@/features/calendar/edit-event/ui/EditEventForm";
-import { CREATE_EVENT, GET_EVENTS, UPDATE_EVENT } from "@/features/calendar/graphql";
 import {
   type CalendarEvent,
-  EventRepeat,
   EventScope,
   EventType,
   type ViewMode,
@@ -29,7 +27,9 @@ import { useAuth } from "@/shared/api/provider/auth-provider";
 import { cn } from "@/shared/lib/cn";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/shared/ui/dialog/dialog";
 
-import { getCalendarRange, getDateKey } from "../model/utils";
+import { type CalendarEventFormValues, useCalendarEvents } from "../model/useCalendarEvents";
+import { useCalendarModal } from "../model/useCalendarModal";
+import { getDateKey } from "../model/utils";
 
 import { CalendarHeader } from "./CalendarHeader";
 import { CalendarYear } from "./CalendarYear";
@@ -57,14 +57,7 @@ export default function CalendarWidget() {
 
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
 
-  const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
-
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-
-  const [createEventOpen, setCreateEventOpen] = useState(false);
-
-  const [editEventOpen, setEditEventOpen] = useState(false);
-  const [selectedEditEvent, setSelectedEditEvent] = useState<CalendarEvent | null>(null);
+  const { closeModal, modal, openCreate, openDelete, openEdit } = useCalendarModal();
 
   const [month, setMonth] = useState<Date>(initialDate);
 
@@ -94,32 +87,11 @@ export default function CalendarWidget() {
 
   const currentDate = viewMode === "week" ? weekStart : month;
 
-  const range = useMemo(() => getCalendarRange(currentDate, viewMode), [currentDate, viewMode]);
-
-  const variables = useMemo(
-    () => ({
-      filter: {
-        scope,
-        startFrom: range.start.toISOString(),
-        startTo: range.end.toISOString(),
-      },
-    }),
-    [scope, range.start, range.end],
-  );
-
-  const { data, loading, error, refetch } = useQuery<{
-    events: CalendarEvent[];
-  }>(GET_EVENTS, {
-    variables,
-    fetchPolicy: "cache-and-network",
-    nextFetchPolicy: "cache-first",
-    notifyOnNetworkStatusChange: true,
+  const { create, data, error, events, loading, refetch, update, updating } = useCalendarEvents({
+    currentDate,
+    scope,
+    viewMode,
   });
-
-  const [createEvent] = useMutation(CREATE_EVENT);
-  const [updateEvent, { loading: updating }] = useMutation(UPDATE_EVENT);
-
-  const events = useMemo<CalendarEvent[]>(() => data?.events ?? [], [data?.events]);
 
   const filteredEvents = useMemo(() => {
     if (filter === "ALL") {
@@ -180,54 +152,42 @@ export default function CalendarWidget() {
 
   const goPrev = () => {
     if (viewMode === "month") {
-      setMonth((current) => {
-        const next = subMonths(current, 1);
-        updateCalendarParams({ date: next });
-        return next;
-      });
+      const next = subMonths(month, 1);
+      setMonth(next);
+      updateCalendarParams({ date: next });
       return;
     }
 
     if (viewMode === "week") {
-      setWeekStart((current) => {
-        const next = subWeeks(current, 1);
-        updateCalendarParams({ date: next });
-        return next;
-      });
+      const next = subWeeks(weekStart, 1);
+      setWeekStart(next);
+      updateCalendarParams({ date: next });
       return;
     }
 
-    setMonth((current) => {
-      const next = subYears(current, 1);
-      updateCalendarParams({ date: next });
-      return next;
-    });
+    const next = subYears(month, 1);
+    setMonth(next);
+    updateCalendarParams({ date: next });
   };
 
   const goNext = () => {
     if (viewMode === "month") {
-      setMonth((current) => {
-        const next = addMonths(current, 1);
-        updateCalendarParams({ date: next });
-        return next;
-      });
+      const next = addMonths(month, 1);
+      setMonth(next);
+      updateCalendarParams({ date: next });
       return;
     }
 
     if (viewMode === "week") {
-      setWeekStart((current) => {
-        const next = addWeeks(current, 1);
-        updateCalendarParams({ date: next });
-        return next;
-      });
+      const next = addWeeks(weekStart, 1);
+      setWeekStart(next);
+      updateCalendarParams({ date: next });
       return;
     }
 
-    setMonth((current) => {
-      const next = addYears(current, 1);
-      updateCalendarParams({ date: next });
-      return next;
-    });
+    const next = addYears(month, 1);
+    setMonth(next);
+    updateCalendarParams({ date: next });
   };
 
   const handleViewChange = (view: ViewMode) => {
@@ -276,101 +236,39 @@ export default function CalendarWidget() {
   const handleScopeChange = (nextScope: EventScope) => {
     updateCalendarParams({ scope: nextScope });
     setSelectedDate(null);
-    setSelectedEvent(null);
-    setDeleteDialogOpen(false);
-    setCreateEventOpen(false);
-    setEditEventOpen(false);
-    setSelectedEditEvent(null);
+    closeModal();
   };
 
   const handleDeleteEvent = (event: CalendarEvent) => {
-    setSelectedEvent(event);
-    setDeleteDialogOpen(true);
+    openDelete(event);
   };
 
   const handleEventDeleted = async () => {
-    setDeleteDialogOpen(false);
-    setSelectedEvent(null);
+    closeModal();
     setSelectedDate(null);
     await refetch();
   };
 
   const handleEditEvent = (event: CalendarEvent) => {
-    setSelectedEditEvent(event);
-    setEditEventOpen(true);
+    openEdit(event);
   };
 
-  const handleEventUpdated = async (values: {
-    title: string;
-    description: string;
-    type: EventType;
-    startAt: Date;
-    endAt: Date | null;
-    allDay: boolean;
-    repeat: EventRepeat;
-    reminderAt: Date | null;
-  }) => {
-    if (!selectedEditEvent) return;
+  const handleEventUpdated = async (values: CalendarEventFormValues) => {
+    if (modal.kind !== "edit") return;
+
+    const selectedEditEvent = modal.event;
 
     try {
-      await updateEvent({
-        variables: {
-          id: selectedEditEvent.seriesId || selectedEditEvent.id,
-          input: {
-            occurrenceDate: selectedEditEvent.startAt,
-            ...(values.startAt.getTime() !== new Date(selectedEditEvent.startAt).getTime()
-              ? { timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone }
-              : {}),
-            title: values.title,
-            description: values.description || undefined,
-            type: values.type,
-            startAt: values.startAt.toISOString(),
-            endAt: values.endAt?.toISOString() ?? null,
-            allDay: values.allDay,
-            repeat: values.repeat,
-            reminderAt: values.reminderAt?.toISOString() ?? null,
-          },
-        },
-      });
-
-      setEditEventOpen(false);
-      setSelectedEditEvent(null);
-      await refetch();
+      await update(selectedEditEvent, values);
+      closeModal();
     } catch (error) {
       console.error("Не удалось обновить событие:", error);
     }
   };
 
-  const handleCreateEvent = async (values: {
-    title: string;
-    description: string;
-    type: EventType;
-    startAt: Date;
-    endAt: Date | null;
-    allDay: boolean;
-    repeat: EventRepeat;
-    reminderAt: Date | null;
-  }) => {
-    await createEvent({
-      variables: {
-        input: {
-          title: values.title,
-          description: values.description || undefined,
-          type: values.type,
-          scope,
-          timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-          startAt: values.startAt.toISOString(),
-          endAt: values.endAt?.toISOString() ?? null,
-          allDay: values.allDay,
-          repeat: values.repeat,
-          reminderAt: values.reminderAt?.toISOString() ?? null,
-        },
-      },
-    });
-
-    setCreateEventOpen(false);
-
-    await refetch();
+  const handleCreateEvent = async (values: CalendarEventFormValues) => {
+    await create(values);
+    closeModal();
   };
 
   if (loading && !data) {
@@ -471,27 +369,23 @@ export default function CalendarWidget() {
           scope={scope}
           onClose={() => {
             setSelectedDate(null);
-            setSelectedEvent(null);
+            closeModal();
           }}
           onAddEvent={() => {
-            setCreateEventOpen(true);
+            openCreate();
           }}
           onDeleteEvent={handleDeleteEvent}
           onEditEvent={handleEditEvent}
         />
       )}
 
-      {selectedEvent && (
+      {modal.kind === "delete" && (
         <DeleteEventDialog
-          key={selectedEvent.id}
-          event={selectedEvent}
-          open={deleteDialogOpen}
+          key={modal.event.id}
+          event={modal.event}
+          open
           onOpenChange={(open) => {
-            setDeleteDialogOpen(open);
-
-            if (!open) {
-              setSelectedEvent(null);
-            }
+            if (!open) closeModal();
           }}
           onDeleted={() => {
             void handleEventDeleted();
@@ -499,9 +393,9 @@ export default function CalendarWidget() {
         />
       )}
 
-      {createEventOpen && selectedDate && (
-        <Dialog open={createEventOpen} onOpenChange={setCreateEventOpen}>
-          <DialogContent className="z-[60] flex max-h-[calc(100dvh-32px-env(safe-area-inset-bottom))] flex-col gap-3 overflow-hidden rounded-2xl sm:max-w-lg">
+      {modal.kind === "create" && selectedDate && (
+        <Dialog open onOpenChange={(open) => !open && closeModal()}>
+          <DialogContent className="z-[60] flex max-h-[calc(100dvh-32px-env(safe-area-inset-bottom))] flex-col gap-3 overflow-hidden rounded-2xl p-5 sm:max-w-lg">
             <div className="shrink-0 pr-8">
               <DialogTitle>Новое событие</DialogTitle>
               <DialogDescription>Добавьте момент в календарь</DialogDescription>
@@ -509,28 +403,34 @@ export default function CalendarWidget() {
             <CreateEventForm
               scope={scope}
               date={selectedDate}
-              onCancel={() => setCreateEventOpen(false)}
+              onCancel={closeModal}
               onSubmit={handleCreateEvent}
             />
           </DialogContent>
         </Dialog>
       )}
 
-      {editEventOpen && selectedEditEvent && (
+      {modal.kind === "edit" && (
         <div className="fixed inset-0 z-[60] flex items-end justify-center bg-black/30 p-0 backdrop-blur-sm sm:items-center sm:p-4">
           <div className="max-h-[90dvh] w-full max-w-lg overflow-auto rounded-t-3xl bg-background p-5 shadow-2xl sm:rounded-3xl">
-            <div className="mb-5">
-              <h2 className="text-xl font-bold">Редактировать событие</h2>
-
-              <p className="mt-1 text-sm text-muted-foreground">Измените детали события</p>
+            <div className="mb-5 flex items-start justify-between gap-4">
+              <div>
+                <h2 className="text-xl font-bold">Редактировать событие</h2>
+                <p className="mt-1 text-sm text-muted-foreground">Измените детали события</p>
+              </div>
+              <button
+                type="button"
+                onClick={closeModal}
+                aria-label="Закрыть"
+                className="rounded-full p-2 text-muted-foreground transition hover:bg-muted hover:text-foreground"
+              >
+                <X className="size-5" />
+              </button>
             </div>
 
             <EditEventForm
-              event={selectedEditEvent}
-              onCancel={() => {
-                setEditEventOpen(false);
-                setSelectedEditEvent(null);
-              }}
+              event={modal.event}
+              onCancel={closeModal}
               onSubmit={handleEventUpdated}
             />
 

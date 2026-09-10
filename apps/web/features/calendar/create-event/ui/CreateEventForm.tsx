@@ -109,12 +109,12 @@ export function CreateEventForm({ scope, date, onCancel, onSubmit }: CreateEvent
   const inputClass =
     "h-11 min-w-0 w-full rounded-xl border bg-background px-3 text-base outline-none focus:border-primary";
   return (
-    <form onSubmit={handleSubmit} className="flex min-h-0 flex-col gap-3">
+    <form onSubmit={handleSubmit} className="flex min-h-0 flex-col gap-3 px-1 pb-1">
       <p className="text-sm text-muted-foreground">
         {format(date, "d MMMM yyyy", { locale: ru })} ·{" "}
         {scope === EventScope.PERSONAL ? "Мой" : "Наш"} · Шаг {step + 1} из 2
       </p>
-      <div className="min-h-0 overflow-y-auto overscroll-contain space-y-3">
+      <div className="min-h-0 space-y-3 overflow-y-auto overscroll-contain px-1">
         {step === 0 ? (
           <>
             <label className="block space-y-1 text-sm font-medium">

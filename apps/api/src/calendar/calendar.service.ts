@@ -15,6 +15,8 @@ import { PrismaService } from '../prisma/prisma.service';
 import { validTimeZone } from '../push/calendar-notification-time';
 import { CalendarPushService } from '../push/calendar-push.service';
 
+import { eventRangeWhere } from './domain/event-range-query';
+import { nextOccurrence, previousOccurrence } from './domain/recurrence';
 import { CreateEventInput } from './dto/create-event.input';
 import { EventsFilterInput } from './dto/events-filter.input';
 import { UpdateEventInput } from './dto/update-event.input';
@@ -43,6 +45,8 @@ type CalendarEvent = {
   excludedDates: Date[];
 };
 
+const MAX_CALENDAR_RANGE_MS = 366 * 24 * 60 * 60 * 1000;
+
 @Injectable()
 export class CalendarService {
   constructor(
@@ -67,6 +71,12 @@ export class CalendarService {
       throw new Error('startFrom не может быть больше startTo');
     }
 
+    if (startTo.getTime() - startFrom.getTime() > MAX_CALENDAR_RANGE_MS) {
+      throw new BadRequestException(
+        'Диапазон календаря не может превышать один год',
+      );
+    }
+
     const where: Prisma.EventWhereInput = {};
 
     if (filter.scope === GraphQLEventScope.PERSONAL) {
@@ -86,7 +96,9 @@ export class CalendarService {
     }
 
     const events = await this.prisma.event.findMany({
-      where,
+      where: {
+        AND: [where, eventRangeWhere(startFrom, startTo)],
+      },
       orderBy: {
         startAt: 'asc',
       },
@@ -96,16 +108,10 @@ export class CalendarService {
 
     for (const event of events) {
       if (event.repeat === EventRepeat.NONE) {
-        const insideRange =
-          event.startAt >= startFrom && event.startAt <= startTo;
-
-        if (insideRange) {
-          result.push({
-            ...event,
-            seriesId: event.id,
-          });
-        }
-
+        result.push({
+          ...event,
+          seriesId: event.id,
+        });
         continue;
       }
 
@@ -448,7 +454,7 @@ export class CalendarService {
      * repeatUntil = 2 сентября
      */
     if (mode === EventDeleteMode.FOLLOWING) {
-      const repeatUntil = this.getPreviousOccurrence(occurrence, event.repeat);
+      const repeatUntil = previousOccurrence(occurrence, event.repeat);
 
       return this.prisma.$transaction(async (tx) => {
         const updated = await tx.event.update({
@@ -591,55 +597,16 @@ export class CalendarService {
         });
       }
 
-      const nextOccurrence = this.getNextOccurrence(
-        occurrenceStart,
-        event.repeat,
-      );
+      const next = nextOccurrence(occurrenceStart, event.repeat);
 
-      if (nextOccurrence.getTime() <= occurrenceStart.getTime()) {
+      if (!next || next.getTime() <= occurrenceStart.getTime()) {
         break;
       }
 
-      occurrenceStart = nextOccurrence;
+      occurrenceStart = next;
     }
 
     return occurrences;
-  }
-
-  /*
-   * Все операции recurrence выполняем в UTC.
-   *
-   * Это важно, потому что Date приходит в ISO UTC,
-   * а использование setDate/setMonth зависит
-   * от timezone Node.js.
-   */
-  private getNextOccurrence(date: Date, repeat: EventRepeat): Date {
-    const next = new Date(date);
-
-    switch (repeat) {
-      case EventRepeat.DAILY:
-        next.setUTCDate(next.getUTCDate() + 1);
-        break;
-
-      case EventRepeat.WEEKLY:
-        next.setUTCDate(next.getUTCDate() + 7);
-        break;
-
-      case EventRepeat.MONTHLY:
-        next.setUTCMonth(next.getUTCMonth() + 1);
-        break;
-
-      case EventRepeat.YEARLY:
-        next.setUTCFullYear(next.getUTCFullYear() + 1);
-        break;
-
-      case EventRepeat.NONE:
-      default:
-        next.setTime(Number.MAX_SAFE_INTEGER);
-        break;
-    }
-
-    return next;
   }
 
   private async checkAccess(
@@ -702,9 +669,9 @@ export class CalendarService {
         return false;
       }
 
-      const next = this.getNextOccurrence(current, event.repeat);
+      const next = nextOccurrence(current, event.repeat);
 
-      if (next.getTime() <= current.getTime()) {
+      if (!next || next.getTime() <= current.getTime()) {
         return false;
       }
 
@@ -712,33 +679,5 @@ export class CalendarService {
     }
 
     return false;
-  }
-
-  private getPreviousOccurrence(date: Date, repeat: EventRepeat): Date {
-    const previous = new Date(date);
-
-    switch (repeat) {
-      case EventRepeat.DAILY:
-        previous.setUTCDate(previous.getUTCDate() - 1);
-        break;
-
-      case EventRepeat.WEEKLY:
-        previous.setUTCDate(previous.getUTCDate() - 7);
-        break;
-
-      case EventRepeat.MONTHLY:
-        previous.setUTCMonth(previous.getUTCMonth() - 1);
-        break;
-
-      case EventRepeat.YEARLY:
-        previous.setUTCFullYear(previous.getUTCFullYear() - 1);
-        break;
-
-      case EventRepeat.NONE:
-      default:
-        return previous;
-    }
-
-    return previous;
   }
 }

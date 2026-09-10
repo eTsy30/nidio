@@ -1,5 +1,7 @@
 import type { Event } from '@prisma/client';
 
+import { nextOccurrence } from '../calendar/domain/recurrence';
+
 export function validTimeZone(value: string): boolean {
   try {
     new Intl.DateTimeFormat('en', { timeZone: value }).format();
@@ -53,29 +55,7 @@ export function localNoon(dateKey: string, timeZone: string): Date {
 }
 
 // Match the calendar's existing UTC recurrence semantics, including month overflow.
-export function advanceOccurrence(
-  date: Date,
-  repeat: Event['repeat'],
-): Date | null {
-  const next = new Date(date);
-  switch (repeat) {
-    case 'DAILY':
-      next.setUTCDate(next.getUTCDate() + 1);
-      break;
-    case 'WEEKLY':
-      next.setUTCDate(next.getUTCDate() + 7);
-      break;
-    case 'MONTHLY':
-      next.setUTCMonth(next.getUTCMonth() + 1);
-      break;
-    case 'YEARLY':
-      next.setUTCFullYear(next.getUTCFullYear() + 1);
-      break;
-    default:
-      return null;
-  }
-  return next;
-}
+export const advanceOccurrence = nextOccurrence;
 
 type EventTiming = Pick<
   Event,
