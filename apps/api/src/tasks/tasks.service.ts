@@ -61,15 +61,22 @@ export class TasksService implements OnModuleInit, OnModuleDestroy {
   private async cleanupCompletedTasks() {
     const threshold = subDays(new Date(), 30);
 
-    await this.prisma.task.deleteMany({
-      where: {
-        completed: true,
-        completedAt: {
-          not: null,
-          lt: threshold,
+    try {
+      await this.prisma.task.deleteMany({
+        where: {
+          completed: true,
+          completedAt: {
+            not: null,
+            lt: threshold,
+          },
         },
-      },
-    });
+      });
+    } catch (error) {
+      this.logger.error(
+        'Completed task cleanup failed; check database connectivity and applied migrations',
+        error instanceof Error ? error.stack : String(error),
+      );
+    }
   }
 
   // ─── ACCESS ──────────────────────────────────────────

@@ -6,57 +6,46 @@ datasource db {
   provider = "postgresql"
 }
 
-// ==========  User & Auth  ==========
-
 model User {
-  id                 String              @id @default(cuid())
-  timeZone           String?
+  id                     String                  @id @default(cuid())
+  email                  String                  @unique
+  passwordHash           String
+  firstName              String                  @db.VarChar(50)
+  avatarUrl              String?
+  gender                 Gender                  @default(UNSPECIFIED)
+  emailVerifiedAt        DateTime?
+  createdAt              DateTime                @default(now())
+  updatedAt              DateTime                @updatedAt
+  timeZone               String?
+  chatPresence           ChatPresence[]
+  memberships            CoupleMember?
+  emailVerifications     EmailVerification[]
+  createdEvents          Event[]                 @relation("CreatedEvents")
+  personalEvents         Event[]                 @relation("PersonalEvents")
+  createdInvites         Invite[]
+  messages               Message[]
+  messageReactions       MessageReaction[]
+  passwordResets         PasswordReset[]
+  pushSubscriptions      PushSubscription[]
+  refreshTokens          RefreshToken[]
   scheduledNotifications ScheduledNotification[]
-  email              String              @unique
-  passwordHash       String
-  firstName          String              @db.VarChar(50)
-  avatarUrl          String?
-  gender             Gender              @default(UNSPECIFIED)
-  emailVerifiedAt    DateTime?
-  createdAt          DateTime            @default(now())
-  updatedAt          DateTime            @updatedAt
-  pushSubscriptions  PushSubscription[]
-  chatPresence       ChatPresence[]
-  memberships        CoupleMember[]
-  emailVerifications EmailVerification[]
-  createdInvites     Invite[]
-  messages           Message[]
-  messageReactions   MessageReaction[]
-  passwordResets     PasswordReset[]
-  refreshTokens      RefreshToken[]
-  workspaces         Workspace[]
-  createdEvents      Event[]             @relation("CreatedEvents")
-  personalEvents     Event[]             @relation("PersonalEvents")
-  createdTemplates   Template[]          @relation("CreatedTemplates")
+  createdTemplates       Template[]              @relation("CreatedTemplates")
+  workspaces             Workspace[]
 }
-
-enum Gender {
-  MALE
-  FEMALE
-  UNSPECIFIED
-}
-
-// ==========  Couple & Relationship  ==========
 
 model Couple {
-  id             String    @id @default(cuid())
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
-  deletedAt      DateTime?
-  notificationDirty Boolean @default(true)
-  relationshipAt DateTime?
-
-  members   CoupleMember[]
-  invites   Invite[]
-  workspace Workspace?
-  events    Event[]
-  board     Board?
-  templates Template[]
+  id                String         @id @default(cuid())
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+  deletedAt         DateTime?
+  relationshipAt    DateTime?
+  notificationDirty Boolean        @default(true)
+  board             Board?
+  members           CoupleMember[]
+  events            Event[]
+  invites           Invite[]
+  templates         Template[]
+  workspace         Workspace?
 
   @@index([createdAt])
   @@index([deletedAt])
@@ -80,11 +69,11 @@ model Invite {
   token      String       @unique
   coupleId   String?
   creatorId  String
-  status     InviteStatus @default(PENDING)
   expiresAt  DateTime
   acceptedAt DateTime?
   revokedAt  DateTime?
   createdAt  DateTime     @default(now())
+  status     InviteStatus @default(PENDING)
   couple     Couple?      @relation(fields: [coupleId], references: [id], onDelete: Cascade)
   creator    User         @relation(fields: [creatorId], references: [id], onDelete: Cascade)
 
@@ -93,22 +82,13 @@ model Invite {
   @@index([token])
 }
 
-enum InviteStatus {
-  PENDING
-  ACCEPTED
-  EXPIRED
-  REVOKED
-}
-
-// ==========  Board & Columns (NEW)  ==========
-
 model Board {
   id        String   @id @default(cuid())
   coupleId  String   @unique
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  columns   Column[]
   couple    Couple   @relation(fields: [coupleId], references: [id], onDelete: Cascade)
+  columns   Column[]
 
   @@index([coupleId])
 }
@@ -117,8 +97,8 @@ model Column {
   id        String   @id @default(cuid())
   boardId   String
   title     String   @db.VarChar(100)
-  icon      String? // lucide icon name или emoji
-  color     String? // hex цвет, назначается автоматически
+  icon      String?
+  color     String?
   order     Int      @default(0)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -129,22 +109,19 @@ model Column {
   @@index([order])
 }
 
-// ==========  Templates (NEW)  ==========
-
 model Template {
   id          String         @id @default(cuid())
   title       String         @db.VarChar(100)
   icon        String?
   color       String?
   isSystem    Boolean        @default(false)
-  coupleId    String? // для пользовательских шаблонов пары
-  createdById String? // кто создал пользовательский шаблон
+  coupleId    String?
+  createdById String?
   createdAt   DateTime       @default(now())
   updatedAt   DateTime       @updatedAt
+  couple      Couple?        @relation(fields: [coupleId], references: [id], onDelete: Cascade)
+  user        User?          @relation("CreatedTemplates", fields: [createdById], references: [id])
   items       TemplateItem[]
-
-  couple Couple? @relation(fields: [coupleId], references: [id], onDelete: Cascade)
-  user   User?   @relation("CreatedTemplates", fields: [createdById], references: [id])
 
   @@index([coupleId])
   @@index([isSystem])
@@ -163,56 +140,32 @@ model TemplateItem {
   @@index([order])
 }
 
-// ==========  Task (UPDATED)  ==========
-
-enum Repeat {
-  NONE
-  DAILY
-  WEEKLY
-  MONTHLY
-  CUSTOM
-}
-
-enum AssigneeMode {
-  ME
-  PARTNER
-  BOTH
-  ROTATE
-}
-
 model Task {
-  overdueNotifiedAt DateTime?
-  id          String  @id @default(cuid())
-  title       String
-  description String?
-
-  columnId String
-  column   Column @relation(fields: [columnId], references: [id], onDelete: Cascade)
-
-  coupleId String?
-  order    Int     @default(0)
-  priority Boolean @default(false)
-
+  id                      String           @id @default(cuid())
+  title                   String
+  description             String?
   assigneeId              String?
-  assigneeMode            AssigneeMode @default(ME)
+  coupleId                String?
+  dueAt                   DateTime?
+  repeat                  Repeat           @default(NONE)
+  completed               Boolean          @default(false)
+  completedAt             DateTime?
+  createdById             String
+  createdAt               DateTime         @default(now())
+  updatedAt               DateTime         @updatedAt
+  assigneeMode            AssigneeMode     @default(ME)
+  occurrenceIndex         Int              @default(0)
+  recurringGroupId        String?
+  repeatConfig            Json?
+  repeatUntil             DateTime?
   rotationFirstAssigneeId String?
-
-  dueAt        DateTime?
-  repeat       Repeat    @default(NONE)
-  repeatUntil  DateTime?
-  repeatConfig Json?
-
-  recurringGroupId String?
-  occurrenceIndex  Int     @default(0)
-
-  completed   Boolean   @default(false)
-  completedAt DateTime?
-  createdById String
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-
-  completions TaskCompletion[]
-  nudges      Nudge[]
+  columnId                String
+  order                   Int              @default(0)
+  priority                Boolean          @default(false)
+  overdueNotifiedAt       DateTime?
+  nudges                  Nudge[]
+  column                  Column           @relation(fields: [columnId], references: [id], onDelete: Cascade)
+  completions             TaskCompletion[]
 
   @@index([completed, overdueNotifiedAt, dueAt])
   @@index([columnId])
@@ -230,8 +183,7 @@ model TaskCompletion {
   taskId    String
   userId    String
   createdAt DateTime @default(now())
-
-  task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
 
   @@unique([taskId, userId])
   @@index([taskId])
@@ -243,15 +195,12 @@ model Nudge {
   senderId    String
   recipientId String
   createdAt   DateTime @default(now())
-
-  task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  task        Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
 
   @@index([taskId])
   @@index([recipientId])
   @@index([createdAt])
 }
-
-// ==========  Workspace & Chat  ==========
 
 model Workspace {
   id        String        @id @default(cuid())
@@ -269,39 +218,28 @@ model Workspace {
   @@index([userId])
 }
 
-enum WorkspaceType {
-  PERSONAL
-  COUPLE
-}
-
-// ==========  Chat  ==========
-
 model Message {
-  id String @id @default(cuid())
-
-  workspaceId String
-  senderId    String
-  type        MessageType @default(TEXT)
-  content     String?     @db.Text
-  clientId    String?     @unique
-  metadata    Json?
-  replyToId   String?
-  deliveredAt DateTime?
-  readAt      DateTime?
-  editedAt    DateTime?
-  deletedAt   DateTime?
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
-
-  sender    User      @relation(fields: [senderId], references: [id])
-  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-
-  replyTo Message?  @relation("MessageReply", fields: [replyToId], references: [id])
-  replies Message[] @relation("MessageReply")
-
+  id             String              @id @default(cuid())
+  workspaceId    String
+  senderId       String
+  createdAt      DateTime            @default(now())
+  editedAt       DateTime?
+  deletedAt      DateTime?
+  content        String?
+  deliveredAt    DateTime?
+  metadata       Json?
+  readAt         DateTime?
+  replyToId      String?
+  type           MessageType         @default(TEXT)
+  updatedAt      DateTime            @updatedAt
+  clientId       String?             @unique
+  replyTo        Message?            @relation("MessageReply", fields: [replyToId], references: [id])
+  replies        Message[]           @relation("MessageReply")
+  sender         User                @relation(fields: [senderId], references: [id])
+  workspace      Workspace           @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  attachments    MessageAttachment[]
+  reactions      MessageReaction[]
   pushDeliveries PushDelivery[]
-  attachments MessageAttachment[]
-  reactions   MessageReaction[]
 
   @@index([workspaceId, createdAt])
   @@index([senderId])
@@ -310,56 +248,34 @@ model Message {
 }
 
 model MessageAttachment {
-  id        String @id @default(cuid())
+  id        String         @id @default(cuid())
   messageId String
-
-  type AttachmentType
-
-  url      String
-  mimeType String
-  fileName String?
-  fileSize Int
-  width    Int?
-  height   Int?
-  duration Int?
-
-  createdAt DateTime @default(now())
-
-  message Message @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  type      AttachmentType
+  url       String
+  mimeType  String
+  fileName  String?
+  fileSize  Int
+  width     Int?
+  height    Int?
+  duration  Int?
+  createdAt DateTime       @default(now())
+  message   Message        @relation(fields: [messageId], references: [id], onDelete: Cascade)
 
   @@index([messageId])
 }
 
 model MessageReaction {
-  id        String @id @default(cuid())
+  id        String   @id @default(cuid())
   messageId String
   userId    String
-
-  emoji String @db.VarChar(20)
-
+  emoji     String   @db.VarChar(20)
   createdAt DateTime @default(now())
-
-  message Message @relation(fields: [messageId], references: [id], onDelete: Cascade)
-  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  message   Message  @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([messageId, userId, emoji])
   @@index([messageId])
 }
-
-enum MessageType {
-  TEXT
-  IMAGE
-  SYSTEM
-}
-
-enum AttachmentType {
-  IMAGE
-  VIDEO
-  VOICE
-  FILE
-}
-
-// ==========  Space & Block  ==========
 
 model Space {
   id          String    @id @default(cuid())
@@ -388,44 +304,29 @@ model Block {
   @@index([spaceId])
 }
 
-enum BlockType {
-  TEXT
-  CHECKLIST
-  LINK
-  IMAGE
-  QUOTE
-  DIVIDER
-}
-
-// ==========  Event  ==========
-
 model Event {
-  timeZone String?
-  notificationDirty Boolean @default(true)
-  id          String      @id @default(cuid())
-  title       String      @db.VarChar(200)
-  description String?     @db.Text
-  startAt     DateTime
-  endAt       DateTime?
-  allDay      Boolean     @default(false)
-  repeat      EventRepeat @default(NONE)
-  type        EventType   @default(OTHER)
-  scope       EventScope
-
-  createdById String
-  createdBy   User   @relation("CreatedEvents", fields: [createdById], references: [id], onDelete: Cascade)
-
-  userId String?
-  user   User?   @relation("PersonalEvents", fields: [userId], references: [id], onDelete: Cascade)
-
-  coupleId String?
-  couple   Couple? @relation(fields: [coupleId], references: [id], onDelete: Cascade)
-
-  reminderAt    DateTime?
-  createdAt     DateTime   @default(now())
-  updatedAt     DateTime   @updatedAt
-  repeatUntil   DateTime?
-  excludedDates DateTime[]
+  id                String      @id @default(cuid())
+  title             String      @db.VarChar(200)
+  description       String?
+  startAt           DateTime
+  endAt             DateTime?
+  type              EventType   @default(OTHER)
+  scope             EventScope
+  createdById       String
+  userId            String?
+  coupleId          String?
+  reminderAt        DateTime?
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+  allDay            Boolean     @default(false)
+  repeat            EventRepeat @default(NONE)
+  excludedDates     DateTime[]
+  repeatUntil       DateTime?
+  timeZone          String?
+  notificationDirty Boolean     @default(true)
+  couple            Couple?     @relation(fields: [coupleId], references: [id], onDelete: Cascade)
+  createdBy         User        @relation("CreatedEvents", fields: [createdById], references: [id], onDelete: Cascade)
+  user              User?       @relation("PersonalEvents", fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([notificationDirty])
   @@index([userId, startAt])
@@ -433,28 +334,6 @@ model Event {
   @@index([createdById])
   @@index([startAt])
 }
-
-enum EventRepeat {
-  NONE
-  DAILY
-  WEEKLY
-  MONTHLY
-  YEARLY
-}
-
-enum EventType {
-  DATE
-  BIRTHDAY
-  ANNIVERSARY
-  OTHER
-}
-
-enum EventScope {
-  PERSONAL
-  COUPLE
-}
-
-// ==========  Auth helpers  ==========
 
 model PasswordReset {
   id        String    @id @default(cuid())
@@ -484,70 +363,149 @@ model EmailVerification {
 
 model RefreshToken {
   id        String   @id @default(cuid())
-  jti       String   @unique
   tokenHash String
   expiresAt DateTime
   createdAt DateTime @default(now())
   userId    String
+  jti       String   @unique
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
 }
 
 model PushSubscription {
-  id        String @id @default(cuid())
-  userId    String
-  endpoint  String @unique
-  p256dh    String
-  auth      String
-  createdAt DateTime @default(now())
-  user      User @relation(fields: [userId], references: [id], onDelete: Cascade)
-  deliveries PushDelivery[]
+  id                   String                @id @default(cuid())
+  userId               String
+  endpoint             String                @unique
+  p256dh               String
+  auth                 String
+  createdAt            DateTime              @default(now())
   notificationAttempts NotificationAttempt[]
+  deliveries           PushDelivery[]
+  user                 User                  @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
   @@index([userId])
 }
 
 model PushDelivery {
   subscriptionId String
-  messageId String
-  createdAt DateTime @default(now())
-  subscription PushSubscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
-  message Message @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  messageId      String
+  createdAt      DateTime         @default(now())
+  message        Message          @relation(fields: [messageId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  subscription   PushSubscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
   @@id([subscriptionId, messageId])
 }
 
 model ChatPresence {
-  socketId String @id
-  userId String
+  socketId    String   @id
+  userId      String
   workspaceId String
-  expiresAt DateTime
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt   DateTime
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
   @@index([userId, workspaceId, expiresAt])
 }
 
-
 model ScheduledNotification {
-  id String @id @default(cuid())
-  key String @unique
-  kind String
-  sourceId String
-  userId String
-  coupleId String?
-  runAt DateTime
-  occurrenceAt DateTime?
+  id            String    @id @default(cuid())
+  key           String    @unique
+  kind          String
+  sourceId      String
+  userId        String
+  coupleId      String?
+  runAt         DateTime
+  occurrenceAt  DateTime?
   sourceVersion DateTime?
-  payload Json
-  leaseUntil DateTime @default(dbgenerated("'1970-01-01 00:00:00'::timestamp"))
-  leaseToken String?
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  payload       Json
+  leaseUntil    DateTime  @default(dbgenerated("'1970-01-01 00:00:00'::timestamp without time zone"))
+  leaseToken    String?
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
   @@index([runAt, leaseUntil])
   @@index([sourceId])
 }
 
 model NotificationAttempt {
   subscriptionId String
-  key String
-  createdAt DateTime @default(now())
-  subscription PushSubscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+  key            String
+  createdAt      DateTime         @default(now())
+  subscription   PushSubscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
   @@id([subscriptionId, key])
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  UNSPECIFIED
+}
+
+enum InviteStatus {
+  PENDING
+  ACCEPTED
+  EXPIRED
+  REVOKED
+}
+
+enum Repeat {
+  NONE
+  DAILY
+  WEEKLY
+  MONTHLY
+  CUSTOM
+}
+
+enum AssigneeMode {
+  ME
+  PARTNER
+  BOTH
+  ROTATE
+}
+
+enum WorkspaceType {
+  PERSONAL
+  COUPLE
+}
+
+enum MessageType {
+  TEXT
+  IMAGE
+  SYSTEM
+}
+
+enum AttachmentType {
+  IMAGE
+  VIDEO
+  VOICE
+  FILE
+}
+
+enum BlockType {
+  TEXT
+  CHECKLIST
+  LINK
+  IMAGE
+  QUOTE
+  DIVIDER
+}
+
+enum EventRepeat {
+  NONE
+  DAILY
+  WEEKLY
+  MONTHLY
+  YEARLY
+}
+
+enum EventType {
+  DATE
+  BIRTHDAY
+  ANNIVERSARY
+  OTHER
+}
+
+enum EventScope {
+  PERSONAL
+  COUPLE
 }

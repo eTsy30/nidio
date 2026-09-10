@@ -114,12 +114,12 @@ export class StorageController {
   }
 
   @Authorization()
-  @Get('images/*')
+  @Get('images/*path')
   async getImage(
     @Param() params: Record<string, string | string[]>,
     @Res({ passthrough: true }) response: Response,
   ): Promise<StreamableFile> {
-    const rawKey = params[0];
+    const rawKey = params.path;
 
     const key = Array.isArray(rawKey) ? rawKey.join('/') : rawKey;
 

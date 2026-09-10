@@ -86,3 +86,47 @@ describe('AuthService refresh', () => {
     ).toHaveLength(1);
   });
 });
+
+describe('AuthService membership validation', () => {
+  const prisma = { user: { findUnique: jest.fn() } };
+  const service = new AuthService(
+    prisma as never,
+    {} as never,
+    {} as never,
+    {} as never,
+    {} as never,
+  );
+
+  it('validates a user without a couple', async () => {
+    prisma.user.findUnique.mockResolvedValue({ id: 'a', memberships: null });
+    expect((await service.validate('a')).relationship).toEqual({
+      connected: false,
+      coupleId: null,
+      workspaceId: null,
+      partner: null,
+    });
+  });
+
+  it('returns the partner from a single membership', async () => {
+    const partner = { id: 'b', firstName: 'Partner', avatarUrl: null };
+    prisma.user.findUnique.mockResolvedValue({
+      id: 'a',
+      memberships: {
+        couple: {
+          id: 'couple',
+          workspace: { id: 'workspace' },
+          members: [
+            { userId: 'a', user: { id: 'a' } },
+            { userId: 'b', user: partner },
+          ],
+        },
+      },
+    });
+    expect((await service.validate('a')).relationship).toEqual({
+      connected: true,
+      coupleId: 'couple',
+      workspaceId: 'workspace',
+      partner,
+    });
+  });
+});

@@ -3,23 +3,38 @@
 Основание: [PROJECT AUDIT](PROJECT-AUDIT.md) и [ROADMAP](ROADMAP.md).
 Обновлено: 2026-09-10.
 
-| Этап                           | Статус | Результат                                                                              |
-| ------------------------------ | :----: | -------------------------------------------------------------------------------------- |
-| 0 — Воспроизводимые проверки   |  [x]   | Scripts, Prisma generation, Turbo/PWA cache, CI и runtime smoke подтверждены           |
-| 1 — Авторизация чата           |  [x]   | Доступ к edit/delete/reply/reactions ограничен автором и workspace для REST/WS         |
-| 2 — JWT lifecycle              |  [x]   | Access/refresh разделены, refresh rotation атомарна, WebSocket принимает только access |
-| 3 — Валидация REST/WS и upload |  [x]   | DTO, upload limit/signature, origin allowlist и rate limits добавлены                  |
-| 4 — Frontend session           |  [x]   | Coordinator refresh, Query profile и межвкладочная сессия подтверждены                 |
-| 5 — Контракты и API            |  [x]   | REST contracts профиля, auth и couple подтверждены                                     |
-| 6 — State management           |  [x]   | Общий server cache, invalidation и URL state Todo/Calendar                             |
-| 7 — FSD                        |  [x]   | Границы `app → screens → widgets → features → shared` проверяются в lint, без entities |
-| 8 — Календарь                  |  [x]   | UTC recurrence engine, bounded reads, widget model и единый modal state готовы         |
-| 9 — Чат: offline/reconnect     |  [x]   | dedupe, acknowledgement, retry, merge HTTP/WS и reconnect подтверждены                 |
-| 10 — Todo                      |  [x]   | DnD model/mutations, rollback/cancel и keyboard drag подтверждены                      |
-| 11 — Push                      |  [x]   | Production service worker activation и Push delivery подтверждены                      |
-| 12 — Design System             |  [x]   | Shared Dialog, route states, browser zoom и основные формы унифицированы               |
-| 13 — Cleanup/performance       |  [x]   | Неиспользуемые файлы и старый PWA-пакет удалены; production build подтверждён          |
-| 14 — Release readiness         |  [ ]   | Не начат                                                                               |
+| Этап                           | Статус | Результат                                                                                            |
+| ------------------------------ | :----: | ---------------------------------------------------------------------------------------------------- |
+| 0 — Воспроизводимые проверки   |  [x]   | Scripts, Prisma generation, Turbo/PWA cache, CI и runtime smoke подтверждены                         |
+| 1 — Авторизация чата           |  [x]   | Доступ к edit/delete/reply/reactions ограничен автором и workspace для REST/WS                       |
+| 2 — JWT lifecycle              |  [x]   | Access/refresh разделены, refresh rotation атомарна, WebSocket принимает только access               |
+| 3 — Валидация REST/WS и upload |  [x]   | DTO, upload limit/signature, origin allowlist и rate limits добавлены                                |
+| 4 — Frontend session           |  [x]   | Coordinator refresh, Query profile и межвкладочная сессия подтверждены                               |
+| 5 — Контракты и API            |  [x]   | REST contracts профиля, auth и couple подтверждены                                                   |
+| 6 — State management           |  [x]   | Общий server cache, invalidation и URL state Todo/Calendar                                           |
+| 7 — FSD                        |  [x]   | Границы `app → screens → widgets → features → shared` проверяются в lint, без entities               |
+| 8 — Календарь                  |  [x]   | UTC recurrence engine, bounded reads, widget model и единый modal state готовы                       |
+| 9 — Чат: offline/reconnect     |  [x]   | dedupe, acknowledgement, retry, merge HTTP/WS и reconnect подтверждены                               |
+| 10 — Todo                      |  [x]   | DnD model/mutations, rollback/cancel и keyboard drag подтверждены                                    |
+| 11 — Push                      |  [x]   | Production service worker activation и Push delivery подтверждены                                    |
+| 12 — Design System             |  [x]   | Shared Dialog, route states, browser zoom и основные формы унифицированы                             |
+| 13 — Cleanup/performance       |  [x]   | Неиспользуемые файлы и старый PWA-пакет удалены; production build подтверждён                        |
+| 14 — Release readiness         |  [x]   | Регрессия, migration/restore rehearsal, browser acceptance и восстановление Neon/Render подтверждены |
+
+## Этап 14 — закрыт 2026-09-10
+
+Подробные результаты, команды deployment, откат и владельцы рисков: [RELEASE.md](RELEASE.md).
+
+- Исправлены одиночная nullable membership в AuthService, необработанная ошибка фоновой очистки и именованный wildcard Storage.
+- API typecheck, 122 unit tests / 17 suites, lint обоих приложений, обе production builds и web typecheck — PASS.
+- PostgreSQL 17: четыре integration suites (chat, refresh race, Todo BOTH/nudge/overdue, calendar push), 24 миграции и повторный deploy — PASS. Эти проверки добавлены в CI.
+- Production HTTP/WebSocket runtime: две пары, auth/profile, refresh race/logout, chat acknowledgement/dedupe/reconnect и workspace isolation, Todo BOTH, GraphQL calendar, storage route — PASS. Внешние transport заменены локальными/mocked; runtime-проверка добавлена в CI после build.
+- Production frontend и sw.js отвечают HTTP 200. Turbo cache восстановил sw.js с идентичным SHA-256.
+- Пользователь подтвердил финальные browser/device сценарии 2026-09-10: две вкладки/logout, chat offline/reconnect, Todo drag/keyboard и реальные push — «Уже проверено — всё работает».
+- Neon: backup восстановлен в PostgreSQL 18; обновление старой схемы проверено на копии и применено транзакционно с сохранением исходных данных всех 13 таблиц. История 24 миграций зарегистрирована, Prisma schema актуальна.
+- Render https://nidio.onrender.com/users/me после восстановления базы вернул ожидаемый HTTP 401 без токена. Ошибка отсутствующей public.Task устранена в Neon.
+
+Исходники и CI подготовлены локально; commit/push и новый hosted CI run в этой сессии не выполнялись. Настройки Render не менялись. Закрытие этапа означает завершённую проверку готовности, а не публикацию этих изменений. Остаточные эксплуатационные задачи и их владелец eTsy30 перечислены в RELEASE.md.
 
 ## Этап 11 — закрыт
 
@@ -84,7 +99,7 @@
 
 Проверки: `pnpm --filter api test -- calendar` — PASS, 26 tests / 4 suites; API typecheck/lint/build — PASS; web typecheck/lint/build — PASS; `git diff --check` — PASS. Web lint: 0 errors / 4 ранее известных warnings.
 
-## Этап 9 — в работе
+## Этап 9 — закрыт
 
 - Сервер сохраняет `clientId` при создании сообщения и возвращает уже созданное сообщение при повторной отправке тем же пользователем в том же workspace. Повтор не публикует второе событие в workspace.
 - WebSocket подтверждает отправку с `messageId` в течение 10 секунд. Chat UI создаёт локальное сообщение со статусом `sending`; успешное подтверждение переводит его в `sent`, а таймаут или ошибка — в `error` с кнопкой повторной отправки через тот же `clientId`.
@@ -96,7 +111,7 @@
 
 Пользователь подтвердил browser-проверку отправки, повторной отправки и reconnect 2026-09-10. Текущий чат по продуктовой модели загружает последние 20 сообщений; cursor pagination остаётся отдельной задачей при появлении требования к истории.
 
-## Этап 10 — в работе
+## Этап 10 — закрыт
 
 - Правила вычисления позиции задачи и оптимистического переноса доски вынесены из `BoardView` в чистый `model/board-dnd.ts`.
 - Pointer, touch и keyboard DnD используют одну функцию `getTaskMove`; это исключает расхождение порядка при разных способах перетаскивания.
@@ -107,7 +122,7 @@
 
 Проверки: web typecheck, architecture/lint и production build — PASS, 0 errors / 4 существующих warnings; API typecheck/lint — PASS; Tasks/Overdue/assignment unit tests — PASS, 23 tests. `git diff --check` — PASS.
 
-Для закрытия этапа нужна browser-проверка: создание/редактирование/удаление, обычная задача и BOTH, nudge, drag внутри/между колонками, Escape и keyboard DnD. Интеграционный `todo.integration.ts` не запускался: он требует отдельную PostgreSQL через `TODO_TEST_DATABASE_URL`, а рабочая база для него не используется.
+Финальное подтверждение в этапе 14: `todo.integration.ts` прошёл на изолированной PostgreSQL 17 (CRUD, assignment, concurrent BOTH/nudge, overdue). Пользователь подтвердил Todo drag/keyboard в браузере. Рабочая база для этих тестов не использовалась.
 
 ## Этап 1 — закрыт
 
@@ -144,7 +159,7 @@
 
 ## Следующий этап
 
-**Этап 4 — Frontend session.**
+Этапы 0–14 завершены. Дальше — публикация подготовленных изменений и эксплуатационные задачи из [RELEASE.md](RELEASE.md).
 
 ## Этап 2 — закрыт
 
@@ -299,7 +314,7 @@ NODE_ENV=production pnpm --filter api db:deploy
 
 Пользователь подтвердил проверку и перешёл к этапу 6 2026-09-10.
 
-## Этап 6 — State management: в работе
+## Этап 6 — State management: закрыт
 
 - `useMe` больше не принудительно запрашивает `/users/me` на каждом focus: AuthProvider и экраны используют один Query cache.
 - Todo filter хранится в URL: `/together?filter=me`, `partner`, `together` или `rotate`; значение `all` URL не засоряет.

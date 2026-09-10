@@ -17,6 +17,20 @@ jobs:
   ci:
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: release-test-only
+          POSTGRES_DB: release_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
 
     steps:
       - name: Checkout
@@ -49,5 +63,15 @@ jobs:
       - name: Test
         run: pnpm test
 
+      - name: Release PostgreSQL regression and migration rehearsal
+        run: pnpm --filter api test:release
+        env:
+          RELEASE_TEST_DATABASE_URL: postgresql://postgres:release-test-only@127.0.0.1:5432/release_test
+
       - name: Build
         run: pnpm build
+
+      - name: Production API HTTP and WebSocket regression
+        run: pnpm --filter api test:runtime
+        env:
+          RELEASE_TEST_DATABASE_URL: postgresql://postgres:release-test-only@127.0.0.1:5432/release_test

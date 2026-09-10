@@ -19,7 +19,10 @@
     "db:deploy": "prisma migrate deploy",
     "db:seed:templates": "prisma db execute --file prisma/seed-templates.sql",
     "db:push": "prisma db push",
-    "db:studio": "prisma studio"
+    "db:studio": "prisma studio",
+    "test:release": "pnpm db:generate && node scripts/test-release.mjs",
+    "start:render": "pnpm db:deploy && pnpm start",
+    "test:runtime": "node scripts/test-runtime.mjs"
   },
   "dependencies": {
     "@apollo/server": "^4.13.0",

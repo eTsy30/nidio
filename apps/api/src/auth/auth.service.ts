@@ -77,7 +77,7 @@ export class AuthService {
       throw new NotFoundException('User not found');
     }
 
-    const membership = user.memberships[0] ?? null;
+    const membership = user.memberships;
     const couple = membership?.couple ?? null;
     const partner =
       couple?.members.find((member) => member.userId !== user.id)?.user ?? null;
