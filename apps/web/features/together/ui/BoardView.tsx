@@ -6,24 +6,31 @@ import {
   DragEndEvent,
   DragOverlay,
   DragStartEvent,
+  KeyboardSensor,
   MouseSensor,
   TouchSensor,
   useSensor,
   useSensors,
 } from "@dnd-kit/core";
-import { arrayMove, horizontalListSortingStrategy, SortableContext } from "@dnd-kit/sortable";
+import {
+  arrayMove,
+  horizontalListSortingStrategy,
+  SortableContext,
+  sortableKeyboardCoordinates,
+} from "@dnd-kit/sortable";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { isBefore, startOfDay } from "date-fns";
 import { Plus } from "lucide-react";
 
 import { boardApi } from "@/features/together/api/board.api";
 import { togetherKeys } from "@/features/together/api/query-keys";
-import { tasksApi } from "@/features/together/api/tasks.api";
 import { cn } from "@/shared/lib/cn";
 import { Button } from "@/shared/ui";
 
 import type { Board } from "../api/board.api";
+import { isTaskOverdue } from "../lib/task-utils";
+import { getTaskMove } from "../model/board-dnd";
 import type { TaskFilter, TogetherTask } from "../model/task.types";
+import { useBoardMutations } from "../model/use-board-mutations";
 
 import { ColumnCard } from "./ColumnCard";
 import { TaskCard } from "./TaskCard";
@@ -40,14 +47,6 @@ interface BoardViewProps {
 }
 
 type TaskViewMode = "active" | "completed";
-
-function isTaskOverdue(task: TogetherTask): boolean {
-  if (task.completed || !task.dueAt) {
-    return false;
-  }
-
-  return isBefore(startOfDay(new Date(task.dueAt)), startOfDay(new Date()));
-}
 
 export function BoardView({
   board,
@@ -76,6 +75,7 @@ export function BoardView({
       },
     }),
     useSensor(TouchSensor, { activationConstraint: { delay: 250, tolerance: 8 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
   );
 
   /**
@@ -135,148 +135,7 @@ export function BoardView({
     },
   });
 
-  /**
-   * Перемещение задачи.
-   *
-   * Optimistic update:
-   * - сразу меняем React Query cache;
-   * - если API упал — возвращаем предыдущий cache;
-   * - после запроса синхронизируем board.
-   */
-  const moveTaskMutation = useMutation({
-    retry: false,
-    mutationFn: ({
-      taskId,
-      columnId,
-      order,
-    }: {
-      taskId: string;
-      columnId: string;
-      order: number;
-    }) => tasksApi.move(taskId, columnId, order),
-
-    onMutate: async ({ taskId, columnId, order }) => {
-      await queryClient.cancelQueries({
-        queryKey: togetherKeys.board(),
-      });
-
-      const previousBoard = queryClient.getQueryData<Board>(togetherKeys.board());
-
-      if (!previousBoard) {
-        return { previousBoard };
-      }
-
-      const nextColumns = previousBoard.columns.map((column) => ({
-        ...column,
-        tasks: [...column.tasks],
-      }));
-
-      let movedTask: TogetherTask | undefined;
-
-      let sourceColumnId: string | undefined;
-
-      for (const column of nextColumns) {
-        const index = column.tasks.findIndex((task) => task.id === taskId);
-
-        if (index !== -1) {
-          movedTask = column.tasks[index];
-
-          sourceColumnId = column.id;
-
-          column.tasks.splice(index, 1);
-
-          break;
-        }
-      }
-
-      if (!movedTask || !sourceColumnId) {
-        return { previousBoard };
-      }
-
-      const updatedTask: TogetherTask = {
-        ...movedTask,
-        columnId,
-      };
-
-      const targetColumn = nextColumns.find((column) => column.id === columnId);
-
-      if (!targetColumn) {
-        return { previousBoard };
-      }
-
-      const safeOrder = Math.max(0, Math.min(order, targetColumn.tasks.length));
-
-      targetColumn.tasks.splice(safeOrder, 0, updatedTask);
-
-      queryClient.setQueryData<Board>(togetherKeys.board(), {
-        ...previousBoard,
-        columns: nextColumns,
-      });
-
-      return {
-        previousBoard,
-      };
-    },
-
-    onError: (_error, _variables, context) => {
-      if (context?.previousBoard) {
-        queryClient.setQueryData(togetherKeys.board(), context.previousBoard);
-      }
-    },
-
-    onSettled: () => {
-      queryClient.invalidateQueries({
-        queryKey: togetherKeys.all,
-      });
-    },
-  });
-
-  /**
-   * Перемещение колонок.
-   */
-  const reorderColumnsMutation = useMutation({
-    retry: false,
-    mutationFn: boardApi.reorderColumns,
-
-    onMutate: async (orderedIds) => {
-      await queryClient.cancelQueries({
-        queryKey: togetherKeys.board(),
-      });
-
-      const previousBoard = queryClient.getQueryData<Board>(togetherKeys.board());
-
-      queryClient.setQueryData<Board>(togetherKeys.board(), (old) => {
-        if (!old) {
-          return old;
-        }
-
-        const idToCol = new Map(old.columns.map((column) => [column.id, column]));
-
-        const newColumns = orderedIds
-          .map((id) => idToCol.get(id))
-          .filter(Boolean) as typeof old.columns;
-
-        return {
-          ...old,
-          columns: newColumns,
-        };
-      });
-
-      return { previousBoard };
-    },
-
-    onError: (_error, _ids, context) => {
-      if (context?.previousBoard) {
-        queryClient.setQueryData(togetherKeys.board(), context.previousBoard);
-      }
-    },
-
-    onSettled: () => {
-      queryClient.invalidateQueries({
-        queryKey: togetherKeys.all,
-      });
-    },
-  });
+  const { moveTaskMutation, reorderColumnsMutation } = useBoardMutations();
 
   const handleDragStart = (event: DragStartEvent) => {
     const { active } = event;
@@ -349,100 +208,22 @@ export function BoardView({
       return;
     }
 
-    const taskId = String(active.id);
-
     const activeColumnId = active.data.current?.columnId as string | undefined;
 
     if (!activeColumnId) {
       return;
     }
 
-    /**
-     * Drop в колонку.
-     */
-    if (overType === "column") {
-      const targetColumnId = over.data.current?.columnId as string | undefined;
-
-      if (!targetColumnId) {
-        return;
-      }
-
-      const targetColumn = board.columns.find((column) => column.id === targetColumnId);
-
-      if (!targetColumn) {
-        return;
-      }
-
-      /**
-       * Если бросили в ту же колонку,
-       * добавляем в конец.
-       */
-      const targetOrder =
-        targetColumnId === activeColumnId
-          ? Math.max(0, targetColumn.tasks.length - 1)
-          : targetColumn.tasks.length;
-
-      moveTaskMutation.mutate({
-        taskId,
-        columnId: targetColumnId,
-        order: targetOrder,
-      });
-
-      return;
-    }
-
-    /**
-     * Drop на другую задачу.
-     */
-    if (overType === "task") {
-      const targetColumnId = over.data.current?.columnId as string | undefined;
-
-      if (!targetColumnId) {
-        return;
-      }
-
-      const targetColumn = board.columns.find((column) => column.id === targetColumnId);
-
-      if (!targetColumn) {
-        return;
-      }
-
-      const activeIndex = targetColumn.tasks.findIndex((task) => task.id === taskId);
-
-      const targetIndex = targetColumn.tasks.findIndex((task) => task.id === over.id);
-
-      if (targetIndex === -1) {
-        return;
-      }
-
-      let targetOrder = targetIndex;
-
-      /**
-       * Если таска двигается внутри той же
-       * колонки вниз, после удаления
-       * исходной позиции индекс назначения
-       * уменьшается на 1.
-       */
-      if (targetColumnId === activeColumnId && activeIndex !== -1 && activeIndex < targetIndex) {
-        targetOrder -= 1;
-      }
-
-      targetOrder = Math.max(0, targetOrder);
-
-      /**
-       * Если задача уже находится перед target,
-       * ничего менять не нужно.
-       */
-      if (targetColumnId === activeColumnId && activeIndex === targetIndex) {
-        return;
-      }
-
-      moveTaskMutation.mutate({
-        taskId,
-        columnId: targetColumnId,
-        order: targetOrder,
-      });
-    }
+    const move = getTaskMove(
+      board,
+      { id: String(active.id), columnId: activeColumnId },
+      {
+        id: String(over.id),
+        type: overType,
+        columnId: over.data.current?.columnId as string | undefined,
+      },
+    );
+    if (move) moveTaskMutation.mutate(move);
   };
 
   return (
@@ -479,7 +260,12 @@ export function BoardView({
         </button>
       </div>
 
-      <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+      <DndContext
+        sensors={sensors}
+        onDragStart={handleDragStart}
+        onDragCancel={() => setActiveTask(null)}
+        onDragEnd={handleDragEnd}
+      >
         <SortableContext
           items={board.columns.map((column) => column.id)}
           strategy={horizontalListSortingStrategy}

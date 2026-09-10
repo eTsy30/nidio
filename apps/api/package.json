@@ -17,6 +17,7 @@
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
     "db:deploy": "prisma migrate deploy",
+    "db:seed:templates": "prisma db execute --file prisma/seed-templates.sql",
     "db:push": "prisma db push",
     "db:studio": "prisma studio"
   },

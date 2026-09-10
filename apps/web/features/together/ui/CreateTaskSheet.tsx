@@ -165,9 +165,9 @@ export function CreateTaskSheet({
               await handleSubmit(onSubmit)(event);
             }
           }}
-          className="flex min-h-0 flex-col gap-3"
+          className="flex min-h-0 flex-col gap-3 px-1 pb-1"
         >
-          <div className="min-h-0 space-y-3 overflow-y-auto overscroll-contain">
+          <div className="min-h-0 space-y-3 overflow-y-auto overscroll-contain px-1">
             {step === 0 && (
               <>
                 {/* Column select */}

@@ -14,8 +14,8 @@
 | 6 — State management           |  [x]   | Общий server cache, invalidation и URL state Todo/Calendar                             |
 | 7 — FSD                        |  [x]   | Границы `app → screens → widgets → features → shared` проверяются в lint, без entities |
 | 8 — Календарь                  |  [x]   | UTC recurrence engine, bounded reads, widget model и единый modal state готовы         |
-| 9 — Чат: offline/reconnect     |  [~]   | dedupe, acknowledgement, retry, merge HTTP/WS и reconnect выполнены; history впереди   |
-| 10 — Todo                      |  [ ]   | Не начат                                                                               |
+| 9 — Чат: offline/reconnect     |  [x]   | dedupe, acknowledgement, retry, merge HTTP/WS и reconnect подтверждены                 |
+| 10 — Todo                      |  [~]   | DnD model/mutations, rollback/cancel и keyboard drag готовы; ожидается browser smoke   |
 | 11 — Push                      |  [ ]   | Не начат                                                                               |
 | 12 — Design System             |  [ ]   | Не начат                                                                               |
 | 13 — Cleanup/performance       |  [ ]   | Не начат                                                                               |
@@ -60,7 +60,20 @@
 
 Проверки текущего блока: API `chat-access` — PASS, 41 test; web typecheck и architecture/lint — PASS, 0 errors / 4 существующих warnings; `git diff --check` — PASS.
 
-Осталось: cursor pagination и загрузка полной истории, browser smoke reconnect/offline.
+Пользователь подтвердил browser-проверку отправки, повторной отправки и reconnect 2026-09-10. Текущий чат по продуктовой модели загружает последние 20 сообщений; cursor pagination остаётся отдельной задачей при появлении требования к истории.
+
+## Этап 10 — в работе
+
+- Правила вычисления позиции задачи и оптимистического переноса доски вынесены из `BoardView` в чистый `model/board-dnd.ts`.
+- Pointer, touch и keyboard DnD используют одну функцию `getTaskMove`; это исключает расхождение порядка при разных способах перетаскивания.
+- Optimistic cache update использует `applyTaskMove` без мутации данных TanStack Query. При ошибке API сохраняется существующий rollback на исходную доску.
+- Добавлен `KeyboardSensor` и `sortableKeyboardCoordinates`; отмена перетаскивания очищает overlay без запроса к API.
+- Мутации перемещения задач и колонок вынесены в `model/use-board-mutations.ts`. UI больше не содержит optimistic cache и rollback-код; все Todo mutations по-прежнему используют `retry: false` и `togetherKeys.all` invalidation.
+- `TaskCard`, Create/EditTaskSheet остаются единственным активным представлением и формами задач. Неиспользуемые `TodayView`, `TodayBanner` и `TaskList` не удалены: для них не подтверждён отказ от отдельного Today/list сценария.
+
+Проверки: web typecheck, architecture/lint и production build — PASS, 0 errors / 4 существующих warnings; API typecheck/lint — PASS; Tasks/Overdue/assignment unit tests — PASS, 23 tests. `git diff --check` — PASS.
+
+Для закрытия этапа нужна browser-проверка: создание/редактирование/удаление, обычная задача и BOTH, nudge, drag внутри/между колонками, Escape и keyboard DnD. Интеграционный `todo.integration.ts` не запускался: он требует отдельную PostgreSQL через `TODO_TEST_DATABASE_URL`, а рабочая база для него не используется.
 
 ## Этап 1 — закрыт
 
