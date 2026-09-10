@@ -8,6 +8,7 @@ import { AddReactionDto } from './dto/add-reaction.dto';
 import { CreateMessageDto } from './dto/create-message.dto';
 import { EditMessageDto } from './dto/edit-message.dto';
 import { ChatRepository } from './chat.repository';
+import { ChatAccessPolicy } from './chat-access.policy';
 
 @Injectable()
 export class ChatService {
@@ -16,6 +17,7 @@ export class ChatService {
     private readonly chatRepository: ChatRepository,
     private readonly relationshipService: RelationshipService,
     private readonly linkPreviewService: LinkPreviewService,
+    private readonly chatAccessPolicy: ChatAccessPolicy,
   ) {}
 
   async getMessages(userId: string, cursor?: string, limit = 20) {
@@ -48,18 +50,12 @@ export class ChatService {
       throw new Error('Message content is required.');
     }
 
+    if (dto.replyToId) {
+      await this.chatAccessPolicy.requireMessage(userId, dto.replyToId);
+    }
+
     const url = dto.content.match(/https?:\/\/[^\s]+/)?.[0];
     const preview = url ? await this.linkPreviewService.get(url) : null;
-
-    if (dto.replyToId) {
-      const replyMessage = await this.chatRepository.findMessageById(
-        dto.replyToId,
-      );
-
-      if (!replyMessage) {
-        throw new Error('Reply message not found.');
-      }
-    }
 
     const message = await this.chatRepository.createMessage({
       workspaceId,
@@ -73,26 +69,41 @@ export class ChatService {
   }
 
   /** Обновить текст сообщения. */
-  async editMessage(messageId: string, dto: EditMessageDto) {
+  async editMessage(userId: string, messageId: string, dto: EditMessageDto) {
     if (!dto.content) {
       throw new Error('Message content is required.');
     }
 
-    return this.chatRepository.updateMessage(messageId, dto.content);
+    const { workspaceId } = await this.chatAccessPolicy.requireAuthorMessage(
+      userId,
+      messageId,
+    );
+    return this.chatRepository.updateMessage(
+      messageId,
+      dto.content,
+      workspaceId,
+      userId,
+    );
   }
 
   /** Мягко удалить сообщение. */
-  async deleteMessage(messageId: string) {
-    return this.chatRepository.deleteMessage(messageId);
+  async deleteMessage(userId: string, messageId: string) {
+    const { workspaceId } = await this.chatAccessPolicy.requireAuthorMessage(
+      userId,
+      messageId,
+    );
+    return this.chatRepository.deleteMessage(messageId, workspaceId, userId);
   }
 
   /** Добавить реакцию к сообщению. */
   async addReaction(userId: string, messageId: string, dto: AddReactionDto) {
+    await this.chatAccessPolicy.requireMessage(userId, messageId);
     return this.chatRepository.addReaction(messageId, userId, dto.emoji);
   }
 
   /** Удалить реакцию с сообщения. */
   async removeReaction(userId: string, messageId: string, emoji: string) {
+    await this.chatAccessPolicy.requireMessage(userId, messageId);
     return this.chatRepository.removeReaction(messageId, userId, emoji);
   }
 

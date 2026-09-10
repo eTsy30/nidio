@@ -62,9 +62,13 @@ export class ChatRepository {
     });
   }
 
-  async findMessageById(id: string) {
-    return this.prisma.message.findUnique({
-      where: { id },
+  async findAccessibleMessage(workspaceId: string, id: string) {
+    return this.prisma.message.findFirst({
+      where: { id, workspaceId, deletedAt: null },
+      select: {
+        id: true,
+        senderId: true,
+      },
     });
   }
 
@@ -118,9 +122,14 @@ export class ChatRepository {
     });
   }
 
-  async updateMessage(id: string, content: string) {
+  async updateMessage(
+    id: string,
+    content: string,
+    workspaceId: string,
+    senderId: string,
+  ) {
     return this.prisma.message.update({
-      where: { id },
+      where: { id, workspaceId, senderId, deletedAt: null },
       data: {
         content,
         editedAt: new Date(),
@@ -128,9 +137,9 @@ export class ChatRepository {
     });
   }
 
-  async deleteMessage(id: string) {
+  async deleteMessage(id: string, workspaceId: string, senderId: string) {
     return this.prisma.message.update({
-      where: { id },
+      where: { id, workspaceId, senderId, deletedAt: null },
       data: {
         deletedAt: new Date(),
       },

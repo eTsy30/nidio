@@ -23,6 +23,43 @@ const ALLOWED_IMAGE_TYPES = {
 
 const DEFAULT_MAX_IMAGE_SIZE_MB = 5;
 
+function maxImageSizeBytes(): number {
+  const configured = Number(process.env.UPLOAD_MAX_IMAGE_SIZE_MB);
+  const megabytes =
+    Number.isFinite(configured) && configured > 0
+      ? configured
+      : DEFAULT_MAX_IMAGE_SIZE_MB;
+
+  return Math.floor(megabytes * 1024 * 1024);
+}
+
+function detectImageMime(
+  buffer: Buffer,
+): keyof typeof ALLOWED_IMAGE_TYPES | null {
+  if (
+    buffer.length >= 3 &&
+    buffer[0] === 0xff &&
+    buffer[1] === 0xd8 &&
+    buffer[2] === 0xff
+  ) {
+    return 'image/jpeg';
+  }
+  if (
+    buffer.length >= 8 &&
+    buffer.subarray(0, 8).equals(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]))
+  ) {
+    return 'image/png';
+  }
+  if (
+    buffer.length >= 12 &&
+    buffer.subarray(0, 4).toString() === 'RIFF' &&
+    buffer.subarray(8, 12).toString() === 'WEBP'
+  ) {
+    return 'image/webp';
+  }
+  return null;
+}
+
 @Controller('storage')
 export class StorageController {
   constructor(private readonly storageService: StorageService) {}
@@ -33,6 +70,10 @@ export class StorageController {
   @UseInterceptors(
     FileInterceptor('file', {
       storage: memoryStorage(),
+      limits: { fileSize: maxImageSizeBytes() },
+      fileFilter: (_request, file, callback) => {
+        callback(null, file.mimetype in ALLOWED_IMAGE_TYPES);
+      },
     }),
   )
   async uploadImage(
@@ -43,32 +84,20 @@ export class StorageController {
       throw new BadRequestException('Файл не передан');
     }
 
-    const extension =
-      ALLOWED_IMAGE_TYPES[file.mimetype as keyof typeof ALLOWED_IMAGE_TYPES];
-
-    if (!extension) {
+    const mimeType = detectImageMime(file.buffer);
+    if (!mimeType || mimeType !== file.mimetype) {
       throw new BadRequestException(
         'Поддерживаются только изображения JPG, PNG и WebP',
       );
     }
 
-    const maxSizeMb = Number(
-      process.env.UPLOAD_MAX_IMAGE_SIZE_MB ?? DEFAULT_MAX_IMAGE_SIZE_MB,
-    );
-
-    const maxSizeBytes = maxSizeMb * 1024 * 1024;
-
-    if (file.size > maxSizeBytes) {
-      throw new BadRequestException(
-        `Размер изображения не должен превышать ${maxSizeMb} МБ`,
-      );
-    }
+    const extension = ALLOWED_IMAGE_TYPES[mimeType];
 
     const key = this.storageService.generateKey(
       `users/${userId}/images`,
       extension,
     );
 
-    return this.storageService.upload(file.buffer, key, file.mimetype);
+    return this.storageService.upload(file.buffer, key, mimeType);
   }
 }

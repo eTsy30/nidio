@@ -4,11 +4,11 @@
   "version": "0.1.0",
   "packageManager": "pnpm@11.15.1",
   "scripts": {
-    "dev": "kill -9 $(lsof -ti:4000) 2>/dev/null; nest start --watch",
     "dev": "turbo dev",
     "build": "turbo build",
     "lint": "turbo lint",
     "typecheck": "turbo typecheck",
+    "test": "turbo test",
     "clean": "turbo clean",
     "lint:fix": "eslint . --fix",
     "format": "prettier . --write",

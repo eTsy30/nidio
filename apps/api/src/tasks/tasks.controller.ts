@@ -16,6 +16,7 @@ import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { JwtGuards } from '../auth/guards/auth.guard';
 
 import { CreateTaskDto } from './dto/create-task.dto';
+import { MoveTaskDto } from './dto/move-task.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
 import { TasksService } from './tasks.service';
 
@@ -63,11 +64,10 @@ export class TasksController {
   @Patch(':id/move')
   move(
     @Param('id') id: string,
-    @Body('columnId') columnId: string,
-    @Body('order') order: number,
+    @Body() dto: MoveTaskDto,
     @CurrentUser('id') userId: string,
   ) {
-    return this.tasksService.moveTask(id, columnId, order, userId);
+    return this.tasksService.moveTask(id, dto.columnId, dto.order, userId);
   }
 
   @Delete(':id')

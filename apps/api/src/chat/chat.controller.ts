@@ -13,6 +13,7 @@ import { Authorization } from '../auth/decorators/Authorization.decorator';
 import { Authorized } from '../auth/decorators/authorized.decorator';
 
 import { AddReactionDto } from './dto/add-reaction.dto';
+import { ChatMessagesQueryDto } from './dto/chat-messages-query.dto';
 import { CreateMessageDto } from './dto/create-message.dto';
 import { EditMessageDto } from './dto/edit-message.dto';
 import { ChatService } from './chat.service';
@@ -25,10 +26,9 @@ export class ChatController {
   @Get('messages')
   async getMessages(
     @Authorized('id') userId: string,
-    @Query('cursor') cursor?: string,
-    @Query('limit') limit = 20,
+    @Query() query: ChatMessagesQueryDto,
   ) {
-    return this.chatService.getMessages(userId, cursor, Number(limit));
+    return this.chatService.getMessages(userId, query.cursor, query.limit);
   }
 
   @Post('messages')
@@ -40,13 +40,20 @@ export class ChatController {
   }
 
   @Patch('messages/:id')
-  async editMessage(@Param('id') id: string, @Body() dto: EditMessageDto) {
-    return this.chatService.editMessage(id, dto);
+  async editMessage(
+    @Authorized('id') userId: string,
+    @Param('id') id: string,
+    @Body() dto: EditMessageDto,
+  ) {
+    return this.chatService.editMessage(userId, id, dto);
   }
 
   @Delete('messages/:id')
-  async deleteMessage(@Param('id') id: string) {
-    return this.chatService.deleteMessage(id);
+  async deleteMessage(
+    @Authorized('id') userId: string,
+    @Param('id') id: string,
+  ) {
+    return this.chatService.deleteMessage(userId, id);
   }
 
   @Post('messages/:id/reactions')

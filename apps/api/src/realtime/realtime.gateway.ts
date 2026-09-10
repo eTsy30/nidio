@@ -1,5 +1,7 @@
+import { UsePipes, ValidationPipe } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import {
+  MessageBody,
   OnGatewayConnection,
   OnGatewayDisconnect,
   OnGatewayInit,
@@ -9,23 +11,42 @@ import {
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 
+import type { AccessTokenPayload } from '../auth/interfaces/jwt.interfaces';
 import { ChatService } from '../chat/chat.service';
-import { AddReactionDto } from '../chat/dto/add-reaction.dto';
 import { CreateMessageDto } from '../chat/dto/create-message.dto';
-import { EditMessageDto } from '../chat/dto/edit-message.dto';
+import {
+  ChatEditDto,
+  ChatPresenceDto,
+  ChatReactionDto,
+  ChatReadDto,
+  ChatRemoveReactionDto,
+  MessageIdDto,
+} from '../chat/dto/ws-chat.dto';
+import { originValidator } from '../config/origin';
 import { PushService } from '../push/push.service';
 import { RelationshipService } from '../relationship/relationship.service';
 
 import { RealtimeService } from './realtime.service';
 @WebSocketGateway({
   cors: {
-    origin: true,
+    origin: originValidator,
     credentials: true,
   },
 })
+@UsePipes(
+  new ValidationPipe({
+    transform: true,
+    whitelist: true,
+    forbidNonWhitelisted: true,
+  }),
+)
 export class RealtimeGateway
   implements OnGatewayConnection, OnGatewayDisconnect, OnGatewayInit
 {
+  private readonly eventWindows = new Map<
+    string,
+    { startedAt: number; count: number }
+  >();
   @WebSocketServer()
   server!: Server;
 
@@ -51,11 +72,53 @@ export class RealtimeGateway
         return;
       }
 
-      const payload = this.jwtService.verify(token);
+      const payload = this.jwtService.verify<AccessTokenPayload>(token);
+
+      if (
+        payload.type !== 'access' ||
+        !payload.sub ||
+        !payload.exp ||
+        payload.exp * 1000 <= Date.now()
+      ) {
+        client.disconnect();
+        return;
+      }
 
       Object.assign(client.data, {
         user: payload,
+        accessTokenExpiresAt: payload.exp,
       });
+
+      client.use((_event, next) => {
+        if (
+          typeof client.data.accessTokenExpiresAt !== 'number' ||
+          client.data.accessTokenExpiresAt * 1000 <= Date.now()
+        ) {
+          client.disconnect();
+          next(new Error('Access token expired'));
+          return;
+        }
+        const now = Date.now();
+        const window = this.eventWindows.get(client.id);
+        const current =
+          !window || now - window.startedAt >= 60_000
+            ? { startedAt: now, count: 0 }
+            : window;
+        current.count += 1;
+        this.eventWindows.set(client.id, current);
+        if (current.count > 60) {
+          next(new Error('Too many WebSocket events'));
+          return;
+        }
+        next();
+      });
+
+      const disconnectAtExpiry = setTimeout(
+        () => client.disconnect(),
+        payload.exp * 1000 - Date.now(),
+      );
+      disconnectAtExpiry.unref();
+      client.once('disconnect', () => clearTimeout(disconnectAtExpiry));
 
       client.join(`user:${payload.sub}`);
 
@@ -137,7 +200,10 @@ export class RealtimeGateway
   // }
 
   @SubscribeMessage('chat:presence')
-  async handleChatPresence(client: Socket, payload: { active?: boolean }) {
+  async handleChatPresence(
+    client: Socket,
+    @MessageBody() payload: ChatPresenceDto,
+  ) {
     const userId = client.data.user?.sub;
     if (!userId || typeof payload?.active !== 'boolean') return;
     const relationship =
@@ -152,7 +218,7 @@ export class RealtimeGateway
   }
 
   @SubscribeMessage('chat:send')
-  async handleChatSend(client: Socket, dto: CreateMessageDto) {
+  async handleChatSend(client: Socket, @MessageBody() dto: CreateMessageDto) {
     const userId = client.data.user?.sub;
 
     if (!userId) {
@@ -171,16 +237,14 @@ export class RealtimeGateway
   }
 
   @SubscribeMessage('chat:edit')
-  async handleChatEdit(
-    client: Socket,
-    payload: { messageId: string; dto: EditMessageDto },
-  ) {
+  async handleChatEdit(client: Socket, @MessageBody() payload: ChatEditDto) {
+    const userId = client.data.user?.sub;
+    if (!userId) return;
     const message = await this.chatService.editMessage(
+      userId,
       payload.messageId,
       payload.dto,
     );
-    const userId = client.data.user?.sub;
-    if (!userId) return;
 
     const relationship =
       await this.relationshipService.getCurrentCouple(userId);
@@ -194,10 +258,10 @@ export class RealtimeGateway
   }
 
   @SubscribeMessage('chat:delete')
-  async handleChatDelete(client: Socket, payload: { messageId: string }) {
-    await this.chatService.deleteMessage(payload.messageId);
+  async handleChatDelete(client: Socket, @MessageBody() payload: MessageIdDto) {
     const userId = client.data.user?.sub;
     if (!userId) return;
+    await this.chatService.deleteMessage(userId, payload.messageId);
 
     const relationship =
       await this.relationshipService.getCurrentCouple(userId);
@@ -213,7 +277,7 @@ export class RealtimeGateway
   @SubscribeMessage('chat:reaction:add')
   async handleReactionAdd(
     client: Socket,
-    payload: { messageId: string; dto: AddReactionDto },
+    @MessageBody() payload: ChatReactionDto,
   ) {
     const userId = client.data.user?.sub;
     if (!userId) return;
@@ -237,7 +301,7 @@ export class RealtimeGateway
   @SubscribeMessage('chat:reaction:remove')
   async handleReactionRemove(
     client: Socket,
-    payload: { messageId: string; emoji: string },
+    @MessageBody() payload: ChatRemoveReactionDto,
   ) {
     const userId = client.data.user?.sub;
     if (!userId) return;
@@ -298,7 +362,7 @@ export class RealtimeGateway
   async handleRead(
     client: Socket,
 
-    payload: { messageIds: string[] },
+    @MessageBody() payload: ChatReadDto,
   ) {
     const userId = client.data.user?.sub;
 
@@ -332,7 +396,7 @@ export class RealtimeGateway
   }
 
   @SubscribeMessage('chat:delivered')
-  async handleDelivered(client: Socket, payload: { messageId: string }) {
+  async handleDelivered(client: Socket, @MessageBody() payload: MessageIdDto) {
     const userId = client.data.user?.sub;
     if (!userId) return;
 
@@ -359,6 +423,7 @@ export class RealtimeGateway
   }
 
   async handleDisconnect(client: Socket) {
+    this.eventWindows.delete(client.id);
     await this.pushService.clearPresence(client.id);
     const userId = client.data.user?.sub;
     if (!userId) {

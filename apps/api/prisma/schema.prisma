@@ -484,6 +484,7 @@ model EmailVerification {
 
 model RefreshToken {
   id        String   @id @default(cuid())
+  jti       String   @unique
   tokenHash String
   expiresAt DateTime
   createdAt DateTime @default(now())

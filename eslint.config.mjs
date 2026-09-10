@@ -4,7 +4,17 @@ import nextVitals from "eslint-config-next/core-web-vitals";
 import nextTs from "eslint-config-next/typescript";
 
 export default [
-  globalIgnores(["**/node_modules/**", "**/dist/**", "**/.next/**", "**/generated/**"]),
+  globalIgnores([
+    "**/node_modules/**",
+    "**/dist/**",
+    "**/.next/**",
+    "**/generated/**",
+    "**/.generated/**",
+    "apps/web/public/sw.js",
+    "apps/web/public/sw.js.map",
+    "apps/web/public/swe-worker-*.js",
+    "apps/web/public/swe-worker-*.js.map",
+  ]),
   ...base,
 
   {

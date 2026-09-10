@@ -27,13 +27,14 @@ export class AuthService {
   private async auth(userId: string) {
     const accessToken = this.tokenService.generateAccessToken(userId);
 
-    const refreshToken = this.tokenService.generateRefreshToken(userId);
+    const { jti, token: refreshToken } =
+      this.tokenService.createRefreshToken(userId);
 
     const tokenHash = await this.passwordService.hash(refreshToken);
 
     const expiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24 * 30);
 
-    await this.sessionService.create(userId, tokenHash, expiresAt);
+    await this.sessionService.create(userId, jti, tokenHash, expiresAt);
 
     return {
       accessToken,
@@ -158,9 +159,9 @@ export class AuthService {
     if (!refreshToken) {
       throw new UnauthorizedException('Refresh token is missing');
     }
-    let payload: { sub: string };
+    let payload;
     try {
-      payload = this.tokenService.verify<{ sub: string }>(refreshToken);
+      payload = this.tokenService.verifyRefreshToken(refreshToken);
     } catch {
       throw new UnauthorizedException('Invalid or expired refresh token');
     }
@@ -169,31 +170,40 @@ export class AuthService {
       throw new UnauthorizedException('Invalid refresh token');
     }
 
-    const sessions = await this.sessionService.findAllByUser(payload.sub);
-
-    const session = await (async () => {
-      for (const item of sessions) {
-        const ok = await this.passwordService.verify(
-          item.tokenHash,
-          refreshToken,
-        );
-        if (ok) return item;
-      }
-      return null;
-    })();
+    const session = await this.sessionService.findByJti(
+      payload.jti,
+      payload.sub,
+    );
 
     if (!session) {
       throw new UnauthorizedException('Invalid refresh token');
     }
 
-    if (session.expiresAt < new Date()) {
+    const validToken = await this.passwordService.verify(
+      session.tokenHash,
+      refreshToken,
+    );
+
+    if (!validToken || session.expiresAt < new Date()) {
       await this.sessionService.delete(session.id);
-      throw new UnauthorizedException('Refresh token expired');
+      throw new UnauthorizedException('Invalid or expired refresh token');
     }
 
-    await this.sessionService.delete(session.id);
+    const accessToken = this.tokenService.generateAccessToken(payload.sub);
+    const nextRefresh = this.tokenService.createRefreshToken(payload.sub);
+    const nextHash = await this.passwordService.hash(nextRefresh.token);
+    const expiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24 * 30);
+    const rotated = await this.sessionService.rotate(session, {
+      jti: nextRefresh.jti,
+      tokenHash: nextHash,
+      expiresAt,
+    });
 
-    return this.auth(payload.sub);
+    if (!rotated) {
+      throw new UnauthorizedException('Invalid refresh token');
+    }
+
+    return { accessToken, refreshToken: nextRefresh.token };
   }
 
   async forgotPassword(email: string) {

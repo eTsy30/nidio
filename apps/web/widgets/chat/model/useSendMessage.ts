@@ -14,7 +14,11 @@ export function useSendMessage(socket: Socket<ServerToClientEvents, ClientToServ
         throw new Error("Socket is not connected");
       }
 
-      socket.emit("chat:send", { content });
+      socket.emit("chat:send", {
+        clientId: crypto.randomUUID(),
+        type: "TEXT",
+        content,
+      });
     },
     [socket],
   );

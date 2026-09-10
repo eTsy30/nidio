@@ -6,10 +6,16 @@ import { PrismaService } from '../../prisma/prisma.service';
 export class SessionService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async create(userId: string, tokenHash: string, expiresAt: Date) {
+  async create(
+    userId: string,
+    jti: string,
+    tokenHash: string,
+    expiresAt: Date,
+  ) {
     return this.prisma.refreshToken.create({
       data: {
         userId,
+        jti,
         tokenHash,
         expiresAt,
       },
@@ -24,19 +30,9 @@ export class SessionService {
     });
   }
 
-  async findAllByUser(userId: string) {
-    return this.prisma.refreshToken.findMany({
-      where: {
-        userId,
-      },
-    });
-  }
-
-  async findByTokenHash(tokenHash: string) {
+  async findByJti(jti: string, userId: string) {
     return this.prisma.refreshToken.findFirst({
-      where: {
-        tokenHash,
-      },
+      where: { jti, userId },
     });
   }
 
@@ -45,6 +41,32 @@ export class SessionService {
       where: {
         id,
       },
+    });
+  }
+
+  async rotate(
+    session: { id: string; userId: string; jti: string; tokenHash: string },
+    next: { jti: string; tokenHash: string; expiresAt: Date },
+  ) {
+    return this.prisma.$transaction(async (tx) => {
+      const consumed = await tx.refreshToken.deleteMany({
+        where: {
+          id: session.id,
+          userId: session.userId,
+          jti: session.jti,
+          tokenHash: session.tokenHash,
+          expiresAt: { gt: new Date() },
+        },
+      });
+
+      if (consumed.count !== 1) {
+        return false;
+      }
+
+      await tx.refreshToken.create({
+        data: { userId: session.userId, ...next },
+      });
+      return true;
     });
   }
 

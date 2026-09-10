@@ -8,11 +8,17 @@ import { RelationshipModule } from '../relationship/relationship.module';
 import { ChatController } from './chat.controller';
 import { ChatRepository } from './chat.repository';
 import { ChatService } from './chat.service';
+import { ChatAccessPolicy } from './chat-access.policy';
 
 @Module({
   imports: [PushModule, PrismaModule, forwardRef(() => RelationshipModule)],
   controllers: [ChatController],
-  providers: [ChatService, ChatRepository, LinkPreviewService],
+  providers: [
+    ChatService,
+    ChatRepository,
+    ChatAccessPolicy,
+    LinkPreviewService,
+  ],
   exports: [ChatService],
 })
 export class ChatModule {}
