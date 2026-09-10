@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 
 import { LinkPreviewService } from '../link-preview/link-preview.service';
 import { PushService } from '../push/push.service';
@@ -45,6 +46,11 @@ export class ChatService {
   }
 
   async sendMessage(userId: string, dto: CreateMessageDto) {
+    const result = await this.sendMessageWithResult(userId, dto);
+    return result.message;
+  }
+
+  async sendMessageWithResult(userId: string, dto: CreateMessageDto) {
     const workspaceId = await this.relationshipService.getWorkspaceId(userId);
     if (!dto.content) {
       throw new Error('Message content is required.');
@@ -54,18 +60,53 @@ export class ChatService {
       await this.chatAccessPolicy.requireMessage(userId, dto.replyToId);
     }
 
+    const existing = await this.chatRepository.findMessageByClientId(
+      dto.clientId,
+    );
+    if (existing) {
+      if (
+        existing.workspaceId === workspaceId &&
+        existing.senderId === userId
+      ) {
+        return { message: existing, created: false };
+      }
+
+      throw new Error('Message client ID is already in use.');
+    }
+
     const url = dto.content.match(/https?:\/\/[^\s]+/)?.[0];
     const preview = url ? await this.linkPreviewService.get(url) : null;
 
-    const message = await this.chatRepository.createMessage({
-      workspaceId,
-      senderId: userId,
-      content: dto.content,
-      ...(preview ? { metadata: { linkPreview: preview } } : {}),
-      ...(dto.replyToId ? { replyToId: dto.replyToId } : {}),
-    });
+    let message;
+    try {
+      message = await this.chatRepository.createMessage({
+        workspaceId,
+        senderId: userId,
+        content: dto.content,
+        clientId: dto.clientId,
+        ...(preview ? { metadata: { linkPreview: preview } } : {}),
+        ...(dto.replyToId ? { replyToId: dto.replyToId } : {}),
+      });
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === 'P2002'
+      ) {
+        const duplicate = await this.chatRepository.findMessageByClientId(
+          dto.clientId,
+        );
+        if (
+          duplicate &&
+          duplicate.workspaceId === workspaceId &&
+          duplicate.senderId === userId
+        ) {
+          return { message: duplicate, created: false };
+        }
+      }
+      throw error;
+    }
     void this.pushService.notifyMessage(message.id);
-    return message;
+    return { message, created: true };
   }
 
   /** Обновить текст сообщения. */

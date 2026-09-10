@@ -27,7 +27,12 @@ describe('Chat access', () => {
   let controller: ChatController;
   let gateway: RealtimeGateway;
   const prisma = {
-    message: { findFirst: jest.fn(), update: jest.fn(), create: jest.fn() },
+    message: {
+      findFirst: jest.fn(),
+      findUnique: jest.fn(),
+      update: jest.fn(),
+      create: jest.fn(),
+    },
     messageReaction: { create: jest.fn(), delete: jest.fn() },
   };
   const notifyMessage = jest.fn();
@@ -41,6 +46,7 @@ describe('Chat access', () => {
     );
     prisma.message.update.mockResolvedValue(message);
     prisma.message.create.mockResolvedValue(message);
+    prisma.message.findUnique.mockResolvedValue(null);
     const module = await Test.createTestingModule({
       controllers: [ChatController],
       providers: [

@@ -23,6 +23,7 @@ export type ChatMessagesProps = {
   onDelete?: ((messageId: string) => void) | undefined;
   onAddReaction?: ((messageId: string, emoji: string) => void) | undefined;
   onRemoveReaction?: ((messageId: string, emoji: string) => void) | undefined;
+  onRetry?: ((message: ChatMessageItem) => void) | undefined;
 };
 
 type MessageGroupItem = {
@@ -58,6 +59,7 @@ export function ChatMessages({
   onDelete,
   onAddReaction,
   onRemoveReaction,
+  onRetry,
 }: ChatMessagesProps) {
   const viewportRef = useRef<HTMLDivElement>(null);
   const shouldScrollRef = useRef(true);
@@ -148,6 +150,7 @@ export function ChatMessages({
                           onDelete={onDelete}
                           onAddReaction={onAddReaction}
                           onRemoveReaction={onRemoveReaction}
+                          onRetry={onRetry}
                         />
                       ))}
                     </MessageGroup>

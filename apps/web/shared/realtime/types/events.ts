@@ -1,5 +1,8 @@
 export type ChatMessageStatus = "sending" | "sent" | "delivered" | "read" | "error";
 
+export type ChatSendAcknowledgement =
+  { ok: true; messageId: string } | { ok: false; error: string };
+
 export type ChatReaction = {
   emoji: string;
   userId: string;
@@ -35,7 +38,7 @@ export interface ServerToClientEvents {
   "chat.message.edited": (message: ChatMessageItem) => void;
   "chat.message.deleted": (data: { messageId: string }) => void;
   "chat.reaction.added": (reaction: { messageId: string; emoji: string; userId: string }) => void;
-  "chat.reaction.removed": (data: { messageId: string; emoji: string }) => void;
+  "chat.reaction.removed": (data: { messageId: string; emoji: string; userId: string }) => void;
   "chat.message.delivered": (data: { messageId: string }) => void;
   "chat.message.read": (data: { userId: string; messageId: string }) => void;
   "chat.typing.start": (data: { userId: string }) => void;
@@ -47,7 +50,10 @@ export interface ServerToClientEvents {
 
 export interface ClientToServerEvents {
   "chat:presence": (data: { active: boolean }) => void;
-  "chat:send": (message: { clientId: string; type: "TEXT"; content: string }) => void;
+  "chat:send": (
+    message: { clientId: string; type: "TEXT"; content: string },
+    acknowledgement: (result: ChatSendAcknowledgement) => void,
+  ) => void;
   "chat:edit": (payload: { messageId: string; dto: { content: string } }) => void;
   "chat:delete": (payload: { messageId: string }) => void;
   "chat:reaction:add": (payload: { messageId: string; dto: { emoji: string } }) => void;

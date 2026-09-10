@@ -14,7 +14,7 @@
 | 6 — State management           |  [x]   | Общий server cache, invalidation и URL state Todo/Calendar                             |
 | 7 — FSD                        |  [x]   | Границы `app → screens → widgets → features → shared` проверяются в lint, без entities |
 | 8 — Календарь                  |  [x]   | UTC recurrence engine, bounded reads, widget model и единый modal state готовы         |
-| 9 — Чат: offline/reconnect     |  [ ]   | Не начат                                                                               |
+| 9 — Чат: offline/reconnect     |  [~]   | dedupe, acknowledgement, retry, merge HTTP/WS и reconnect выполнены; history впереди   |
 | 10 — Todo                      |  [ ]   | Не начат                                                                               |
 | 11 — Push                      |  [ ]   | Не начат                                                                               |
 | 12 — Design System             |  [ ]   | Не начат                                                                               |
@@ -49,6 +49,18 @@
 - `useCalendarEvents` отделяет GraphQL query/mutations от `CalendarWidget`; `useCalendarModal` заменяет независимые create/edit/delete boolean state на один discriminated union.
 
 Проверки: `pnpm --filter api test -- calendar` — PASS, 26 tests / 4 suites; API typecheck/lint/build — PASS; web typecheck/lint/build — PASS; `git diff --check` — PASS. Web lint: 0 errors / 4 ранее известных warnings.
+
+## Этап 9 — в работе
+
+- Сервер сохраняет `clientId` при создании сообщения и возвращает уже созданное сообщение при повторной отправке тем же пользователем в том же workspace. Повтор не публикует второе событие в workspace.
+- WebSocket подтверждает отправку с `messageId` в течение 10 секунд. Chat UI создаёт локальное сообщение со статусом `sending`; успешное подтверждение переводит его в `sent`, а таймаут или ошибка — в `error` с кнопкой повторной отправки через тот же `clientId`.
+- Загрузка REST и сообщения WebSocket объединяются по ID и `clientId`, а не заменяют массив целиком. Поэтому поздний ответ `/chat/messages` не удаляет новое сообщение.
+- После reconnect UI заново загружает последние сообщения. Статусы доставки монотонны: `delivered` больше не может перезаписать `read`.
+- Удаление реакции теперь передаёт `userId`, поэтому исчезает только реакция конкретного участника, а не все реакции с тем же emoji. Typing автоматически скрывается через 4 секунды, если событие stop потеряно.
+
+Проверки текущего блока: API `chat-access` — PASS, 41 test; web typecheck и architecture/lint — PASS, 0 errors / 4 существующих warnings; `git diff --check` — PASS.
+
+Осталось: cursor pagination и загрузка полной истории, browser smoke reconnect/offline.
 
 ## Этап 1 — закрыт
 

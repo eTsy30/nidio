@@ -1,4 +1,4 @@
-import { Dispatch, SetStateAction, useEffect } from "react";
+import { Dispatch, SetStateAction, useEffect, useRef } from "react";
 import type { Socket } from "socket.io-client";
 
 import type {
@@ -7,12 +7,15 @@ import type {
   ServerToClientEvents,
 } from "@/shared/realtime/types/events";
 
+import { mergeMessages } from "./message-state";
+
 type Props = {
   socket: Socket<ServerToClientEvents, ClientToServerEvents> | null;
   currentUserId: string;
   setMessages: Dispatch<SetStateAction<ChatMessageItem[]>>;
   setIsTyping: Dispatch<SetStateAction<boolean>>;
   setIsOnline: Dispatch<SetStateAction<boolean>>;
+  reloadMessages: () => Promise<void>;
 };
 
 export function useChatRealtime({
@@ -21,7 +24,10 @@ export function useChatRealtime({
   setMessages,
   setIsTyping,
   setIsOnline,
+  reloadMessages,
 }: Props) {
+  const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   useEffect(() => {
     if (!socket) return;
 
@@ -32,21 +38,9 @@ export function useChatRealtime({
         });
       }
 
-      setMessages((prev) => {
-        const exists = prev.some((item) => item.id === message.id);
-
-        if (exists) {
-          return prev;
-        }
-
-        const next: ChatMessageItem = {
-          ...message,
-
-          status: message.status ?? "sent",
-        };
-
-        return [...prev, next];
-      });
+      setMessages((prev) =>
+        mergeMessages(prev, [{ ...message, status: message.status ?? "sent" }]),
+      );
     }
 
     function handleDelivered(data: { messageId: string }) {
@@ -58,17 +52,33 @@ export function useChatRealtime({
     }
 
     function updateStatus(messageId: string, status: ChatMessageItem["status"]) {
+      const rank = { error: 0, sending: 1, sent: 2, delivered: 3, read: 4 } as const;
       setMessages((prev) =>
-        prev.map((message) => (message.id === messageId ? { ...message, status } : message)),
+        prev.map((message) =>
+          message.id === messageId && rank[status] > rank[message.status]
+            ? { ...message, status }
+            : message,
+        ),
       );
     }
 
     function handleTypingStart(data: { userId: string }) {
-      if (data.userId !== currentUserId) setIsTyping(true);
+      if (data.userId !== currentUserId) {
+        setIsTyping(true);
+        if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+        typingTimeoutRef.current = setTimeout(() => {
+          setIsTyping(false);
+          typingTimeoutRef.current = null;
+        }, 4_000);
+      }
     }
 
     function handleTypingStop(data: { userId: string }) {
-      if (data.userId !== currentUserId) setIsTyping(false);
+      if (data.userId !== currentUserId) {
+        if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+        typingTimeoutRef.current = null;
+        setIsTyping(false);
+      }
     }
 
     function handleUserOnline(data: { userId: string }) {
@@ -121,12 +131,14 @@ export function useChatRealtime({
       );
     }
 
-    function handleReactionRemoved(data: { messageId: string; emoji: string }) {
+    function handleReactionRemoved(data: { messageId: string; emoji: string; userId: string }) {
       setMessages((prev) =>
         prev.map((item) => {
           if (item.id !== data.messageId) return item;
 
-          const nextReactions = item.reactions?.filter((r) => r.emoji !== data.emoji);
+          const nextReactions = item.reactions?.filter(
+            (reaction) => reaction.emoji !== data.emoji || reaction.userId !== data.userId,
+          );
 
           if (!nextReactions || nextReactions.length === 0) {
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -155,6 +167,7 @@ export function useChatRealtime({
     socket.on("chat.typing.stop", handleTypingStop);
     socket.on("user.online", handleUserOnline);
     socket.on("user.offline", handleUserOffline);
+    socket.on("connect", reloadMessages);
     socket.emit("user:status:sync");
 
     return () => {
@@ -169,6 +182,8 @@ export function useChatRealtime({
       socket.off("chat.typing.stop", handleTypingStop);
       socket.off("user.online", handleUserOnline);
       socket.off("user.offline", handleUserOffline);
+      socket.off("connect", reloadMessages);
+      if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
     };
-  }, [socket, currentUserId, setMessages, setIsTyping, setIsOnline]);
+  }, [socket, currentUserId, setMessages, setIsTyping, setIsOnline, reloadMessages]);
 }

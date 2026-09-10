@@ -42,7 +42,7 @@ export function Chat() {
       }
     : null;
 
-  useLoadMessages(setMessages);
+  const reloadMessages = useLoadMessages(setMessages);
 
   useChatRealtime({
     socket,
@@ -50,9 +50,16 @@ export function Chat() {
     setMessages,
     setIsTyping,
     setIsOnline,
+    reloadMessages,
   });
 
-  const sendMessage = useSendMessage(socket);
+  const { sendMessage, retryMessage } = useSendMessage({
+    socket,
+    currentUser: user
+      ? { id: user.id, firstName: user.firstName ?? "Вы", avatarUrl: user.avatarUrl }
+      : null,
+    setMessages,
+  });
   const editMessage = useEditMessage(socket);
   const deleteMessage = useDeleteMessage(socket);
   const addReaction = useAddReaction(socket);
@@ -109,6 +116,7 @@ export function Chat() {
         onDelete={handleDelete}
         onAddReaction={handleAddReaction}
         onRemoveReaction={handleRemoveReaction}
+        onRetry={retryMessage}
       />
 
       <div className="shrink-0 border-t border-border/50 bg-background/90 px-4 pb-[calc(env(safe-area-inset-bottom)+16px)] pt-4 backdrop-blur-xl">

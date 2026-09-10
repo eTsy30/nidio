@@ -1,6 +1,7 @@
 import { UsePipes, ValidationPipe } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import {
+  Ack,
   ConnectedSocket,
   MessageBody,
   OnGatewayConnection,
@@ -222,22 +223,36 @@ export class RealtimeGateway
   async handleChatSend(
     @ConnectedSocket() client: Socket,
     @MessageBody() dto: CreateMessageDto,
+    @Ack()
+    ack?: (
+      result: { ok: true; messageId: string } | { ok: false; error: string },
+    ) => void,
   ) {
     const userId = client.data.user?.sub;
 
     if (!userId) {
+      ack?.({ ok: false, error: 'Unauthorized' });
       return;
     }
 
-    const message = await this.chatService.sendMessage(userId, dto);
+    const { message, created } = await this.chatService.sendMessageWithResult(
+      userId,
+      dto,
+    );
     const relationship =
       await this.relationshipService.getCurrentCouple(userId);
-    if (!relationship) return;
-    this.realtimeService.emitToWorkspace(
-      relationship.workspaceId,
-      'chat.message.created',
-      message,
-    );
+    if (!relationship) {
+      ack?.({ ok: false, error: 'Relationship not found' });
+      return;
+    }
+    if (created) {
+      this.realtimeService.emitToWorkspace(
+        relationship.workspaceId,
+        'chat.message.created',
+        message,
+      );
+    }
+    ack?.({ ok: true, messageId: message.id });
   }
 
   @SubscribeMessage('chat:edit')
@@ -328,7 +343,7 @@ export class RealtimeGateway
     this.realtimeService.emitToWorkspace(
       relationship.workspaceId,
       'chat.reaction.removed',
-      payload,
+      { ...payload, userId },
     );
   }
 

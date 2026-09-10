@@ -122,6 +122,26 @@ export class ChatRepository {
     });
   }
 
+  async findMessageByClientId(clientId: string) {
+    return this.prisma.message.findUnique({
+      where: { clientId },
+      include: {
+        sender: {
+          select: { id: true, firstName: true, avatarUrl: true },
+        },
+        replyTo: {
+          select: {
+            id: true,
+            content: true,
+            sender: { select: { id: true, firstName: true } },
+          },
+        },
+        attachments: true,
+        reactions: true,
+      },
+    });
+  }
+
   async updateMessage(
     id: string,
     content: string,

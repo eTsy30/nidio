@@ -21,6 +21,7 @@ type ChatMessageProps = {
   onDelete?: ((messageId: string) => void) | undefined;
   onAddReaction?: ((messageId: string, emoji: string) => void) | undefined;
   onRemoveReaction?: ((messageId: string, emoji: string) => void) | undefined;
+  onRetry?: ((message: ChatMessageItem) => void) | undefined;
 };
 
 export function ChatMessage({
@@ -33,6 +34,7 @@ export function ChatMessage({
   onDelete,
   onAddReaction,
   onRemoveReaction,
+  onRetry,
 }: ChatMessageProps) {
   const isMine = message.sender.id === currentUserId;
   const time = new Date(message.createdAt).toLocaleTimeString([], {
@@ -103,7 +105,15 @@ export function ChatMessage({
                     )}
                     {message.status === "read" && <CheckCheck className="size-3" strokeWidth={3} />}
                     {message.status === "error" && (
-                      <AlertCircle className="size-3 text-destructive" />
+                      <button
+                        type="button"
+                        onClick={() => onRetry?.(message)}
+                        className="text-destructive hover:opacity-70"
+                        title="Повторить отправку"
+                        aria-label="Повторить отправку"
+                      >
+                        <AlertCircle className="size-3" />
+                      </button>
                     )}
                   </span>
                 )}

@@ -1,9 +1,11 @@
-import { Dispatch, SetStateAction, useEffect } from "react";
+import { Dispatch, SetStateAction, useCallback, useEffect } from "react";
 
 import type { ApiError } from "@/shared/api/client/api";
 import { http } from "@/shared/api/client/api";
 
 import { ChatMessageItem } from "../type/chat";
+
+import { getMessageStatus, mergeMessages } from "./message-state";
 
 type GetMessagesResponse = {
   messages: Array<
@@ -15,30 +17,28 @@ type GetMessagesResponse = {
 };
 
 export function useLoadMessages(setMessages: Dispatch<SetStateAction<ChatMessageItem[]>>) {
-  useEffect(() => {
-    async function loadMessages() {
-      try {
-        const data = await http.get<GetMessagesResponse>("/chat/messages");
-
-        setMessages(
-          data.messages
-            .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
-            .map((message) => ({
-              ...message,
-              status: message.readAt ? "read" : message.deliveredAt ? "delivered" : "sent",
-            })),
+  const loadMessages = useCallback(async () => {
+    try {
+      const data = await http.get<GetMessagesResponse>("/chat/messages");
+      const messages = data.messages.map((message) => ({
+        ...message,
+        status: getMessageStatus(message),
+      }));
+      setMessages((current) => mergeMessages(current, messages));
+    } catch (error) {
+      if (error instanceof Error) {
+        const apiError = error as ApiError;
+        console.error(
+          "Failed to load chat messages",
+          apiError.response?.data?.message ?? apiError.message,
         );
-      } catch (error) {
-        if (error instanceof Error) {
-          const apiError = error as ApiError;
-          console.error(
-            "Failed to load chat messages",
-            apiError.response?.data?.message ?? apiError.message,
-          );
-        }
       }
     }
-
-    void loadMessages();
   }, [setMessages]);
+
+  useEffect(() => {
+    void loadMessages();
+  }, [loadMessages]);
+
+  return loadMessages;
 }
