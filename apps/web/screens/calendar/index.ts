@@ -1,1 +1,1 @@
-import { CalendarPage } from "./ui/CalendarPage";
+export { CalendarPage } from "./ui/CalendarPage";

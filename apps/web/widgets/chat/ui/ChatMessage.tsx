@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { AlertCircle, Check, CheckCheck, Loader2, Pencil, Trash2 } from "lucide-react";
 
 import { cn } from "@/shared/lib/cn";
@@ -131,7 +132,14 @@ export function ChatMessage({
                 )}
               >
                 {linkPreview.image && (
-                  <img src={linkPreview.image} alt="" className="h-36 w-full object-cover" />
+                  <Image
+                    src={linkPreview.image}
+                    alt=""
+                    width={640}
+                    height={144}
+                    unoptimized
+                    className="h-36 w-full object-cover"
+                  />
                 )}
                 <div className="p-3">
                   <p className="line-clamp-1 text-sm font-medium">{linkPreview.title}</p>

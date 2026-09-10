@@ -1,1 +1,1 @@
-import { TogetherPage } from "./ui/TogetherPage";
+export { TogetherPage } from "./ui/TogetherPage";

@@ -2,13 +2,13 @@
 
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { X } from "lucide-react";
 
 import { togetherKeys } from "@/features/together/api/query-keys";
 import { templatesApi } from "@/features/together/api/templates.api";
 import { Template } from "@/features/together/model/templates";
 import { cn } from "@/shared/lib/cn";
 import { Button } from "@/shared/ui";
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/shared/ui/dialog/dialog";
 
 interface TemplatePickerProps {
   open: boolean;
@@ -77,38 +77,11 @@ export function TemplatePicker({ open, onClose }: TemplatePickerProps) {
   );
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
-      <div className="absolute inset-0 bg-overlay/60 backdrop-blur-sm" onClick={onClose} />
-
-      <div
-        className={cn(
-          "relative w-full bg-card shadow-[var(--shadow-modal)]",
-          "rounded-t-[var(--radius-lg)] sm:rounded-[var(--radius-lg)]",
-          "sm:max-w-md sm:mx-4",
-          "max-h-[85vh] overflow-y-auto",
-          "animate-in slide-in-from-bottom duration-300",
-          "sm:animate-none",
-          "px-4 pt-5 pb-8 sm:p-6",
-        )}
-      >
-        <div className="w-10 h-1 bg-muted rounded-full mx-auto mb-5 sm:hidden" />
-
-        <div className="flex items-start justify-between mb-6">
-          <div>
-            <h2 className="text-lg font-bold tracking-tight">Шаблоны</h2>
-
-            <p className="text-sm text-muted-foreground mt-0.5">
-              Добавьте готовую колонку с задачами
-            </p>
-          </div>
-
-          <button
-            type="button"
-            onClick={onClose}
-            className="p-2 rounded-full hover:bg-muted transition-colors"
-          >
-            <X className="w-5 h-5 text-muted-foreground" />
-          </button>
+    <Dialog open={open} onOpenChange={(next) => !next && !applyMutation.isPending && onClose()}>
+      <DialogContent className="z-[60] max-h-[calc(100dvh-92px-env(safe-area-inset-bottom))] w-[calc(100%-2rem)] overflow-y-auto rounded-2xl p-5 sm:max-h-[calc(100dvh-2rem)] sm:max-w-md">
+        <div className="pr-8">
+          <DialogTitle>Шаблоны</DialogTitle>
+          <DialogDescription>Добавьте готовую колонку с задачами</DialogDescription>
         </div>
 
         {isLoading ? (
@@ -159,7 +132,7 @@ export function TemplatePicker({ open, onClose }: TemplatePickerProps) {
             Не удалось применить шаблон. Попробуйте ещё раз.
           </p>
         )}
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }

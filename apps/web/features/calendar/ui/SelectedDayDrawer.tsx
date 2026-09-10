@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { format } from "date-fns";
 import { ru } from "date-fns/locale";
 import { Cake, CalendarDays, ChevronLeft, Heart, Plus, Sparkles } from "lucide-react";
@@ -197,9 +198,12 @@ export function SelectedDayDrawer({
                   <div className="mt-5 flex items-center gap-2">
                     <div className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full bg-muted text-xs font-medium">
                       {selectedEvent.creator.avatarUrl ? (
-                        <img
+                        <Image
                           src={selectedEvent.creator.avatarUrl}
                           alt=""
+                          width={32}
+                          height={32}
+                          unoptimized
                           className="h-full w-full object-cover"
                         />
                       ) : (

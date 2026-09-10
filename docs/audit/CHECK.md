@@ -15,11 +15,45 @@
 | 7 — FSD                        |  [x]   | Границы `app → screens → widgets → features → shared` проверяются в lint, без entities |
 | 8 — Календарь                  |  [x]   | UTC recurrence engine, bounded reads, widget model и единый modal state готовы         |
 | 9 — Чат: offline/reconnect     |  [x]   | dedupe, acknowledgement, retry, merge HTTP/WS и reconnect подтверждены                 |
-| 10 — Todo                      |  [~]   | DnD model/mutations, rollback/cancel и keyboard drag готовы; ожидается browser smoke   |
-| 11 — Push                      |  [ ]   | Не начат                                                                               |
-| 12 — Design System             |  [ ]   | Не начат                                                                               |
-| 13 — Cleanup/performance       |  [ ]   | Не начат                                                                               |
+| 10 — Todo                      |  [x]   | DnD model/mutations, rollback/cancel и keyboard drag подтверждены                      |
+| 11 — Push                      |  [x]   | Production service worker activation и Push delivery подтверждены                      |
+| 12 — Design System             |  [x]   | Shared Dialog, route states, browser zoom и основные формы унифицированы               |
+| 13 — Cleanup/performance       |  [x]   | Неиспользуемые файлы и старый PWA-пакет удалены; production build подтверждён          |
 | 14 — Release readiness         |  [ ]   | Не начат                                                                               |
+
+## Этап 11 — закрыт
+
+- Push работает через production service worker; development-режим намеренно не регистрирует service worker, чтобы избежать несоответствия PWA chunks.
+- `getPushRegistration` ожидает activation до пяти секунд и объясняет требование production-сборки вместо ложного сообщения об ошибке.
+- Пользователь подтвердил Chat/Calendar/Todo push в production-режиме 2026-09-10. API push, calendar scheduler и overdue tests прошли: 37 tests.
+
+## Этап 12 — реализация
+
+- Убрано отключение browser zoom из Next viewport.
+- `TemplatePicker` переведён с самописного fixed overlay на общий Base UI Dialog с focus trap, Escape и возвратом фокуса.
+- В итоге основные ручные модалки и route-level состояния переведены на общий механизм ниже.
+
+## Этап 12 — закрыт
+
+- Browser zoom разрешён: viewport больше не ограничивает `maximumScale` и `userScalable`.
+- Template picker, редактирование задачи и редактирование календарного события используют один Base UI Dialog. Общий компонент обеспечивает focus trap, Escape, backdrop и возврат фокуса.
+- Добавлены `app/loading.tsx`, `app/error.tsx` с retry и `app/global-error.tsx`, поэтому route-level сбои и загрузка не превращаются в пустой экран.
+- Существующие Input и Label продолжают создавать связку `label/htmlFor/id`; бизнес-формы и их валидация остались в features.
+
+Проверки: web typecheck, architecture/lint и production build с Serwist — PASS, 0 errors / 4 существующих warnings; `git diff --check` — PASS.
+
+Ручная проверка: на 320/375/768/1440 px открыть шаблоны, редактирование задачи и редактирование события; проверить Escape, Tab/Shift+Tab, click backdrop, длинную форму и системный zoom. Изменения не затрагивают API, задачи или календарные данные.
+
+## Этап 13 — закрыт
+
+- Удалены только файлы без входящих импортов: пустой `widgets/ui/EventCard`, дубли календарных и board types, неиспользуемый Avatar contract, старый параллельный список realtime events, `DeleteEventButton` и `AssigneeSelector`.
+- Удалена неиспользуемая корневая зависимость `@ducanh2912/next-pwa` из `package.json` и lockfile. Serwist остаётся единственным PWA stack.
+- Исправлены четыре lint warnings: два изображения переведены на `next/image`, пустые screen barrels заменены корректными re-export.
+- Today/list UI и Prisma models сохранены: для них не подтверждён отказ от самостоятельного пользовательского сценария.
+- TemplatePicker на mobile ограничен высотой выше нижней панели и safe area.
+
+Проверки: `pnpm install --frozen-lockfile` — PASS; web typecheck, architecture/lint и production build с Serwist — PASS, 0 errors / 0 warnings; `git diff --check` — PASS.
+Отдельный React profiler и bundle-анализ не запускались: после удаления кода и dependency не найдено измеренное узкое место, которое оправдывало бы функциональную оптимизацию.
 
 ## Этап 0 — закрыт
 

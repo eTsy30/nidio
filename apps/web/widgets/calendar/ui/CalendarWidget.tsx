@@ -11,7 +11,6 @@ import {
   subWeeks,
   subYears,
 } from "date-fns";
-import { X } from "lucide-react";
 
 import { CreateEventForm } from "@/features/calendar/create-event/ui/CreateEventForm";
 import { DeleteEventDialog } from "@/features/calendar/delete-event/ui/DeleteEventDialog";
@@ -411,21 +410,11 @@ export default function CalendarWidget() {
       )}
 
       {modal.kind === "edit" && (
-        <div className="fixed inset-0 z-[60] flex items-end justify-center bg-black/30 p-0 backdrop-blur-sm sm:items-center sm:p-4">
-          <div className="max-h-[90dvh] w-full max-w-lg overflow-auto rounded-t-3xl bg-background p-5 shadow-2xl sm:rounded-3xl">
-            <div className="mb-5 flex items-start justify-between gap-4">
-              <div>
-                <h2 className="text-xl font-bold">Редактировать событие</h2>
-                <p className="mt-1 text-sm text-muted-foreground">Измените детали события</p>
-              </div>
-              <button
-                type="button"
-                onClick={closeModal}
-                aria-label="Закрыть"
-                className="rounded-full p-2 text-muted-foreground transition hover:bg-muted hover:text-foreground"
-              >
-                <X className="size-5" />
-              </button>
+        <Dialog open onOpenChange={(open) => !open && closeModal()}>
+          <DialogContent className="z-[60] max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-lg overflow-y-auto rounded-2xl p-5">
+            <div className="pr-8">
+              <DialogTitle>Редактировать событие</DialogTitle>
+              <DialogDescription>Измените детали события</DialogDescription>
             </div>
 
             <EditEventForm
@@ -437,8 +426,8 @@ export default function CalendarWidget() {
             {updating && (
               <p className="mt-3 text-center text-xs text-muted-foreground">Сохраняем изменения…</p>
             )}
-          </div>
-        </div>
+          </DialogContent>
+        </Dialog>
       )}
     </main>
   );

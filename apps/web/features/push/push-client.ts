@@ -11,9 +11,27 @@ export function supportsPush() {
 }
 
 export async function getPushRegistration() {
-  const registration = await navigator.serviceWorker.getRegistration();
-  if (!registration?.active)
-    throw new Error("Уведомления пока недоступны. Обновите приложение и попробуйте снова.");
+  const existing = await navigator.serviceWorker.getRegistration();
+  if (existing?.active) return existing;
+
+  const registration = await Promise.race([
+    navigator.serviceWorker.ready,
+    new Promise<never>((_resolve, reject) => {
+      window.setTimeout(
+        () =>
+          reject(
+            new Error(
+              "Уведомления пока недоступны. Запустите production-сборку приложения и обновите страницу.",
+            ),
+          ),
+        5_000,
+      );
+    }),
+  ]);
+  if (!registration.active)
+    throw new Error(
+      "Уведомления пока недоступны. Запустите production-сборку приложения и обновите страницу.",
+    );
   return registration;
 }
 
