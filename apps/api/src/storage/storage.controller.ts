@@ -1,13 +1,18 @@
 import {
   BadRequestException,
   Controller,
+  Get,
   HttpCode,
   HttpStatus,
+  Param,
   Post,
+  Res,
+  StreamableFile,
   UploadedFile,
   UseInterceptors,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
+import type { Response } from 'express';
 import { memoryStorage } from 'multer';
 
 import { Authorization } from '../auth/decorators/Authorization.decorator';
@@ -25,6 +30,7 @@ const DEFAULT_MAX_IMAGE_SIZE_MB = 5;
 
 function maxImageSizeBytes(): number {
   const configured = Number(process.env.UPLOAD_MAX_IMAGE_SIZE_MB);
+
   const megabytes =
     Number.isFinite(configured) && configured > 0
       ? configured
@@ -44,12 +50,14 @@ function detectImageMime(
   ) {
     return 'image/jpeg';
   }
+
   if (
     buffer.length >= 8 &&
     buffer.subarray(0, 8).equals(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]))
   ) {
     return 'image/png';
   }
+
   if (
     buffer.length >= 12 &&
     buffer.subarray(0, 4).toString() === 'RIFF' &&
@@ -57,6 +65,7 @@ function detectImageMime(
   ) {
     return 'image/webp';
   }
+
   return null;
 }
 
@@ -70,7 +79,9 @@ export class StorageController {
   @UseInterceptors(
     FileInterceptor('file', {
       storage: memoryStorage(),
-      limits: { fileSize: maxImageSizeBytes() },
+      limits: {
+        fileSize: maxImageSizeBytes(),
+      },
       fileFilter: (_request, file, callback) => {
         callback(null, file.mimetype in ALLOWED_IMAGE_TYPES);
       },
@@ -85,6 +96,7 @@ export class StorageController {
     }
 
     const mimeType = detectImageMime(file.buffer);
+
     if (!mimeType || mimeType !== file.mimetype) {
       throw new BadRequestException(
         'Поддерживаются только изображения JPG, PNG и WebP',
@@ -99,5 +111,39 @@ export class StorageController {
     );
 
     return this.storageService.upload(file.buffer, key, mimeType);
+  }
+
+  @Authorization()
+  @Get('images/*')
+  async getImage(
+    @Param() params: Record<string, string | string[]>,
+    @Res({ passthrough: true }) response: Response,
+  ): Promise<StreamableFile> {
+    const rawKey = params[0];
+
+    const key = Array.isArray(rawKey) ? rawKey.join('/') : rawKey;
+
+    if (!key) {
+      throw new BadRequestException('Некорректный URL файла');
+    }
+
+    const object = await this.storageService.getObject(key);
+
+    if (!object.Body) {
+      throw new BadRequestException('Файл не найден');
+    }
+
+    const body = await object.Body.transformToByteArray();
+
+    if (object.ContentType) {
+      response.setHeader('Content-Type', object.ContentType);
+    }
+
+    response.setHeader('Cache-Control', 'private, max-age=3600');
+
+    return new StreamableFile(Buffer.from(body), {
+      type: object.ContentType ?? 'application/octet-stream',
+      length: body.length,
+    });
   }
 }

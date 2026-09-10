@@ -1,6 +1,7 @@
 import {
   CreateBucketCommand,
   DeleteObjectCommand,
+  GetObjectCommand,
   HeadBucketCommand,
   PutObjectCommand,
   S3Client,
@@ -17,7 +18,7 @@ export class StorageService implements OnModuleInit {
 
   private readonly client: S3Client;
   private readonly bucket: string;
-  private readonly publicUrl: string;
+  private readonly apiUrl: string;
 
   constructor(private readonly configService: ConfigService) {
     const provider = this.configService.getOrThrow<string>('STORAGE_PROVIDER');
@@ -34,8 +35,7 @@ export class StorageService implements OnModuleInit {
 
     this.bucket = this.configService.getOrThrow<string>('STORAGE_BUCKET');
 
-    this.publicUrl =
-      this.configService.getOrThrow<string>('STORAGE_PUBLIC_URL');
+    this.apiUrl = this.configService.getOrThrow<string>('API_PUBLIC_URL');
 
     this.client = new S3Client({
       endpoint,
@@ -105,8 +105,19 @@ export class StorageService implements OnModuleInit {
     );
   }
 
+  async getObject(key: string) {
+    return this.client.send(
+      new GetObjectCommand({
+        Bucket: this.bucket,
+        Key: key,
+      }),
+    );
+  }
+
   getPublicUrl(key: string): string {
-    return `${this.publicUrl.replace(/\/$/, '')}/${key}`;
+    const encodedKey = encodeURIComponent(key);
+
+    return `${this.apiUrl.replace(/\/$/, '')}/storage/images/${encodedKey}`;
   }
 
   generateKey(prefix: string, extension: string): string {
