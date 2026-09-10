@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { ru } from "date-fns/locale";
@@ -17,8 +18,17 @@ import { TemplatePicker } from "@/features/together/ui/TemplatePicker";
 import { useAuth } from "@/shared/api/provider/auth-provider";
 import { Button } from "@/shared/ui/button/Button";
 
+const TASK_FILTERS = new Set<TaskFilter>(["all", "me", "partner", "together", "rotate"]);
+
+function getTaskFilter(value: string | null): TaskFilter {
+  return value && TASK_FILTERS.has(value as TaskFilter) ? (value as TaskFilter) : "all";
+}
+
 export function TogetherPage() {
-  const [filter, setFilter] = useState<TaskFilter>("all");
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const filter = getTaskFilter(searchParams.get("filter"));
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isTemplateOpen, setIsTemplateOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
@@ -37,8 +47,17 @@ export function TogetherPage() {
     refetchOnReconnect: "always",
   });
 
-  const partnerName = relationship?.partnerFirstName ?? user?.relationship?.partner?.firstName;
-  const partnerAvatarUrl = relationship?.partnerAvatarUrl ?? user?.relationship?.partner?.avatarUrl;
+  const partnerName = relationship?.partnerFirstName ?? undefined;
+  const partnerAvatarUrl = relationship?.partnerAvatarUrl ?? undefined;
+
+  const handleFilterChange = (nextFilter: TaskFilter) => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (nextFilter === "all") params.delete("filter");
+    else params.set("filter", nextFilter);
+
+    const query = params.toString();
+    router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
+  };
 
   return (
     <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-background">
@@ -65,7 +84,7 @@ export function TogetherPage() {
 
       <main className="flex min-h-0 min-w-0 flex-1 flex-col px-3 pt-3 sm:px-6 lg:px-8">
         <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-3">
-          <TaskFilters active={filter} onChange={setFilter} />
+          <TaskFilters active={filter} onChange={handleFilterChange} />
           {boardLoading ? (
             <div className="flex gap-4 overflow-x-auto pb-4">
               {Array.from({ length: 3 }).map((_, i) => (
@@ -106,6 +125,7 @@ export function TogetherPage() {
         }}
         defaultColumnId={selectedColumnId ?? undefined}
         columns={board?.columns ?? []}
+        partnerId={relationship?.partnerId}
       />
 
       <EditTaskSheet
@@ -116,6 +136,7 @@ export function TogetherPage() {
         }}
         task={editingTask}
         columns={board?.columns ?? []}
+        partnerId={relationship?.partnerId}
       />
 
       <TemplatePicker open={isTemplateOpen} onClose={() => setIsTemplateOpen(false)} />

@@ -1,8 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import { Toaster } from "sonner";
 
+import { AuthProvider } from "@/app/providers/AuthProvider";
 import { ApolloProviderWrapper } from "@/shared/api/provider/apollo-provider";
-import { AuthProvider } from "@/shared/api/provider/auth-provider";
 import { QueryProvider } from "@/shared/api/query/query-provider";
 import { RealtimeProvider } from "@/shared/realtime";
 

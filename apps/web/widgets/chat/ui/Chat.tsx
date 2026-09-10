@@ -40,7 +40,7 @@ export function Chat() {
         firstName: couple.partnerFirstName || "Партнёр",
         avatarUrl: couple.partnerAvatarUrl,
       }
-    : (user?.relationship?.partner ?? null);
+    : null;
 
   useLoadMessages(setMessages);
 

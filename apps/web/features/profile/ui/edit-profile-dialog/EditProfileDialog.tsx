@@ -7,7 +7,6 @@ import { ImagePlus, X } from "lucide-react";
 import type { SubmitHandler } from "react-hook-form";
 import { useForm } from "react-hook-form";
 
-import type { User } from "@/features/auth/model/auth.types";
 import {
   updateProfile,
   type UpdateProfileRequest,
@@ -19,6 +18,7 @@ import {
 } from "@/features/profile/model/edit-profile.schema";
 import { ApiError } from "@/shared/api/client/api";
 import { queryKeys } from "@/shared/api/query/query-keys";
+import type { User } from "@/shared/contracts/user";
 import { Avatar, AvatarFallback, AvatarImage } from "@/shared/ui/avatar-pair/Avatar";
 import { Button } from "@/shared/ui/button/Button";
 import {

@@ -5,14 +5,15 @@ import { format } from "date-fns";
 import { ru } from "date-fns/locale";
 import { Cake, CalendarDays, ChevronLeft, Heart, Plus, Sparkles } from "lucide-react";
 
+import { typeMeta } from "@/features/calendar/model/constants";
 import { cn } from "@/shared/lib/cn";
 import { Button } from "@/shared/ui";
 import { ScrollArea } from "@/shared/ui/scroll-area";
-import { typeMeta } from "@/widgets/calendar/model/constants";
-import { EmptyDayMessage } from "@/widgets/calendar/ui/EmptyDayMessage";
-import { EventCard } from "@/widgets/calendar/ui/EventCard";
 
 import { type CalendarEvent, EventRepeat, EventScope, EventType } from "../types";
+
+import { EmptyDayMessage } from "./EmptyDayMessage";
+import { EventCard } from "./EventCard";
 
 interface SelectedDayDrawerProps {
   date: Date | null;

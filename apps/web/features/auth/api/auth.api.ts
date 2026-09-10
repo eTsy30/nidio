@@ -1,6 +1,6 @@
 import { http } from "@/shared/api/client/api";
-import { apolloClient } from "@/shared/lib/apollo-client";
-import { removeAccessToken, setAccessToken } from "@/shared/lib/token";
+import { endCurrentSession, refreshAccessToken } from "@/shared/api/session/session-coordinator";
+import { setAccessToken } from "@/shared/lib/token";
 
 import {
   ForgotPasswordRequest,
@@ -9,15 +9,6 @@ import {
   ResetPasswordRequest,
 } from "../model";
 import { AuthResponse, User } from "../model/auth.types";
-
-export interface ChangePasswordRequest {
-  currentPassword: string;
-  newPassword: string;
-}
-
-export interface ChangePasswordResponse {
-  message: string;
-}
 
 export const login = async (data: LoginRequest): Promise<AuthResponse> => {
   const response = await http.post<AuthResponse>("/auth/login", data);
@@ -28,11 +19,7 @@ export const login = async (data: LoginRequest): Promise<AuthResponse> => {
 };
 
 export const refresh = async (): Promise<AuthResponse> => {
-  const response = await http.post<AuthResponse>("/auth/refresh");
-
-  setAccessToken(response.accessToken);
-
-  return response;
+  return { accessToken: await refreshAccessToken() };
 };
 
 export const register = async (data: RegisterRequest): Promise<AuthResponse> => {
@@ -48,9 +35,6 @@ export const forgotPassword = (data: ForgotPasswordRequest): Promise<void> =>
 
 export const resetPassword = (data: ResetPasswordRequest): Promise<void> =>
   http.post<void>("/auth/reset-password", data);
-
-export const changePassword = (data: ChangePasswordRequest): Promise<ChangePasswordResponse> =>
-  http.post<ChangePasswordResponse>("/auth/change-password", data);
 
 export const logout = async (): Promise<void> => {
   try {
@@ -68,12 +52,13 @@ export const logout = async (): Promise<void> => {
       throw error;
     }
   } finally {
-    removeAccessToken();
-
-    await apolloClient.resetStore().catch(() => {});
+    endCurrentSession();
   }
 };
 
 export const me = async (): Promise<User> => {
   return http.get<User>("/users/me");
 };
+
+export const acceptInviteAfterRegistration = (token: string): Promise<void> =>
+  http.post<void>(`/relationship/invite/${token}/accept`);

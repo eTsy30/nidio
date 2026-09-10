@@ -4,6 +4,7 @@ import { createContext, type ReactNode, useCallback, useContext, useEffect, useS
 import type { Socket } from "socket.io-client";
 
 import { useAuth } from "@/shared/api/provider/auth-provider";
+import { subscribeAuth } from "@/shared/lib/token";
 
 import { connectSocket, disconnectSocket, getSocket } from "../lib/socket";
 import type { ClientToServerEvents, ServerToClientEvents } from "../types/events";
@@ -46,6 +47,18 @@ export function RealtimeProvider({ children }: { children: ReactNode }) {
       disconnectSocket();
     };
   }, [user, isLoading]);
+
+  useEffect(() => {
+    return subscribeAuth(() => {
+      if (isLoading || !user) return;
+
+      // The gateway closes an expired access-token connection. Socket.IO does not
+      // reconnect after a server-initiated disconnect, so create a connection
+      // with the token that was just issued by the session coordinator.
+      disconnectSocket();
+      connectSocket();
+    });
+  }, [isLoading, user]);
 
   useEffect(() => {
     function handleTypingStart(data: { userId: string }) {

@@ -13,7 +13,7 @@ export function HomeHeader() {
         firstName: couple.partnerFirstName || "Партнёр",
         avatarUrl: couple.partnerAvatarUrl,
       }
-    : user?.relationship?.partner;
+    : null;
 
   const hour = new Date().getHours();
 

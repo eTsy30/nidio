@@ -5,9 +5,4 @@ export class AuthResponse {
     example: 'eyJhbGciOi...',
   })
   accessToken!: string;
-
-  @ApiProperty({
-    example: 'eyJhbGciOi...',
-  })
-  refreshToken!: string;
 }

@@ -7,11 +7,12 @@ import {
   Patch,
   Post,
 } from '@nestjs/common';
-import { ApiTags } from '@nestjs/swagger';
+import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
 
 import { Authorization } from '../auth/decorators/Authorization.decorator';
 import { Authorized } from '../auth/decorators/authorized.decorator';
 
+import { CoupleDto } from './dto/couple.dto';
 import { UpdateRelationshipDto } from './dto/update-relationship.dto';
 import { RelationshipService } from './relationship.service';
 
@@ -48,6 +49,10 @@ export class RelationshipController {
 
   @Authorization()
   @Get('couple')
+  @ApiOkResponse({
+    type: CoupleDto,
+    description: 'Текущая пара либо null, если пользователь не состоит в паре.',
+  })
   getCurrentCouple(@Authorized('id') userId: string) {
     return this.relationshipService.getCurrentCouple(userId);
   }

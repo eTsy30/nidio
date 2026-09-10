@@ -1,8 +1,6 @@
 import { AxiosError, AxiosResponse } from "axios";
 
-import { refresh } from "@/features/auth/api/auth.api";
-import { removeAccessToken } from "@/shared/lib/token";
-import { routes } from "@/shared/router/paths";
+import { refreshAccessToken } from "@/shared/api/session/session-coordinator";
 
 import { api } from "../client/api";
 
@@ -40,19 +38,12 @@ export const responseErrorInterceptor = async (error: AxiosError) => {
   originalRequest._retry = true;
 
   try {
-    const { accessToken } = await refresh();
+    const accessToken = await refreshAccessToken();
 
     originalRequest.headers.set("Authorization", `Bearer ${accessToken}`);
 
     return api(originalRequest);
   } catch {
-    removeAccessToken();
-
-    if (typeof window !== "undefined") {
-      const redirect = `${window.location.pathname}${window.location.search}`;
-      window.location.replace(`${routes.login}?redirect=${encodeURIComponent(redirect)}`);
-    }
-
     return Promise.reject(error);
   }
 };

@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 
 import { useMe } from "@/features/auth";
+import { useCurrentCouple } from "@/features/relationship/hook/use-relationship";
 import { useRealtimeContext } from "@/shared/realtime/provider/RealtimeProvider";
 import { routes } from "@/shared/router/paths";
 import { AvatarPair } from "@/shared/ui/avatar-pair/AvatarPair";
@@ -10,11 +11,17 @@ import { AvatarPair } from "@/shared/ui/avatar-pair/AvatarPair";
 export function ConnectionSuccessOverlay() {
   const router = useRouter();
   const { data: user } = useMe();
+  const { data: couple } = useCurrentCouple();
   const { connectionEvent, clearConnectionEvent } = useRealtimeContext();
 
   const visible = connectionEvent;
 
-  const partner = user?.relationship?.partner;
+  const partner = couple
+    ? {
+        firstName: couple.partnerFirstName ?? "Партнёр",
+        avatarUrl: couple.partnerAvatarUrl,
+      }
+    : null;
 
   const currentFallback = user?.firstName?.charAt(0).toUpperCase() ?? "?";
   const partnerFallback = partner?.firstName?.charAt(0).toUpperCase() ?? "?";

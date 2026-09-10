@@ -4,6 +4,7 @@ import { AxiosError } from "axios";
 import { queryKeys } from "@/shared/api/query/query-keys";
 
 import {
+  acceptInviteAfterRegistration,
   forgotPassword,
   login,
   logout,
@@ -39,6 +40,13 @@ export const useRegister = () => {
   });
 };
 
+export const useAcceptInviteAfterRegistration = () => {
+  return useMutation<void, AxiosError<{ message?: string }>, string>({
+    mutationFn: acceptInviteAfterRegistration,
+    retry: false,
+  });
+};
+
 export const useForgotPassword = () => {
   return useMutation<void, AxiosError, ForgotPasswordRequest>({
     mutationFn: forgotPassword,
@@ -62,7 +70,5 @@ export const useMe = () => {
     queryKey: queryKeys.auth.user,
     queryFn: me,
     retry: false,
-    refetchOnWindowFocus: true,
-    staleTime: 0,
   });
 };

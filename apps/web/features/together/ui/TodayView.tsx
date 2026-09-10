@@ -2,7 +2,6 @@
 
 import { useQuery } from "@tanstack/react-query";
 
-import { useCurrentCouple } from "@/features/relationship/hook/use-relationship";
 import { togetherKeys } from "@/features/together/api/query-keys";
 import { tasksApi } from "@/features/together/api/tasks.api";
 import { useAuth } from "@/shared/api/provider/auth-provider";
@@ -31,12 +30,10 @@ function isDueToday(task: TogetherTask): boolean {
   );
 }
 
-export function TodayView() {
+export function TodayView({ partnerId }: { partnerId?: string }) {
   const { user } = useAuth();
-  const { data: relationship } = useCurrentCouple();
 
   const currentUserId = user?.id ?? "";
-  const partnerId = relationship?.partnerId;
 
   const { data: tasks = [] } = useQuery({
     queryKey: togetherKeys.today(),

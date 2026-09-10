@@ -1,60 +1,42 @@
 import { ApolloClient, ApolloLink, HttpLink, InMemoryCache, Observable } from "@apollo/client";
 
-import { getAccessToken, removeAccessToken, setAccessToken } from "@/shared/lib/token";
+import { refreshAccessToken } from "@/shared/api/session/session-coordinator";
+import { getAccessToken } from "@/shared/lib/token";
 
-let isRefreshing = false;
-let refreshPromise: Promise<string | null> | null = null;
-
-const pendingRequests: Array<(token: string | null) => void> = [];
-
-function subscribeToRefresh(callback: (token: string | null) => void) {
-  pendingRequests.push(callback);
-}
-
-function notifyRefreshSubscribers(token: string | null) {
-  pendingRequests.forEach((cb) => cb(token));
-  pendingRequests.length = 0;
-}
-
-async function doRefresh(): Promise<string | null> {
-  try {
-    const response = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000"}/auth/refresh`,
-      {
-        method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-      },
-    );
-
-    if (!response.ok) {
-      throw new Error("Refresh failed");
-    }
-
-    const data = await response.json();
-
-    if (data.accessToken) {
-      setAccessToken(data.accessToken);
-      return data.accessToken;
-    }
-
-    return null;
-  } catch {
-    removeAccessToken();
-    return null;
-  }
-}
-
-async function refreshToken(): Promise<string | null> {
-  if (!isRefreshing) {
-    isRefreshing = true;
-    refreshPromise = doRefresh().finally(() => {
-      isRefreshing = false;
-      refreshPromise = null;
-    });
+function isUnauthorized(error: unknown): boolean {
+  if (!error || typeof error !== "object") {
+    return false;
   }
 
-  return refreshPromise!;
+  const candidate = error as {
+    statusCode?: unknown;
+    response?: { status?: unknown };
+    message?: unknown;
+  };
+  const message = typeof candidate.message === "string" ? candidate.message.toLowerCase() : "";
+
+  return (
+    candidate.statusCode === 401 ||
+    candidate.response?.status === 401 ||
+    message.includes("unauthorized") ||
+    message.includes("invalid token")
+  );
+}
+
+function hasUnauthorizedGraphQLError(result: { errors?: readonly unknown[] }): boolean {
+  return (
+    result.errors?.some((error) => {
+      if (!error || typeof error !== "object") {
+        return false;
+      }
+
+      const candidate = error as {
+        extensions?: { code?: unknown };
+        message?: unknown;
+      };
+      return candidate.extensions?.code === "UNAUTHENTICATED" || isUnauthorized(candidate);
+    }) ?? false
+  );
 }
 
 const httpLink = new HttpLink({
@@ -73,102 +55,61 @@ const authLink = new ApolloLink((operation, forward) => {
   return forward(operation);
 });
 
-const errorLink = new ApolloLink((operation, forward) => {
+const sessionRetryLink = new ApolloLink((operation, forward) => {
   return new Observable((observer) => {
-    const subscription = forward(operation).subscribe({
-      next: (result) => {
-        if (result.errors) {
-          const unauthorized = result.errors.some(
-            (err) =>
-              err.extensions?.code === "UNAUTHENTICATED" ||
-              (typeof err.message === "string" &&
-                (err.message.toLowerCase().includes("unauthorized") ||
-                  err.message.toLowerCase().includes("invalid token"))),
-          );
+    let subscription: { unsubscribe: () => void } | undefined;
+    let retried = false;
+    let closed = false;
 
-          if (unauthorized) {
-            subscribeToRefresh((token) => {
-              if (!token) {
-                if (typeof window !== "undefined") {
-                  window.location.href = "/login";
-                }
-                observer.error(new Error("Session expired"));
-                return;
-              }
+    const retry = async (): Promise<void> => {
+      try {
+        const token = await refreshAccessToken();
+        if (closed) return;
 
-              const oldHeaders = operation.getContext().headers;
-              operation.setContext({
-                headers: {
-                  ...oldHeaders,
-                  authorization: `Bearer ${token}`,
-                },
-              });
+        operation.setContext(({ headers = {} }: { headers?: Record<string, string> }) => ({
+          headers: {
+            ...headers,
+            authorization: `Bearer ${token}`,
+          },
+        }));
+        execute();
+      } catch (error) {
+        if (!closed) observer.error(error);
+      }
+    };
 
-              forward(operation).subscribe({
-                next: observer.next.bind(observer),
-                error: observer.error.bind(observer),
-                complete: observer.complete.bind(observer),
-              });
-            });
-
-            if (!isRefreshing) {
-              refreshToken().then((token) => {
-                notifyRefreshSubscribers(token);
-              });
-            }
+    const execute = (): void => {
+      subscription = forward(operation).subscribe({
+        next: (result) => {
+          if (!retried && hasUnauthorizedGraphQLError(result)) {
+            retried = true;
+            void retry();
             return;
           }
-        }
-        observer.next(result);
-      },
-      error: (error) => {
-        if (
-          error.statusCode === 401 ||
-          error.response?.status === 401 ||
-          error.message?.toLowerCase().includes("unauthorized")
-        ) {
-          subscribeToRefresh((token) => {
-            if (!token) {
-              if (typeof window !== "undefined") {
-                window.location.href = "/login";
-              }
-              observer.error(new Error("Session expired"));
-              return;
-            }
-
-            const oldHeaders = operation.getContext().headers;
-            operation.setContext({
-              headers: {
-                ...oldHeaders,
-                authorization: `Bearer ${token}`,
-              },
-            });
-
-            forward(operation).subscribe({
-              next: observer.next.bind(observer),
-              error: observer.error.bind(observer),
-              complete: observer.complete.bind(observer),
-            });
-          });
-
-          if (!isRefreshing) {
-            refreshToken().then((token) => {
-              notifyRefreshSubscribers(token);
-            });
+          observer.next(result);
+        },
+        error: (error) => {
+          if (!retried && isUnauthorized(error)) {
+            retried = true;
+            void retry();
+            return;
           }
-          return;
-        }
-        observer.error(error);
-      },
-      complete: () => observer.complete(),
-    });
+          observer.error(error);
+        },
+        complete: () => observer.complete(),
+      });
+    };
 
-    return () => subscription.unsubscribe();
+    execute();
+    return () => {
+      closed = true;
+      subscription?.unsubscribe();
+    };
   });
 });
 
 export const apolloClient = new ApolloClient({
-  link: ApolloLink.from([errorLink, authLink, httpLink]),
+  link: ApolloLink.from([sessionRetryLink, authLink, httpLink]),
   cache: new InMemoryCache(),
   defaultOptions: {
     watchQuery: {

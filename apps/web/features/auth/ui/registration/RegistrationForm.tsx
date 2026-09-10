@@ -5,7 +5,6 @@ import { AxiosError } from "axios";
 import { Mail, User } from "lucide-react";
 import { useForm } from "react-hook-form";
 
-import { useAcceptInvite } from "@/features/relationship/hook/use-relationship";
 import { cn } from "@/shared/lib/cn";
 import { routes } from "@/shared/router/paths";
 import { AuthLayout, PasswordInput } from "@/shared/ui";
@@ -13,7 +12,7 @@ import { Button } from "@/shared/ui/button/Button";
 import { Input } from "@/shared/ui/input/Input";
 import { Link } from "@/shared/ui/link/Link";
 
-import { useRegister } from "../../hooks/use-login";
+import { useAcceptInviteAfterRegistration, useRegister } from "../../hooks/use-login";
 import { RegisterRequest, registerSchema } from "../../model";
 
 import { registrationFeatures } from "./registration-features";
@@ -24,7 +23,7 @@ export function RegistrationForm() {
   const redirect = searchParams.get("redirect");
 
   const inviteToken = redirect?.startsWith("/invite/") ? (redirect.split("/").pop() ?? null) : null;
-  const acceptInviteMutation = useAcceptInvite();
+  const acceptInviteMutation = useAcceptInviteAfterRegistration();
   const {
     register,
     formState: { errors, isValid, isDirty },

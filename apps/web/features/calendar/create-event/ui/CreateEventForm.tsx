@@ -4,9 +4,9 @@ import { useState } from "react";
 import { format } from "date-fns";
 import { ru } from "date-fns/locale";
 
+import { repeatOptions, typeMeta } from "@/features/calendar/model/constants";
+import { EventRepeat, EventScope, EventType } from "@/features/calendar/types";
 import { Button } from "@/shared/ui";
-import { repeatOptions, typeMeta } from "@/widgets/calendar/model/constants";
-import { EventRepeat, EventScope, EventType } from "@/widgets/calendar/model/types";
 
 interface CreateEventFormProps {
   scope: EventScope;

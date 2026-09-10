@@ -1,5 +1,5 @@
-import type { Gender, User } from "@/features/auth/model/auth.types";
 import { http } from "@/shared/api/client/api";
+import type { Gender, User } from "@/shared/contracts/user";
 
 export interface UpdateProfileRequest {
   firstName: string;

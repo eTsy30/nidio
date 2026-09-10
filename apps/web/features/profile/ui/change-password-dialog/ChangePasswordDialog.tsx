@@ -4,13 +4,10 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 
-import {
-  changePassword,
-  type ChangePasswordRequest,
-  type ChangePasswordResponse,
-} from "@/features/auth/api/auth.api";
+import { changePassword } from "@/features/profile/api/change-password.api";
 import type { ApiError } from "@/shared/api/client/api";
 import { useAuth } from "@/shared/api/provider/auth-provider";
+import type { ChangePasswordRequest, ChangePasswordResponse } from "@/shared/contracts/user";
 import { Button } from "@/shared/ui/button/Button";
 import {
   Dialog,

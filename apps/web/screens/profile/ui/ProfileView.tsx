@@ -14,6 +14,7 @@ import {
 } from "@/features/profile";
 import { PushSettings } from "@/features/push/PushSettings";
 import { useCurrentCouple } from "@/features/relationship/hook/use-relationship";
+import { useUpdateRelationship } from "@/features/relationship/hook/use-relationship";
 import { useAuth } from "@/shared/api/provider/auth-provider";
 import { Button } from "@/shared/ui/button/Button";
 
@@ -22,6 +23,7 @@ export function ProfileView() {
   const { data: user } = useMe();
 
   const { data: couple, isLoading: isCoupleLoading } = useCurrentCouple();
+  const updateRelationship = useUpdateRelationship();
 
   const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
 
@@ -41,7 +43,15 @@ export function ProfileView() {
           onEdit={() => setIsEditProfileOpen(true)}
         />
 
-        <CoupleCard couple={couple} isLoading={isCoupleLoading} />
+        <CoupleCard
+          couple={couple}
+          isLoading={isCoupleLoading}
+          isSavingRelationshipDate={updateRelationship.isPending}
+          relationshipDateSaveError={updateRelationship.isError}
+          onSaveRelationshipDate={(relationshipAt) =>
+            updateRelationship.mutateAsync({ relationshipAt })
+          }
+        />
 
         <ProfileSection title="Настройки">
           <PushSettings />

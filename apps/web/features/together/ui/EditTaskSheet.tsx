@@ -8,7 +8,6 @@ import { Flag, X } from "lucide-react";
 import { type SubmitHandler, useForm, useWatch } from "react-hook-form";
 import { z } from "zod";
 
-import { useCurrentCouple } from "@/features/relationship/hook/use-relationship";
 import { useAuth } from "@/shared/api/provider/auth-provider";
 import { cn } from "@/shared/lib/cn";
 import { Button } from "@/shared/ui";
@@ -23,6 +22,7 @@ interface EditTaskSheetProps {
   open: boolean;
   onClose: () => void;
   columns: Column[];
+  partnerId: string | undefined;
 }
 
 const assigneeValues = ["ME", "PARTNER", "BOTH", "ROTATE"] as const;
@@ -56,10 +56,9 @@ const repeatOptions = [
   { value: "CUSTOM" as const, label: "Своё повторение" },
 ];
 
-export function EditTaskSheet({ task, open, onClose, columns }: EditTaskSheetProps) {
+export function EditTaskSheet({ task, open, onClose, columns, partnerId }: EditTaskSheetProps) {
   const queryClient = useQueryClient();
   const { user } = useAuth();
-  const { data: relationship } = useCurrentCouple();
 
   const {
     register,
@@ -259,7 +258,7 @@ export function EditTaskSheet({ task, open, onClose, columns }: EditTaskSheetPro
                 className="h-11 w-full rounded-xl border bg-background px-3 text-sm"
               >
                 <option value={user?.id}>Я</option>
-                <option value={relationship?.partnerId}>Партнёр</option>
+                <option value={partnerId}>Партнёр</option>
               </select>
             </label>
           )}

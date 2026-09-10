@@ -7,13 +7,8 @@ export class CoupleDto {
   @ApiProperty()
   partnerId!: string;
 
-  @ApiProperty()
-  partnerFirstName!: string;
-
-  @ApiProperty({
-    nullable: true,
-  })
-  partnerLastName!: string | null;
+  @ApiProperty({ nullable: true })
+  partnerFirstName!: string | null;
 
   @ApiProperty({
     nullable: true,

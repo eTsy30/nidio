@@ -9,10 +9,10 @@
 | 1 — Авторизация чата           |  [x]   | Доступ к edit/delete/reply/reactions ограничен автором и workspace для REST/WS         |
 | 2 — JWT lifecycle              |  [x]   | Access/refresh разделены, refresh rotation атомарна, WebSocket принимает только access |
 | 3 — Валидация REST/WS и upload |  [x]   | DTO, upload limit/signature, origin allowlist и rate limits добавлены                  |
-| 4 — Frontend session           |  [ ]   | Не начат                                                                               |
-| 5 — Контракты и API            |  [ ]   | Не начат                                                                               |
-| 6 — State management           |  [ ]   | Не начат                                                                               |
-| 7 — FSD                        |  [ ]   | Не начат                                                                               |
+| 4 — Frontend session           |  [x]   | Coordinator refresh, Query profile и межвкладочная сессия подтверждены                 |
+| 5 — Контракты и API            |  [x]   | REST contracts профиля, auth и couple подтверждены                                     |
+| 6 — State management           |  [x]   | Общий server cache, invalidation и URL state Todo/Calendar                             |
+| 7 — FSD                        |  [x]   | Границы `app → screens → widgets → features → shared` проверяются в lint, без entities |
 | 8 — Календарь                  |  [ ]   | Не начат                                                                               |
 | 9 — Чат: offline/reconnect     |  [ ]   | Не начат                                                                               |
 | 10 — Todo                      |  [ ]   | Не начат                                                                               |
@@ -27,6 +27,17 @@
 - CI выполняет install → generate → lint → typecheck → test → build.
 - Проверены production build, PWA cache restore, отдельная PostgreSQL migration rehearsal и HTTP runtime smoke.
 - Пользователь подтвердил работу приложения и успешный GitHub Actions job `ci`.
+
+## Этап 7 — закрыт
+
+- Выбранная структура: `app → screens → widgets → features → shared`; слой `entities` не используется по решению проекта.
+- Общие wire-контракты вынесены в `shared/contracts`; feature не импортирует соседнюю feature.
+- `AuthProvider` перенесён в `app/providers`, а `shared` хранит только auth context и transport-примитивы.
+- Calendar feature больше не импортирует UI или model из calendar widget; widget использует feature UI в разрешённом направлении.
+- Todo sheets получают `partnerId` от экрана, profile-card получает сохранение даты от экрана. Это убрало зависимости `together/profile → relationship`, сохранив поведение.
+- `apps/web/scripts/check-architecture.mjs` проверяет алиас-импорты вверх по слоям и между feature-slices. Он запускается в `pnpm --filter web lint` и в CI.
+
+Проверки: `pnpm --filter web typecheck` — PASS; `pnpm --filter web lint` — PASS, 0 errors / 4 существующих warnings; `pnpm --filter web build` — PASS, включая Serwist; `git diff --check` — PASS.
 
 ## Этап 1 — закрыт
 
@@ -141,3 +152,94 @@ NODE_ENV=production pnpm --filter api db:deploy
 - `git diff --check` — PASS.
 
 После deployment проверить: отправку сообщения через чат, upload JPG/PNG/WebP до `UPLOAD_MAX_IMAGE_SIZE_MB`, а также значение `FRONTEND_URL`. Если есть несколько frontend-доменов, перечислить их через запятую без пробелов в production env. HTTP rate limit хранится в памяти процесса, WS limit — в памяти сокета; для нескольких API-инстансов глобальный distributed limit остаётся отдельной инфраструктурной задачей.
+
+## Этап 4 — закрыт
+
+### Что изменено
+
+- Единственный `session-coordinator` выполняет refresh для AuthProvider, Axios и Apollo через общий Promise.
+- `401/403` завершает сессию; ошибки сети/5xx не удаляют access-token и не разлогинивают пользователя.
+- Profile хранится в TanStack Query; AuthProvider больше не содержит отдельный React state с пользователем.
+- Logout и истечение сессии очищают TanStack Query и Apollo через `clearStore`, без `resetStore` и повторных персональных запросов.
+- Две вкладки используют `navigator.locks` и `BroadcastChannel`: новая сессия или logout синхронизируются между вкладками.
+- Guards используют `isAuthenticated`, поэтому загрузка profile не создаёт ложный redirect после успешного login/refresh.
+
+### Файлы
+
+| FILE                                                     | CHANGES                                                                       |
+| -------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| apps/web/shared/api/session/session-coordinator.ts       | Single-flight refresh, offline/expired distinction, межвкладочная координация |
+| apps/web/shared/api/interceptors/response.interceptor.ts | Axios повторяет 401 только через coordinator                                  |
+| apps/web/shared/lib/apollo-client.ts                     | Apollo повторяет один раз через coordinator                                   |
+| apps/web/shared/api/provider/auth-provider.tsx           | Query-backed profile, единый logout и lifecycle                               |
+| apps/web/features/auth/api/auth.api.ts                   | Refresh/logout делегированы coordinator                                       |
+| apps/web/shared/router/guards/{AuthGuard,GuestGuard}.tsx | Проверяют `isAuthenticated`                                                   |
+
+### Автоматические проверки
+
+- `pnpm --filter web typecheck` — PASS.
+- `pnpm --filter web lint` — PASS, 0 errors; 5 ранее известных warnings вне этапа.
+- `pnpm --filter web build` — PASS, включая production Serwist service worker.
+- `git diff --check` — PASS.
+
+### Проверка в браузере
+
+1. Войти, обновить страницу и открыть chat/calendar/together/profile: сессия и профиль сохраняются.
+2. В двух вкладках одного браузера обновить защищённую страницу одновременно: обе остаются авторизованными.
+3. Выйти в первой вкладке: вторая возвращается на `/login`; после нового входа не видны данные прежней сессии.
+4. Отключить сеть, обновить уже авторизованную вкладку, затем вернуть сеть: временный сбой не должен сам разлогинить пользователя.
+
+Пользователь подтвердил browser-проверку 2026-09-10: login/reload, две вкладки, logout и offline/recovery работают.
+
+## Этап 5 — закрыт
+
+### Что изменено
+
+- `/users/me` и `PATCH /users/me` документированы точным `UserMeDto`: только профиль, без relationship и `updatedAt`.
+- Auth REST responses документированы как `{ accessToken }`; refresh-token остаётся только в HttpOnly cookie.
+- `GET /relationship/couple` типизирован как `CurrentCoupleResponse | null`.
+- Frontend перестал читать несуществующий `user.relationship`; шапка, чат, overlay и Todo получают партнёра только из couple query.
+- Добавлены unit-tests контрактов auth response и profile select.
+
+### Файлы
+
+| FILE                                                  | CHANGES                                              |
+| ----------------------------------------------------- | ---------------------------------------------------- |
+| apps/api/src/users/dto/user-me.dto.ts                 | Точный Swagger DTO профиля                           |
+| apps/api/src/{users,auth,relationship}/*controller.ts | Response contracts для REST                          |
+| apps/api/src/auth/dto/auth.dto.ts                     | Только access-token в JSON                           |
+| apps/web/features/auth/model/auth.types.ts            | Честные `AuthResponse` и `User`                      |
+| apps/web/features/relationship/{api,hook}/            | Nullable couple contract                             |
+| apps/web/screens, apps/web/widgets/chat               | Используют couple как единственный источник партнёра |
+| apps/api/src/{auth,users}/*.spec.ts                   | Регрессии HTTP-contract                              |
+
+### Автоматические проверки
+
+- `pnpm --filter api test` — PASS: 112 tests / 14 suites.
+- `pnpm --filter api typecheck` и `pnpm --filter web typecheck` — PASS.
+- `pnpm --filter api lint` — PASS; `pnpm --filter web lint` — 0 errors, 5 прежних warnings.
+- `pnpm --filter api build` и `pnpm --filter web build` — PASS.
+- `git diff --check` — PASS.
+
+### Нужна проверка в браузере
+
+1. В паре проверить имя и аватар партнёра в главной, чате и Todo.
+2. Без пары открыть главную, чат, Todo и профиль: нет ошибки, показывается приглашение.
+3. Отредактировать профиль и обновить страницу: имя, аватар и email сохраняются.
+
+Пользователь подтвердил проверку и перешёл к этапу 6 2026-09-10.
+
+## Этап 6 — State management: в работе
+
+- `useMe` больше не принудительно запрашивает `/users/me` на каждом focus: AuthProvider и экраны используют один Query cache.
+- Todo filter хранится в URL: `/together?filter=me`, `partner`, `together` или `rotate`; значение `all` URL не засоряет.
+- Некорректное значение filter безопасно становится `all`; Back/Forward и ссылка восстанавливают фильтр.
+
+Проверка первого шага: `pnpm --filter web typecheck` — PASS; ESLint без ошибок, 5 прежних warnings.
+
+### Завершение
+
+- Profile и couple используют Query cache; profile update обновляет cache сразу, invite/accept/update/leave инвалидируют связанные couple/invite keys.
+- Повторы мутаций выключены по умолчанию: потеря ответа не создаёт повторную запись автоматически.
+- Todo filter и calendar scope/view/date отражаются в URL; формы и модалки не попадают в URL.
+- Проверки: web typecheck, lint, production build и `git diff --check` — PASS.

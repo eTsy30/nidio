@@ -75,7 +75,7 @@ export const useAcceptInvite = () => {
 };
 
 export const useCurrentCouple = () => {
-  return useQuery<CurrentCoupleResponse, ApiError>({
+  return useQuery<CurrentCoupleResponse | null, ApiError>({
     queryKey: queryKeys.relationship.couple,
     queryFn: getCurrentCouple,
   });

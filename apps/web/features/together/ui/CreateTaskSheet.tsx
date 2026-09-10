@@ -8,7 +8,6 @@ import { ru } from "date-fns/locale";
 import { Flag } from "lucide-react";
 import { type SubmitHandler, useForm, useWatch } from "react-hook-form";
 
-import { useCurrentCouple } from "@/features/relationship/hook/use-relationship";
 import { useAuth } from "@/shared/api/provider/auth-provider";
 import { cn } from "@/shared/lib/cn";
 import { Button } from "@/shared/ui";
@@ -27,6 +26,7 @@ interface CreateTaskSheetProps {
   onClose: () => void;
   defaultColumnId: string | undefined;
   columns: Column[];
+  partnerId: string | undefined;
 }
 
 const assigneeOptions = [
@@ -43,10 +43,15 @@ const repeatOptions: { value: RepeatOption; label: string }[] = [
   { value: "MONTHLY", label: "Каждый месяц" },
 ];
 
-export function CreateTaskSheet({ open, onClose, defaultColumnId, columns }: CreateTaskSheetProps) {
+export function CreateTaskSheet({
+  open,
+  onClose,
+  defaultColumnId,
+  columns,
+  partnerId,
+}: CreateTaskSheetProps) {
   const queryClient = useQueryClient();
   const { user } = useAuth();
-  const { data: relationship } = useCurrentCouple();
 
   const [step, setStep] = useState(0);
   const [dueMode, setDueMode] = useState<DueMode>("today");
@@ -98,14 +103,14 @@ export function CreateTaskSheet({ open, onClose, defaultColumnId, columns }: Cre
   };
 
   const onSubmit: SubmitHandler<CreateTaskFormData> = (data) => {
-    if (!user || !relationship || createMutation.isPending || (dueMode === "custom" && !customDate))
+    if (!user || !partnerId || createMutation.isPending || (dueMode === "custom" && !customDate))
       return;
 
     let assigneeId: string | null = null;
     let rotationFirstAssigneeId: string | undefined = undefined;
 
     if (data.assignee === "ME") assigneeId = user.id;
-    else if (data.assignee === "PARTNER") assigneeId = relationship.partnerId;
+    else if (data.assignee === "PARTNER") assigneeId = partnerId;
     else if (data.assignee === "ROTATE") {
       rotationFirstAssigneeId = data.rotationFirst || user.id;
       assigneeId = rotationFirstAssigneeId;
@@ -260,13 +265,12 @@ export function CreateTaskSheet({ open, onClose, defaultColumnId, columns }: Cre
                             type="button"
                             onClick={() => {
                               if (opt.value === "ME") setValue("rotationFirst", user?.id ?? "");
-                              else setValue("rotationFirst", relationship?.partnerId ?? "");
+                              else setValue("rotationFirst", partnerId ?? "");
                             }}
                             className={cn(
                               "h-9 rounded-lg border text-sm font-medium transition-all",
                               (opt.value === "ME" && rotationFirst === user?.id) ||
-                                (opt.value === "PARTNER" &&
-                                  rotationFirst === relationship?.partnerId)
+                                (opt.value === "PARTNER" && rotationFirst === partnerId)
                                 ? "border-primary bg-primary/5 text-primary"
                                 : "hover:bg-muted",
                             )}
@@ -364,7 +368,7 @@ export function CreateTaskSheet({ open, onClose, defaultColumnId, columns }: Cre
               className="flex-1"
               disabled={
                 createMutation.isPending ||
-                (step === 1 && (!isValid || !relationship || (dueMode === "custom" && !customDate)))
+                (step === 1 && (!isValid || !partnerId || (dueMode === "custom" && !customDate)))
               }
               loading={createMutation.isPending}
             >

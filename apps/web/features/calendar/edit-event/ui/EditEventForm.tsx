@@ -3,11 +3,11 @@
 import { useState } from "react";
 import { format } from "date-fns";
 
+import { repeatOptions, typeMeta } from "@/features/calendar/model/constants";
 import { CalendarEvent } from "@/features/calendar/types";
+import { EventRepeat, EventType } from "@/features/calendar/types";
 import { cn } from "@/shared/lib/cn";
 import { Button } from "@/shared/ui";
-import { repeatOptions, typeMeta } from "@/widgets/calendar/model/constants";
-import { EventRepeat, EventType } from "@/widgets/calendar/model/types";
 
 interface EditEventFormProps {
   event: CalendarEvent;

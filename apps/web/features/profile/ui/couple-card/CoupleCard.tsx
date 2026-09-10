@@ -1,11 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { CalendarDays, Check, Heart, Loader2, Pencil, UserPlus } from "lucide-react";
 
-import { useUpdateRelationship } from "@/features/relationship/hook/use-relationship";
-import type { CurrentCoupleResponse } from "@/features/relationship/model/relationship.types";
+import type { CurrentCoupleResponse } from "@/shared/contracts/relationship";
 import { routes } from "@/shared/router/paths";
 import { Avatar, AvatarFallback, AvatarImage } from "@/shared/ui/avatar-pair/Avatar";
 import { Button } from "@/shared/ui/button/Button";
@@ -14,6 +13,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/shared/ui/card/Card"
 interface CoupleCardProps {
   couple: CurrentCoupleResponse | null | undefined;
   isLoading?: boolean;
+  isSavingRelationshipDate?: boolean;
+  relationshipDateSaveError?: boolean;
+  onSaveRelationshipDate: (relationshipAt: string) => Promise<unknown>;
 }
 
 const formatRelationshipDate = (date: string) => {
@@ -42,10 +44,14 @@ const formatDateForInput = (date: string | null) => {
   return `${year}-${month}-${day}`;
 };
 
-export function CoupleCard({ couple, isLoading = false }: CoupleCardProps) {
+export function CoupleCard({
+  couple,
+  isLoading = false,
+  isSavingRelationshipDate = false,
+  relationshipDateSaveError = false,
+  onSaveRelationshipDate,
+}: CoupleCardProps) {
   const router = useRouter();
-
-  const updateRelationship = useUpdateRelationship();
 
   const [isEditingDate, setIsEditingDate] = useState(false);
   const [relationshipDate, setRelationshipDate] = useState(() =>
@@ -65,21 +71,17 @@ export function CoupleCard({ couple, isLoading = false }: CoupleCardProps) {
     setIsEditingDate(false);
   };
 
-  const handleSaveDate = () => {
+  const handleSaveDate = async () => {
     if (!relationshipDate) {
       return;
     }
 
-    updateRelationship.mutate(
-      {
-        relationshipAt: new Date(`${relationshipDate}T00:00:00.000Z`).toISOString(),
-      },
-      {
-        onSuccess: () => {
-          setIsEditingDate(false);
-        },
-      },
-    );
+    try {
+      await onSaveRelationshipDate(new Date(`${relationshipDate}T00:00:00.000Z`).toISOString());
+      setIsEditingDate(false);
+    } catch {
+      // Ошибка отображается под формой через relationshipDateSaveError.
+    }
   };
 
   return (
@@ -144,10 +146,10 @@ export function CoupleCard({ couple, isLoading = false }: CoupleCardProps) {
                       type="button"
                       variant="primary"
                       size="md"
-                      disabled={!relationshipDate || updateRelationship.isPending}
+                      disabled={!relationshipDate || isSavingRelationshipDate}
                       onClick={handleSaveDate}
                     >
-                      {updateRelationship.isPending ? (
+                      {isSavingRelationshipDate ? (
                         <Loader2 className="size-4 animate-spin" />
                       ) : (
                         <Check className="size-4" />
@@ -159,7 +161,7 @@ export function CoupleCard({ couple, isLoading = false }: CoupleCardProps) {
                       type="button"
                       variant="secondary"
                       size="md"
-                      disabled={updateRelationship.isPending}
+                      disabled={isSavingRelationshipDate}
                       onClick={handleCancelEditDate}
                     >
                       Отмена
@@ -209,7 +211,7 @@ export function CoupleCard({ couple, isLoading = false }: CoupleCardProps) {
                 </div>
               )}
 
-              {updateRelationship.isError && (
+              {relationshipDateSaveError && (
                 <p className="mt-3 text-sm text-destructive">
                   Не удалось сохранить дату. Попробуйте ещё раз.
                 </p>

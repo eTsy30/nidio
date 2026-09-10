@@ -7,7 +7,7 @@ import {
   Req,
   Res,
 } from '@nestjs/common';
-import { ApiTags } from '@nestjs/swagger';
+import { ApiCreatedResponse, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import type { Request, Response } from 'express';
 
 import { Authorization } from './decorators/Authorization.decorator';
@@ -20,6 +20,7 @@ import { AuthService } from './auth.service';
 
 const isDev = process.env.NODE_ENV !== 'production';
 
+import { AuthResponse } from './dto/auth.dto';
 import { ChangePasswordDto } from './dto/change-password.dto';
 @ApiTags('Auth')
 @Controller('auth')
@@ -28,6 +29,7 @@ export class AuthController {
 
   @Post('register')
   @HttpCode(HttpStatus.CREATED)
+  @ApiCreatedResponse({ type: AuthResponse })
   async register(
     @Body() dto: RegisterRequestDto,
     @Res({ passthrough: true }) res: Response,
@@ -47,6 +49,7 @@ export class AuthController {
 
   @Post('login')
   @HttpCode(HttpStatus.OK)
+  @ApiOkResponse({ type: AuthResponse })
   async login(
     @Body() dto: LoginDto,
     @Res({ passthrough: true }) res: Response,
@@ -66,6 +69,7 @@ export class AuthController {
 
   @Post('refresh')
   @HttpCode(HttpStatus.OK)
+  @ApiOkResponse({ type: AuthResponse })
   async refresh(
     @Req() req: Request,
     @Res({ passthrough: true }) res: Response,

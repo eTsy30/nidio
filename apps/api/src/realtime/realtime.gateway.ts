@@ -1,6 +1,7 @@
 import { UsePipes, ValidationPipe } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import {
+  ConnectedSocket,
   MessageBody,
   OnGatewayConnection,
   OnGatewayDisconnect,
@@ -161,7 +162,7 @@ export class RealtimeGateway
     }
   }
   @SubscribeMessage('user:status:sync')
-  async handleUserStatusSync(client: Socket) {
+  async handleUserStatusSync(@ConnectedSocket() client: Socket) {
     const userId = client.data.user?.sub;
     if (!userId) return;
 
@@ -201,7 +202,7 @@ export class RealtimeGateway
 
   @SubscribeMessage('chat:presence')
   async handleChatPresence(
-    client: Socket,
+    @ConnectedSocket() client: Socket,
     @MessageBody() payload: ChatPresenceDto,
   ) {
     const userId = client.data.user?.sub;
@@ -218,7 +219,10 @@ export class RealtimeGateway
   }
 
   @SubscribeMessage('chat:send')
-  async handleChatSend(client: Socket, @MessageBody() dto: CreateMessageDto) {
+  async handleChatSend(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() dto: CreateMessageDto,
+  ) {
     const userId = client.data.user?.sub;
 
     if (!userId) {
@@ -237,7 +241,10 @@ export class RealtimeGateway
   }
 
   @SubscribeMessage('chat:edit')
-  async handleChatEdit(client: Socket, @MessageBody() payload: ChatEditDto) {
+  async handleChatEdit(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() payload: ChatEditDto,
+  ) {
     const userId = client.data.user?.sub;
     if (!userId) return;
     const message = await this.chatService.editMessage(
@@ -258,7 +265,10 @@ export class RealtimeGateway
   }
 
   @SubscribeMessage('chat:delete')
-  async handleChatDelete(client: Socket, @MessageBody() payload: MessageIdDto) {
+  async handleChatDelete(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() payload: MessageIdDto,
+  ) {
     const userId = client.data.user?.sub;
     if (!userId) return;
     await this.chatService.deleteMessage(userId, payload.messageId);
@@ -276,7 +286,7 @@ export class RealtimeGateway
 
   @SubscribeMessage('chat:reaction:add')
   async handleReactionAdd(
-    client: Socket,
+    @ConnectedSocket() client: Socket,
     @MessageBody() payload: ChatReactionDto,
   ) {
     const userId = client.data.user?.sub;
@@ -300,7 +310,7 @@ export class RealtimeGateway
 
   @SubscribeMessage('chat:reaction:remove')
   async handleReactionRemove(
-    client: Socket,
+    @ConnectedSocket() client: Socket,
     @MessageBody() payload: ChatRemoveReactionDto,
   ) {
     const userId = client.data.user?.sub;
@@ -323,7 +333,7 @@ export class RealtimeGateway
   }
 
   @SubscribeMessage('chat:typing:start')
-  async handleTypingStart(client: Socket) {
+  async handleTypingStart(@ConnectedSocket() client: Socket) {
     const userId = client.data.user?.sub;
     if (!userId) return;
 
@@ -341,7 +351,7 @@ export class RealtimeGateway
   }
 
   @SubscribeMessage('chat:typing:stop')
-  async handleTypingStop(client: Socket) {
+  async handleTypingStop(@ConnectedSocket() client: Socket) {
     const userId = client.data.user?.sub;
     if (!userId) return;
 
@@ -360,7 +370,7 @@ export class RealtimeGateway
 
   @SubscribeMessage('chat:read')
   async handleRead(
-    client: Socket,
+    @ConnectedSocket() client: Socket,
 
     @MessageBody() payload: ChatReadDto,
   ) {
@@ -396,7 +406,10 @@ export class RealtimeGateway
   }
 
   @SubscribeMessage('chat:delivered')
-  async handleDelivered(client: Socket, @MessageBody() payload: MessageIdDto) {
+  async handleDelivered(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() payload: MessageIdDto,
+  ) {
     const userId = client.data.user?.sub;
     if (!userId) return;
 

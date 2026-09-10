@@ -1,8 +1,8 @@
 "use client";
 
+import { typeMeta } from "@/features/calendar/model/constants";
+import { EventType } from "@/features/calendar/types";
 import { cn } from "@/shared/lib/cn";
-import { typeMeta } from "@/widgets/calendar/model/constants";
-import { EventType } from "@/widgets/calendar/model/types";
 
 interface EventFilterProps {
   value: EventType | "ALL";

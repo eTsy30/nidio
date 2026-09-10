@@ -16,15 +16,7 @@ export interface InviteResponse {
 /**
  * Ответ GET /relationship/couple
  */
-export interface CurrentCoupleResponse {
-  id: string;
-  workspaceId: string;
-  partnerId: string;
-  partnerFirstName: string | null;
-  partnerAvatarUrl: string | null;
-  createdAt: string;
-  relationshipAt: string | null;
-}
+export type { CurrentCoupleResponse } from "@/shared/contracts/relationship";
 
 /**
  * Запрос PATCH /relationship/couple

@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useMutation, useQuery } from "@apollo/client/react";
 import {
   addMonths,
@@ -35,9 +36,24 @@ import { CalendarYear } from "./CalendarYear";
 import { MonthView } from "./MonthView";
 import { WeekView } from "./WeekView";
 
+function toCalendarDate(date: Date): string {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+}
+
+function parseCalendarDate(value: string | null): Date | null {
+  if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return null;
+  const date = new Date(`${value}T12:00:00`);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
 export default function CalendarWidget() {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const { user } = useAuth();
-  const [scope, setScope] = useState<EventScope>(EventScope.PERSONAL);
+  const scope = searchParams.get("scope") === "couple" ? EventScope.COUPLE : EventScope.PERSONAL;
+  const calendarDateValue = searchParams.get("date");
+  const initialDate = parseCalendarDate(calendarDateValue) ?? new Date();
 
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
 
@@ -50,17 +66,31 @@ export default function CalendarWidget() {
   const [editEventOpen, setEditEventOpen] = useState(false);
   const [selectedEditEvent, setSelectedEditEvent] = useState<CalendarEvent | null>(null);
 
-  const [month, setMonth] = useState<Date>(new Date());
+  const [month, setMonth] = useState<Date>(initialDate);
 
   const [weekStart, setWeekStart] = useState<Date>(
-    startOfWeek(new Date(), {
+    startOfWeek(initialDate, {
       weekStartsOn: 1,
     }),
   );
 
-  const [viewMode, setViewMode] = useState<ViewMode>("month");
+  const viewParam = searchParams.get("view");
+  const viewMode: ViewMode = viewParam === "week" || viewParam === "year" ? viewParam : "month";
 
   const [filter, setFilter] = useState<EventType | "ALL">("ALL");
+
+  const updateCalendarParams = (next: { scope?: EventScope; view?: ViewMode; date?: Date }) => {
+    const params = new URLSearchParams(searchParams.toString());
+    const nextScope = next.scope ?? scope;
+    const nextView = next.view ?? viewMode;
+    if (nextScope === EventScope.PERSONAL) params.delete("scope");
+    else params.set("scope", "couple");
+    if (nextView === "month") params.delete("view");
+    else params.set("view", nextView);
+    if (next.date) params.set("date", toCalendarDate(next.date));
+    const query = params.toString();
+    router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
+  };
 
   const currentDate = viewMode === "week" ? weekStart : month;
 
@@ -145,40 +175,65 @@ export default function CalendarWidget() {
     );
 
     setSelectedDate(today);
+    updateCalendarParams({ date: today });
   };
 
   const goPrev = () => {
     if (viewMode === "month") {
-      setMonth((current) => subMonths(current, 1));
+      setMonth((current) => {
+        const next = subMonths(current, 1);
+        updateCalendarParams({ date: next });
+        return next;
+      });
       return;
     }
 
     if (viewMode === "week") {
-      setWeekStart((current) => subWeeks(current, 1));
+      setWeekStart((current) => {
+        const next = subWeeks(current, 1);
+        updateCalendarParams({ date: next });
+        return next;
+      });
       return;
     }
 
-    setMonth((current) => subYears(current, 1));
+    setMonth((current) => {
+      const next = subYears(current, 1);
+      updateCalendarParams({ date: next });
+      return next;
+    });
   };
 
   const goNext = () => {
     if (viewMode === "month") {
-      setMonth((current) => addMonths(current, 1));
+      setMonth((current) => {
+        const next = addMonths(current, 1);
+        updateCalendarParams({ date: next });
+        return next;
+      });
       return;
     }
 
     if (viewMode === "week") {
-      setWeekStart((current) => addWeeks(current, 1));
+      setWeekStart((current) => {
+        const next = addWeeks(current, 1);
+        updateCalendarParams({ date: next });
+        return next;
+      });
       return;
     }
 
-    setMonth((current) => addYears(current, 1));
+    setMonth((current) => {
+      const next = addYears(current, 1);
+      updateCalendarParams({ date: next });
+      return next;
+    });
   };
 
   const handleViewChange = (view: ViewMode) => {
     const baseDate = selectedDate ?? new Date();
 
-    setViewMode(view);
+    updateCalendarParams({ view, date: baseDate });
 
     if (view === "week") {
       setWeekStart(
@@ -195,6 +250,7 @@ export default function CalendarWidget() {
 
   const handleSelectDate = (date: Date) => {
     setSelectedDate(date);
+    updateCalendarParams({ date });
 
     if (
       viewMode === "month" &&
@@ -208,7 +264,7 @@ export default function CalendarWidget() {
     setMonth(new Date(date.getFullYear(), date.getMonth(), 1));
 
     setSelectedDate(null);
-    setViewMode("month");
+    updateCalendarParams({ view: "month" });
   };
 
   const handleYearDayClick = (date: Date) => {
@@ -218,7 +274,7 @@ export default function CalendarWidget() {
   };
 
   const handleScopeChange = (nextScope: EventScope) => {
-    setScope(nextScope);
+    updateCalendarParams({ scope: nextScope });
     setSelectedDate(null);
     setSelectedEvent(null);
     setDeleteDialogOpen(false);

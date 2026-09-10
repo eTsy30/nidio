@@ -27,8 +27,8 @@ export const acceptInvite = (token: string): Promise<AcceptInviteResponse> => {
   return http.post<AcceptInviteResponse>(`/relationship/invite/${token}/accept`);
 };
 
-export const getCurrentCouple = (): Promise<CurrentCoupleResponse> => {
-  return http.get<CurrentCoupleResponse>("/relationship/couple");
+export const getCurrentCouple = (): Promise<CurrentCoupleResponse | null> => {
+  return http.get<CurrentCoupleResponse | null>("/relationship/couple");
 };
 
 export const updateRelationship = (

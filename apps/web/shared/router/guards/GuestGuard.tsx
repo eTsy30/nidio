@@ -13,15 +13,15 @@ type GuestGuardProps = {
 export function GuestGuard({ children }: GuestGuardProps) {
   const router = useRouter();
   const pathname = usePathname();
-  const { user, isLoading } = useAuth();
+  const { isAuthenticated, isLoading } = useAuth();
 
   useEffect(() => {
-    if (!isLoading && user && !pathname.startsWith(routes.invite)) {
+    if (!isLoading && isAuthenticated && !pathname.startsWith(routes.invite)) {
       router.replace(routes.home);
     }
-  }, [user, isLoading, router, pathname]);
+  }, [isAuthenticated, isLoading, router, pathname]);
 
-  if (isLoading || user) {
+  if (isLoading || isAuthenticated) {
     return null;
   }
 
