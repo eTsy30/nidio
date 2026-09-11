@@ -13,7 +13,7 @@ import {
 } from "./card.types";
 
 export const cardVariants = cva(
-  "rounded-3xl border border-border/60 bg-card text-card-foreground shadow-[0_10px_30px_rgba(15,23,42,0.05)] transition-colors",
+  "rounded-3xl border border-border/60 bg-card text-card-foreground shadow-[0_4px_20px_rgb(41_41_35_/_0.035)] transition-[border-color,box-shadow] duration-200",
   {
     variants: {
       padding: {

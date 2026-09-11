@@ -54,7 +54,10 @@ export function CalendarHeader({
   };
 
   return (
-    <header className="border-b bg-background px-3 py-3 sm:px-5">
+    <header className="border-b bg-card/80 px-3 py-3 backdrop-blur-xl sm:px-5">
+      <p className="mb-3 text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+        Ваш календарь
+      </p>
       <div className="grid min-h-10 grid-cols-[1fr_auto] items-center gap-2 xl:grid-cols-[auto_1fr_auto]">
         <div className="flex shrink-0 items-center rounded-xl bg-muted p-1">
           <Button

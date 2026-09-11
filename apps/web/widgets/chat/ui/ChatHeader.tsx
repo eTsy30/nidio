@@ -1,7 +1,8 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ChevronLeft, MoreVertical } from "lucide-react";
+import { ChevronLeft, Heart } from "lucide-react";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/shared/ui/avatar-pair/Avatar";
 
@@ -68,13 +69,13 @@ export function ChatHeader({ partner, isOnline, isTyping }: ChatHeaderProps) {
           </div>
         </div>
 
-        <button
-          type="button"
-          aria-label="Меню"
+        <Link
+          href="/profile"
+          aria-label="Настройки вашей пары"
           className="flex size-10 items-center justify-center rounded-full border border-transparent transition-all duration-200 hover:border-border hover:bg-muted active:scale-95"
         >
-          <MoreVertical className="size-5" />
-        </button>
+          <Heart className="size-5" />
+        </Link>
       </div>
     </header>
   );

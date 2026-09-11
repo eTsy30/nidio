@@ -1,75 +1,64 @@
 "use client";
 
-import { useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { CalendarDays, Home, MessageCircle, User, Users } from "lucide-react";
+import { CalendarDays, Heart, House, ListTodo, MessageCircle, UserRound } from "lucide-react";
 
 const navigation = [
-  {
-    href: "/chat",
-    label: "Чат",
-    icon: MessageCircle,
-  },
-  {
-    href: "/calendar",
-    label: "Календарь",
-    icon: CalendarDays,
-  },
-  {
-    href: "/",
-    label: "Главная",
-    icon: Home,
-  },
-  {
-    href: "/together",
-    label: "ToDo",
-    icon: Users,
-  },
-  {
-    href: "/profile",
-    label: "Профиль",
-    icon: User,
-  },
+  { href: "/", label: "Главная", icon: House },
+  { href: "/chat", label: "Чат", icon: MessageCircle },
+  { href: "/calendar", label: "Календарь", icon: CalendarDays },
+  { href: "/together", label: "Задачи", icon: ListTodo },
+  { href: "/profile", label: "Профиль", icon: UserRound },
 ];
 
 export function BottomNavigation() {
   const pathname = usePathname();
-
-  useEffect(() => {
-    navigator.vibrate?.(10);
-  }, [pathname]);
-
   return (
-    <nav className="fixed inset-x-0 bottom-0 z-50 border-t border-border/60 bg-card/90 shadow-floating backdrop-blur-xl supports-[padding:max(0px)]:pb-[max(env(safe-area-inset-bottom),0px)]">
-      <div className="mx-auto flex h-15 max-w-md items-center justify-between px-3">
-        {navigation.map((item) => {
-          const Icon = item.icon;
-          const active = pathname === item.href;
-
+    <nav aria-label="Основная навигация" className="app-navigation">
+      <Link
+        href="/"
+        className="mb-12 hidden items-center gap-3 px-3 text-foreground hover:no-underline lg:flex"
+        aria-label="Nidio — главная"
+      >
+        <span className="flex size-10 items-center justify-center rounded-2xl bg-primary text-primary-foreground">
+          <Heart className="size-5" aria-hidden="true" />
+        </span>
+        <span className="text-2xl font-semibold tracking-tight">
+          nidio<span className="text-primary">.</span>
+        </span>
+      </Link>
+      <div className="mx-auto flex w-full max-w-lg items-center justify-between gap-1 lg:max-w-none lg:flex-col lg:items-stretch lg:gap-2">
+        {navigation.map(({ href, label, icon: Icon }) => {
+          const active =
+            href === "/" ? pathname === href : pathname === href || pathname.startsWith(`${href}/`);
           return (
             <Link
-              key={item.href}
-              href={item.href}
-              className="flex min-w-0 flex-1 items-center justify-center"
+              key={href}
+              href={href}
+              aria-current={active ? "page" : undefined}
+              className={`nav-item group ${active ? "nav-item-active" : ""}`}
             >
-              <div
-                className={`relative flex w-full max-w-[72px] flex-col items-center justify-center gap-1 rounded-2xl px-3 py-2 transition-all duration-300 active:scale-95 ${
-                  active
-                    ? "bg-primary/10 text-primary shadow-soft"
-                    : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"
-                }`}
-              >
-                <div
-                  className={`transition-all duration-300 ${active ? "scale-110" : "scale-100"}`}
-                >
-                  <Icon className="size-[22px]" />
-                </div>
-                <span className="text-[11px] font-medium leading-none">{item.label}</span>
-              </div>
+              <span className="nav-icon">
+                <Icon className="size-5" strokeWidth={active ? 2.2 : 1.7} aria-hidden="true" />
+              </span>
+              <span className="text-[10px] font-medium sm:text-xs lg:text-sm">{label}</span>
+              {active && (
+                <span
+                  className="hidden size-1.5 rounded-full bg-primary lg:ml-auto lg:block"
+                  aria-hidden="true"
+                />
+              )}
             </Link>
           );
         })}
+      </div>
+      <div className="mt-auto hidden rounded-2xl border border-primary/10 bg-primary/5 p-4 lg:block">
+        <Heart className="mb-3 size-5 text-primary" aria-hidden="true" />
+        <p className="text-sm font-medium">Ближе каждый день</p>
+        <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
+          Ваши планы, разговоры и маленькие традиции.
+        </p>
       </div>
     </nav>
   );

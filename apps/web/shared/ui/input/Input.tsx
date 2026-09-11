@@ -28,7 +28,7 @@ const inputVariants = cva(
       },
       variant: {
         default:
-          "bg-background border border-input shadow-[var(--shadow-soft)] hover:shadow-[var(--shadow-floating)] focus-visible:border-primary",
+          "bg-background border border-input shadow-[var(--shadow-soft)] hover:border-primary/30 focus-visible:border-primary",
         filled: "bg-muted border border-transparent hover:bg-muted/80 shadow-[var(--shadow-soft)]",
         ghost: "bg-transparent border border-transparent hover:bg-card",
       },

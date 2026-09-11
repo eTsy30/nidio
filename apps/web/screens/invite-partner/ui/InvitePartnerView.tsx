@@ -35,9 +35,9 @@ export function InvitePartnerView() {
   return (
     <div
       className={cn(
-        "min-h-screen",
-        "bg-background",
-        "flex items-center justify-center",
+        "min-h-0 flex-1 overflow-y-auto",
+        "invitation-surface",
+        "flex items-start justify-center",
         "p-4 md:p-8",
       )}
     >

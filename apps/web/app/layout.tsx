@@ -35,7 +35,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ru" className="h-full antialiased">
+    <html data-scroll-behavior="smooth" lang="ru" className="h-full antialiased">
       <head>
         <link rel="manifest" href="/manifest.json" />
       </head>

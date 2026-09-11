@@ -17,19 +17,20 @@ export function ProfileHeader({ firstName, email, avatarUrl, onEdit }: ProfileHe
   const fallback = displayName.charAt(0).toUpperCase();
 
   return (
-    <section className="flex items-center gap-4">
+    <section className="flex items-center gap-4 rounded-3xl border border-primary/10 bg-primary/5 p-5">
       <Avatar size="lg" className="size-16 shrink-0">
         <AvatarImage src={avatarUrl ?? undefined} alt={displayName} />
         <AvatarFallback>{fallback}</AvatarFallback>
       </Avatar>
 
       <div className="min-w-0 flex-1">
-        <h1 className="truncate text-xl font-semibold tracking-tight">{displayName}</h1>
+        <h2 className="truncate text-xl font-semibold tracking-tight">{displayName}</h2>
 
         <p className="mt-1 truncate text-sm text-muted-foreground">{email}</p>
       </div>
 
       <Button
+        aria-label="Редактировать профиль"
         type="button"
         variant="secondary"
         size="sm"

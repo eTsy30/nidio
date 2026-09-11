@@ -23,13 +23,15 @@ export function TaskFilters({ active, onChange }: TaskFiltersProps) {
       {filters.map((f) => (
         <button
           key={f.key}
+          type="button"
+          aria-pressed={active === f.key}
           onClick={() => onChange(f.key)}
           className={cn(
-            "px-4 py-2 rounded-full text-sm font-semibold whitespace-nowrap",
+            "min-h-11 px-4 py-2 rounded-full text-sm font-semibold whitespace-nowrap",
             "transition-[background-color,color,box-shadow,transform]",
             "duration-150 ease-out select-none",
             active === f.key
-              ? "bg-primary text-primary-foreground shadow-[0_10px_30px_rgb(175_75_43_/_0.28)]"
+              ? "bg-primary text-primary-foreground shadow-soft"
               : "bg-muted text-muted-foreground hover:bg-muted/80",
           )}
         >

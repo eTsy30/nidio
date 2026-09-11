@@ -61,10 +61,10 @@ export function TogetherPage() {
 
   return (
     <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-background">
-      <header className="sticky top-0 z-10 bg-background/80 backdrop-blur-md border-b border-border/60 px-4 pt-safe-top">
+      <header className="sticky top-0 z-10 bg-card/80 backdrop-blur-md border-b border-border/60 px-4 pt-safe-top">
         <div className="flex items-center justify-between py-4">
           <div>
-            <h1 className="text-xl font-bold tracking-tight">Nidio</h1>
+            <h1 className="text-xl font-bold tracking-tight">Совместные задачи</h1>
             <p className="text-xs text-muted-foreground capitalize mt-0.5">
               {format(new Date(), "EEEE, d MMMM", { locale: ru })}
             </p>

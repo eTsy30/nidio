@@ -1,53 +1,48 @@
 "use client";
 
+import Link from "next/link";
+import { Heart } from "lucide-react";
+
 import { useMe } from "@/features/auth";
 import { useCurrentCouple } from "@/features/relationship/hook/use-relationship";
 import { AvatarPair } from "@/shared/ui/avatar-pair/AvatarPair";
 
 export function HomeHeader() {
   const { data: user } = useMe();
-
-  const { data: couple, isPending, isError } = useCurrentCouple();
-  const partner = couple?.partnerId
-    ? {
-        firstName: couple.partnerFirstName || "Партнёр",
-        avatarUrl: couple.partnerAvatarUrl,
-      }
-    : null;
-
-  const hour = new Date().getHours();
-
-  const greeting = hour < 12 ? "Доброе утро ☀️" : hour < 18 ? "Добрый день 🌤️" : "Добрый вечер 🌙";
-
-  const subtitle = partner
-    ? "Дом там, где вы вдвоём ❤️"
-    : isPending
-      ? "Загружаем ваше пространство…"
-      : isError
-        ? "Ваше пространство ❤️"
-        : "Пригласите любимого человека ❤️";
-
-  const currentFallback = user?.firstName?.charAt(0).toUpperCase() ?? "?";
-  const partnerFallback = partner?.firstName?.charAt(0).toUpperCase() ?? "?";
+  const { data: couple } = useCurrentCouple();
 
   return (
-    <header className="sticky top-0 z-20 border-b border-border bg-background/80 backdrop-blur-xl">
-      <div className="mx-auto flex min-h-20 max-w-7xl items-center justify-between gap-3 px-4 py-3 sm:px-6">
-        <div className="min-w-0">
-          <p className="text-xs text-muted-foreground">{greeting}</p>
-          <h1 className="mt-1 text-base sm:text-xl font-semibold tracking-tight">{subtitle}</h1>
+    <header className="shrink-0 border-b border-border/70 bg-background/90 px-5 py-4 backdrop-blur-xl sm:px-8">
+      <div className="mx-auto flex w-full max-w-6xl items-center justify-between gap-4">
+        <div className="flex min-w-0 flex-1 items-center gap-3">
+          <span className="hidden size-10 shrink-0 sm:flex items-center justify-center rounded-2xl bg-primary/10 text-primary">
+            <Heart className="size-5" aria-hidden="true" />
+          </span>
+          <div className="min-w-0">
+            <p className="truncate text-base sm:text-lg font-semibold tracking-tight">
+              Ваше пространство
+            </p>
+            <p className="hidden text-xs text-muted-foreground sm:block">
+              Маленькие моменты. Общая история.
+            </p>
+          </div>
         </div>
-
-        <AvatarPair
-          leftAvatar={user?.avatarUrl ?? undefined}
-          rightAvatar={partner?.avatarUrl ?? undefined}
-          leftAlt={user?.firstName ?? undefined}
-          rightAlt={partner?.firstName ?? undefined}
-          leftFallback={currentFallback}
-          rightFallback={partner ? partnerFallback : undefined}
-          size="default"
-          className="shrink-0"
-        />
+        <Link
+          href="/profile"
+          aria-label="Открыть профиль и настройки пары"
+          className="shrink-0 rounded-full hover:no-underline"
+        >
+          <AvatarPair
+            leftAvatar={user?.avatarUrl}
+            rightAvatar={couple?.partnerAvatarUrl}
+            leftAlt={user?.firstName ?? "Вы"}
+            rightAlt={couple?.partnerFirstName ?? "Партнёр"}
+            leftFallback={user?.firstName?.charAt(0).toUpperCase() ?? "?"}
+            rightFallback={couple?.partnerFirstName?.charAt(0).toUpperCase() ?? "?"}
+            size="default"
+            className="[&>svg]:hidden sm:[&>svg]:block"
+          />
+        </Link>
       </div>
     </header>
   );

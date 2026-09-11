@@ -21,13 +21,14 @@ const buttonVariants = cva(
     "cursor-pointer",
     "outline-none",
     "shrink-0",
+    "hover:no-underline",
     "focus-visible:ring-2",
     "focus-visible:ring-ring/40",
     "focus-visible:ring-offset-2",
     "focus-visible:ring-offset-background",
-    "hover:-translate-y-px",
+    "motion-safe:hover:-translate-y-px",
     "active:translate-y-0",
-    "active:scale-[0.98]",
+    "motion-safe:active:scale-[0.98]",
     "disabled:pointer-events-none",
     "disabled:opacity-50",
     "[&_svg]:pointer-events-none",
@@ -40,9 +41,9 @@ const buttonVariants = cva(
         primary: [
           "bg-primary",
           "text-primary-foreground",
-          "shadow-[0_10px_30px_rgb(175_75_43_/_0.28)]",
+          "shadow-[0_3px_10px_rgb(175_75_43_/_0.16)]",
           "hover:brightness-[1.03]",
-          "hover:shadow-[0_18px_40px_rgb(175_75_43_/_0.36)]",
+          "hover:shadow-[0_6px_16px_rgb(175_75_43_/_0.22)]",
         ].join(" "),
 
         secondary: [
@@ -52,7 +53,7 @@ const buttonVariants = cva(
           "border-border",
           "shadow-[0_6px_20px_rgb(0_0_0_/_0.05)]",
           "hover:bg-surface",
-          "hover:shadow-[0_14px_36px_rgb(0_0_0_/_0.08)]",
+          "hover:border-primary/25",
         ].join(" "),
 
         ghost: ["bg-transparent", "hover:bg-surface"].join(" "),

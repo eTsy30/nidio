@@ -18,15 +18,15 @@ export function AuthLayout({ title, description, children, features = [] }: Auth
   return (
     <main
       className={cn(
-        "min-h-screen",
-        "bg-background",
+        "min-h-dvh",
+        "invitation-surface",
         "flex items-center justify-center",
         "p-4 md:p-8",
       )}
     >
       <section
         className={cn(
-          "grid w-full max-w-7xl overflow-hidden",
+          "animate-fade-up grid w-full max-w-5xl overflow-hidden border border-border/70",
           "rounded-lg",
           "bg-card",
           "shadow-floating",
@@ -38,7 +38,7 @@ export function AuthLayout({ title, description, children, features = [] }: Auth
             "relative overflow-hidden",
             "hidden lg:flex",
             "flex-col justify-between",
-            "bg-primary",
+            "bg-[#78452f]",
             "p-14",
             "text-primary-foreground",
           )}
@@ -52,14 +52,16 @@ export function AuthLayout({ title, description, children, features = [] }: Auth
                 <Heart className="size-6 fill-current" />
               </div>
 
-              <span className="heading-md">Nidio</span>
+              <span className="text-2xl font-semibold tracking-tight">Nidio</span>
             </div>
 
             <div className="space-y-8">
-              <h2 className="display-sm max-w-sm leading-tight">Пространство для двоих</h2>
+              <h2 className="max-w-sm text-4xl font-semibold leading-tight text-white">
+                Пространство для двоих
+              </h2>
 
               <p className="body-lg max-w-md text-primary-foreground/80">
-                Общайтесь, планируйте важные события, сохраняйте воспоминания и оставайтесь ближе
+                Общайтесь, планируйте важные события, делите повседневные заботы и оставайтесь ближе
                 друг к другу каждый день.
               </p>
             </div>
