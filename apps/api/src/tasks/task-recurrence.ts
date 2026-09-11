@@ -5,7 +5,6 @@ import { PrismaService } from '../prisma/prisma.service';
 
 import { getCoupleMemberIds } from './task-queries';
 
-// Todo recurrence uses local calendar dates; calendar events have separate UTC rules.
 function computeNextDueAt(currentDueAt: Date, repeat: Repeat): Date {
   switch (repeat) {
     case 'DAILY':
@@ -79,7 +78,6 @@ export async function createNextOccurrence(
     return;
   }
 
-  // Do not create another future occurrence when one already exists.
   const existingFuture = await prisma.task.findFirst({
     where: {
       recurringGroupId: task.recurringGroupId,

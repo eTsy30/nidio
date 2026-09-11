@@ -29,12 +29,6 @@ export function useTaskCard({ task, currentUserId, partnerId, onEdit }: TaskCard
   const isCreator = task.createdById === currentUserId;
   const isTogetherTask = task.assigneeMode === "BOTH";
 
-  /*
-   * Для BOTH assigneeId === null.
-   *
-   * Поэтому определяем выполнение каждой стороны
-   * только через task.completions.
-   */
   const myCompletion = task.completions?.some((completion) => completion.userId === currentUserId);
 
   const partnerCompletion = task.completions?.some((completion) =>
@@ -56,10 +50,6 @@ export function useTaskCard({ task, currentUserId, partnerId, onEdit }: TaskCard
     return task.assigneeMode === "ME" ? "Партнёру" : "Мне";
   })();
 
-  /*
-   * Для BOTH каждый участник может выполнить свою часть.
-   * Для остальных режимов выполнить задачу может только assignee.
-   */
   const canCompleteMyPart =
     !isCompleted && !isFuture && (isTogetherTask || task.assigneeId === currentUserId);
 

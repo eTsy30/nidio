@@ -30,7 +30,6 @@ export function getCalendarRange(date: Date, viewMode: ViewMode) {
     };
   }
 
-  // Include outside days displayed in the month grid.
   return {
     start: startOfWeek(startOfMonth(date), {
       weekStartsOn: 1,

@@ -9,7 +9,7 @@ export const createTaskSchema = z.object({
   repeat: z.enum(repeatValues),
   hasDueDate: z.boolean(),
   columnId: z.string().min(1, "Выберите колонку"),
-  priority: z.boolean(), // ← без .default()
+  priority: z.boolean(),
   rotationFirst: z.string().optional(),
 });
 

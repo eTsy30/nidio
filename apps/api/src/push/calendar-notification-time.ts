@@ -54,7 +54,6 @@ export function localNoon(dateKey: string, timeZone: string): Date {
   return new Date(value);
 }
 
-// Match the calendar's existing UTC recurrence semantics, including month overflow.
 export const advanceOccurrence = nextOccurrence;
 
 type EventTiming = Pick<
@@ -112,7 +111,6 @@ export function nextRelationshipNotice(
   timeZone: string,
   from: Date,
 ): NoticeTime | null {
-  // Profile stores a calendar date as UTC midnight, not an instant in the user's zone.
   const monthDay = relationshipAt.toISOString().slice(5, 10);
   const firstYear = relationshipAt.getUTCFullYear() + 1;
   const currentYear = Number(localDateKey(from, timeZone).slice(0, 4));
@@ -123,7 +121,6 @@ export function nextRelationshipNotice(
   ) {
     const dateKey = `${year}-${monthDay}`;
     const occurrenceAt = new Date(`${dateKey}T00:00:00Z`);
-    // February 29 anniversaries are observed on their actual date in leap years.
     if (occurrenceAt.toISOString().slice(0, 10) !== dateKey) continue;
     const runAt = localNoon(dateKey, timeZone);
     if (runAt >= from) return { runAt, occurrenceAt, dateKey };

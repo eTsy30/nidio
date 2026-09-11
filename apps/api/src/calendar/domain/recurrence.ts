@@ -1,9 +1,5 @@
 import { EventRepeat } from '@prisma/client';
 
-/**
- * Existing calendar recurrence semantics operate on UTC instants.
- * JavaScript month overflow is retained for compatibility with saved events.
- */
 export function nextOccurrence(date: Date, repeat: EventRepeat): Date | null {
   const next = new Date(date);
 

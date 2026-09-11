@@ -1,6 +1,5 @@
 const DEFAULT_DEV_ORIGINS = ['http://localhost:3000'];
 
-/** The first configured origin is the public website used in outgoing links. */
 export function getFrontendUrl(configured = process.env.FRONTEND_URL): string {
   const firstOrigin = configured
     ?.split(',')

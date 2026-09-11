@@ -105,7 +105,7 @@ export class CalendarPushService
       ['EVENT_DAY', day],
     ] as const) {
       if (!time) continue;
-      // One notification when a manually selected reminder coincides with local noon.
+
       const duplicateNoon =
         kind === 'EVENT_DAY' &&
         reminder?.runAt.getTime() === time.runAt.getTime();
@@ -137,7 +137,7 @@ export class CalendarPushService
 
   private async planEvent(tx: Tx, sourceEvent: Event, from: Date) {
     let event = sourceEvent;
-    // Legacy events did not record a zone. Capture the creator's known zone once.
+
     if (!event.timeZone) {
       const creator = await tx.user.findUnique({
         where: { id: event.createdById },
@@ -218,7 +218,6 @@ export class CalendarPushService
     }
   }
 
-  // Runs only for newly created/changed sources, not all events every minute.
   private async planDirty(now: Date) {
     const from = new Date(now.getTime() - GRACE_MS);
     const events = await this.prisma.event.findMany({
@@ -257,7 +256,6 @@ export class CalendarPushService
       });
   }
 
-  // Enqueue the change with the calendar mutation in the SAME database transaction.
   async enqueueChange(
     tx: Tx,
     event: Event,
@@ -304,7 +302,7 @@ export class CalendarPushService
         orderBy: { runAt: 'asc' },
         take: 100,
       });
-      // Bounded concurrency prevents one device from delaying the whole minute's queue.
+
       for (let i = 0; i < due.length; i += 10) {
         const results = await Promise.allSettled(
           due.slice(i, i + 10).map((job) => this.process(job, now)),
@@ -423,7 +421,6 @@ export class CalendarPushService
       await this.push.notifyUser(job.userId, deliveryKey, payload);
     }
     await this.prisma.$transaction(async (tx) => {
-      // A concurrent edit may already have replaced this job. Never overwrite its new schedule.
       const removed = await tx.scheduledNotification.deleteMany({
         where: { id: job.id, leaseToken: token },
       });

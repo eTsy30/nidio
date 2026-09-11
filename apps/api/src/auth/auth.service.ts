@@ -212,7 +212,6 @@ export class AuthService {
       where: { email },
     });
 
-    // Do not reveal whether the user exists.
     if (!user) {
       return {
         message:

@@ -35,7 +35,6 @@ export class TaskOverdueService
     if (this.running || !this.push.publicKey) return;
     this.running = true;
     try {
-      // Todo currently uses calendar dates: today's tasks become overdue the next day.
       const cutoff = startOfDay(now);
       const candidates = await this.prisma.task.findMany({
         where: {

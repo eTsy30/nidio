@@ -77,7 +77,6 @@ export function BoardView({
     useSensor(TouchSensor, { activationConstraint: { delay: 250, tolerance: 8 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
   );
-  // Completion mode and assignee filter are independent.
 
   const filterTasks = (tasks: TogetherTask[]): TogetherTask[] => {
     const tasksByMode = tasks.filter((task) =>

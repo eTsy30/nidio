@@ -55,9 +55,6 @@ export function RealtimeProvider({ children }: { children: ReactNode }) {
     return subscribeAuth(() => {
       if (isLoading || !user) return;
 
-      // The gateway closes an expired access-token connection. Socket.IO does not
-      // reconnect after a server-initiated disconnect, so create a connection
-      // with the token that was just issued by the session coordinator.
       disconnectSocket();
       connectSocket();
     });

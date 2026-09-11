@@ -53,7 +53,6 @@ export function PushSettings() {
     try {
       if (status === "enabled") await disablePush();
       else {
-        // Must be called directly from the click, before any network await (iOS).
         const permission = await Notification.requestPermission();
         await enablePush(permission);
       }

@@ -14,7 +14,6 @@ export async function completeTask(
 ) {
   const taskId = task.id;
 
-  // Compare dates, so a task due today can be completed before its due time.
   if (isFutureTask(task.dueAt)) {
     throw new ForbiddenException('Нельзя выполнить задачу раньше её даты');
   }
@@ -91,7 +90,6 @@ export async function completeTask(
     return task;
   }
 
-  // Advance the series only after the current occurrence is fully completed.
   if (updated.completed && updated.repeat !== 'NONE') {
     await createNextOccurrence(prisma, updated, coupleId);
   }

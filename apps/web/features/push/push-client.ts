@@ -40,7 +40,7 @@ export async function disablePush() {
   const registration = await navigator.serviceWorker.getRegistration();
   const subscription = await registration?.pushManager.getSubscription();
   if (!subscription) return;
-  // Revoke locally even when the API is temporarily unavailable (including logout).
+
   try {
     await http.post("/push/unsubscribe", { endpoint: subscription.endpoint });
   } finally {

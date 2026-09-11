@@ -25,7 +25,7 @@ export function useLoadMessages(setMessages: Dispatch<SetStateAction<ChatMessage
       }));
       setMessages((current) => mergeMessages(current, messages));
     } catch {
-      // Keep the current history; reconnect will retry the load.
+      // !!
     }
   }, [setMessages]);
 

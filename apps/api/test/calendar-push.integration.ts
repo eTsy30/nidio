@@ -121,7 +121,7 @@ async function main() {
       0,
       'title edit does not notify partner',
     );
-    // Move reminder safely into the future, then change start time.
+
     await calendar.update(first.id, shared.id, {
       startAt: new Date(startAt.getTime() + 3_600_000),
       reminderAt: new Date(startAt.getTime() + 1_800_000),
@@ -188,7 +188,6 @@ async function main() {
       2,
     );
 
-    // Edit a later recurrence without moving the anchor to the later date.
     const series = await calendar.create(first.id, {
       ...base,
       startAt,

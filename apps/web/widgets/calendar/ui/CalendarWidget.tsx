@@ -262,7 +262,7 @@ export default function CalendarWidget() {
       await update(selectedEditEvent, values);
       closeModal();
     } catch {
-      // Keep the dialog open after a failed mutation.
+      // !!
     }
   };
 

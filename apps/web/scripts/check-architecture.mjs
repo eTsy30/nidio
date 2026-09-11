@@ -12,7 +12,8 @@ async function files(directory) {
   const nested = await Promise.all(
     entries.map(async (entry) => {
       const path = join(directory, entry.name);
-      if (entry.isDirectory()) return entry.name === "node_modules" || entry.name === ".next" ? [] : files(path);
+      if (entry.isDirectory())
+        return entry.name === "node_modules" || entry.name === ".next" ? [] : files(path);
       return /\.(ts|tsx)$/.test(entry.name) ? [path] : [];
     }),
   );

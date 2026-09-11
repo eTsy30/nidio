@@ -89,7 +89,7 @@ export class BoardService {
         boardId: board.id,
         title: dto.title,
         icon: dto.icon ?? null,
-        color: colors[count % colors.length] ?? null, // ← вот тут
+        color: colors[count % colors.length] ?? null,
         order: (maxOrder._max.order ?? -1) + 1,
       },
       include: { tasks: true },

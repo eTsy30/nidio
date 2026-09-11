@@ -28,7 +28,7 @@ export class EmailService {
   }
 
   async sendPasswordReset(email: string, resetUrl: string): Promise<void> {
-    // Не логируем email (PII), чтобы не раскрывать персональные данные в логах.
+    //  Важно Не логируем email (PII), чтобы не раскрывать персональные данные в логах.
     this.logger.log('📧 Sending password reset email');
 
     try {

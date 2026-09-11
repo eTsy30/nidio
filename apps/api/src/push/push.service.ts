@@ -47,7 +47,7 @@ export class PushService {
   async subscribe(userId: string, dto: SubscribePushDto) {
     if (!this.publicKey)
       throw new ServiceUnavailableException('Push is not configured');
-    // Only browser push providers: never send server requests to arbitrary subscriber URLs.
+
     const url = new URL(dto.endpoint);
     const allowed =
       url.hostname === 'fcm.googleapis.com' ||
@@ -203,7 +203,6 @@ export class PushService {
         });
         const results = await Promise.allSettled(
           subscriptions.map(async (subscription) => {
-            // Atomic claim per message/device also prevents duplicates across API instances.
             try {
               await this.prisma.pushDelivery.create({
                 data: { subscriptionId: subscription.id, messageId },
@@ -249,7 +248,7 @@ export class PushService {
                   where: { id: subscription.id },
                 });
               }
-              // Do not retry ambiguous failures: the provider may already have accepted the push.
+
               this.logger.warn(
                 `Chat push failed (status: ${status ?? 'network'})`,
               );

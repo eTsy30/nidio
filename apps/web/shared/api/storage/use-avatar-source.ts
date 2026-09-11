@@ -36,9 +36,7 @@ export function useAvatarSource(src: string | undefined): string | undefined {
         objectUrl = URL.createObjectURL(data);
         setLoaded({ source: src, url: objectUrl });
       })
-      .catch(() => {
-        // AvatarFallback remains visible when the image cannot be loaded.
-      });
+      .catch(() => {});
 
     return () => {
       controller.abort();

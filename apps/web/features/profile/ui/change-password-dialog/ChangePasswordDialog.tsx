@@ -61,13 +61,6 @@ export function ChangePasswordDialog({ open, onOpenChange }: ChangePasswordDialo
         newPassword: data.newPassword,
       });
 
-      /*
-       * Backend инвалидирует все refresh-токены после
-       * успешной смены пароля.
-       *
-       * Поэтому текущую сессию тоже завершаем через
-       * существующий AuthProvider.logout().
-       */
       await logout();
     } catch {
       // Ошибка отображается через mutation.error.

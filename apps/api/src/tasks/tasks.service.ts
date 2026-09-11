@@ -277,7 +277,7 @@ export class TasksService implements OnModuleInit, OnModuleDestroy {
         }),
       ),
     );
-    // Saving the task succeeded; a notification failure must not cause duplicate task creation on retry.
+
     if (results.some((result) => result.status === 'rejected'))
       this.logger.error('Task assignment push failed');
   }
@@ -304,7 +304,6 @@ export class TasksService implements OnModuleInit, OnModuleDestroy {
       });
     }
 
-    // An overdue recurring task is deleted only as a single occurrence.
     if (isOverdue(task)) {
       return this.prisma.task.delete({
         where: { id: taskId },

@@ -66,7 +66,7 @@ export function DeleteEventDialog({
       onOpenChange(false);
       onDeleted?.();
     } catch {
-      // Keep the dialog open after a failed mutation.
+      // !!
     }
   };
 

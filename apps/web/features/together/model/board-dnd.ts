@@ -12,10 +12,6 @@ type DropTarget = {
   columnId?: string | undefined;
 };
 
-/**
- * Translates DnD-kit data into the API move request. It has no side effects,
- * so the same rules are used by pointer, touch and keyboard dragging.
- */
 export function getTaskMove(
   board: Board,
   active: { id: string; columnId: string },
@@ -51,7 +47,6 @@ export function getTaskMove(
   return { taskId: active.id, columnId: targetColumnId, order: Math.max(0, order) };
 }
 
-/** Returns a new board for optimistic cache updates without mutating cached data. */
 export function applyTaskMove(board: Board, move: TaskMove): Board {
   const columns = board.columns.map((column) => ({ ...column, tasks: [...column.tasks] }));
   const sourceColumn = columns.find((column) =>

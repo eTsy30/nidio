@@ -56,7 +56,6 @@ export function CalendarHeader({
   return (
     <header className="border-b bg-background px-3 py-3 sm:px-5">
       <div className="grid min-h-10 grid-cols-[1fr_auto] items-center gap-2 xl:grid-cols-[auto_1fr_auto]">
-        {/* LEFT: PERIOD NAVIGATION */}
         <div className="flex shrink-0 items-center rounded-xl bg-muted p-1">
           <Button
             variant="ghost"

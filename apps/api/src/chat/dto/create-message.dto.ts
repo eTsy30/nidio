@@ -9,7 +9,6 @@ import {
 import { MessageType } from '../enums/message-type.enum';
 
 export class CreateMessageDto {
-  /** Client-generated idempotency key; distinct from the persisted message ID. */
   @IsString()
   @MaxLength(100)
   clientId!: string;
