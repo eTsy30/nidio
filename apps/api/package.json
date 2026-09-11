@@ -6,7 +6,7 @@
   "private": true,
   "license": "UNLICENSED",
   "scripts": {
-    "dev": "pnpm db:generate && nest start --watch",
+    "dev": "pnpm db:generate && nest start --watch --path tsconfig.dev.json",
     "build": "pnpm db:generate && nest build",
     "start": "node dist/src/main.js",
     "lint": "eslint \"{src,test}/**/*.ts\"",

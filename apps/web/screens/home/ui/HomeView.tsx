@@ -1,5 +1,3 @@
-// import { BottomNavigation } from "@/widgets/navigation";
-
 import { HomeContent } from "./HomeContent";
 import { HomeHeader } from "./HomeHeader";
 

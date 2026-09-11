@@ -34,6 +34,7 @@ export type ChatMessageItem = {
 };
 
 export interface ServerToClientEvents {
+  "relationship.updated": (data: { coupleId: string }) => void;
   "chat.message.created": (message: ChatMessageItem) => void;
   "chat.message.edited": (message: ChatMessageItem) => void;
   "chat.message.deleted": (data: { messageId: string }) => void;

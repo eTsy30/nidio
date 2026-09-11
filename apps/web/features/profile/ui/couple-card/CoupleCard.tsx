@@ -98,7 +98,6 @@ export function CoupleCard({
           </div>
         ) : couple ? (
           <div className="space-y-6">
-            {/* Partner */}
             <div className="flex items-center gap-4">
               <Avatar size="lg" className="shrink-0">
                 <AvatarImage
@@ -121,7 +120,6 @@ export function CoupleCard({
               </div>
             </div>
 
-            {/* Relationship date */}
             <div className="rounded-xl border bg-muted/30 p-4">
               {isEditingDate ? (
                 <div className="space-y-3">

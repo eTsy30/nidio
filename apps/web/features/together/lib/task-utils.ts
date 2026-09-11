@@ -49,10 +49,6 @@ export function isTaskOverdue(task: TogetherTask): boolean {
   return isBefore(taskDay, getToday());
 }
 
-export function isTaskActive(task: TogetherTask): boolean {
-  return !task.completed;
-}
-
 export function getTaskTemporalState(task: TogetherTask): TaskTemporalState {
   if (isTaskCompleted(task)) {
     return "completed";
@@ -97,14 +93,4 @@ export function formatOverdueStatus(task: TogetherTask): string {
   }
 
   return `⚠ Просрочено ${days} дня`;
-}
-
-export function partitionTasks(tasks: TogetherTask[]) {
-  const active = tasks.filter(isTaskActive);
-  const completed = tasks.filter(isTaskCompleted);
-
-  return {
-    active,
-    completed,
-  };
 }

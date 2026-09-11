@@ -27,8 +27,10 @@ export const acceptInvite = (token: string): Promise<AcceptInviteResponse> => {
   return http.post<AcceptInviteResponse>(`/relationship/invite/${token}/accept`);
 };
 
-export const getCurrentCouple = (): Promise<CurrentCoupleResponse | null> => {
-  return http.get<CurrentCoupleResponse | null>("/relationship/couple");
+export const getCurrentCouple = async (): Promise<CurrentCoupleResponse | null> => {
+  const couple = await http.get<CurrentCoupleResponse | null | "">("/relationship/couple");
+  // Nest serializes a null controller result as an empty HTTP body.
+  return couple === "" ? null : couple;
 };
 
 export const updateRelationship = (

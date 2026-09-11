@@ -108,8 +108,6 @@ export class ChatService {
     void this.pushService.notifyMessage(message.id);
     return { message, created: true };
   }
-
-  /** Обновить текст сообщения. */
   async editMessage(userId: string, messageId: string, dto: EditMessageDto) {
     if (!dto.content) {
       throw new Error('Message content is required.');
@@ -126,8 +124,6 @@ export class ChatService {
       userId,
     );
   }
-
-  /** Мягко удалить сообщение. */
   async deleteMessage(userId: string, messageId: string) {
     const { workspaceId } = await this.chatAccessPolicy.requireAuthorMessage(
       userId,
@@ -135,20 +131,14 @@ export class ChatService {
     );
     return this.chatRepository.deleteMessage(messageId, workspaceId, userId);
   }
-
-  /** Добавить реакцию к сообщению. */
   async addReaction(userId: string, messageId: string, dto: AddReactionDto) {
     await this.chatAccessPolicy.requireMessage(userId, messageId);
     return this.chatRepository.addReaction(messageId, userId, dto.emoji);
   }
-
-  /** Удалить реакцию с сообщения. */
   async removeReaction(userId: string, messageId: string, emoji: string) {
     await this.chatAccessPolicy.requireMessage(userId, messageId);
     return this.chatRepository.removeReaction(messageId, userId, emoji);
   }
-
-  /** Отметить сообщение как прочитанное. */
   async markRead(messageIds: string[], workspaceId: string, userId: string) {
     const updatedIds: string[] = [];
 
@@ -169,8 +159,6 @@ export class ChatService {
 
     return updatedIds;
   }
-
-  /** Отметить сообщение как доставленное. */
   async markDelivered(messageId: string, workspaceId: string, userId: string) {
     const message = await this.chatRepository.canUpdateStatus(
       messageId,
@@ -184,8 +172,6 @@ export class ChatService {
 
     return this.chatRepository.markDelivered(messageId);
   }
-
-  /** Событие набора текста. Пока ничего не сохраняется в БД. */
   async typing(userId: string) {
     return {
       userId,

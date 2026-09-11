@@ -8,6 +8,7 @@ import { ConfigService } from '@nestjs/config';
 import { Invite, InviteStatus, Prisma, WorkspaceType } from '@prisma/client';
 import { randomUUID } from 'node:crypto';
 
+import { getFrontendUrl } from '../config/origin';
 import { PrismaService } from '../prisma/prisma.service';
 import { RealtimeService } from '../realtime/realtime.service';
 
@@ -251,6 +252,9 @@ export class RelationshipService {
       },
       select: {
         coupleId: true,
+        couple: {
+          select: { members: { select: { userId: true } } },
+        },
       },
     });
 
@@ -258,7 +262,7 @@ export class RelationshipService {
       throw new NotFoundException('Couple not found.');
     }
 
-    return this.prisma.couple.update({
+    const couple = await this.prisma.couple.update({
       where: {
         id: membership.coupleId,
       },
@@ -271,6 +275,14 @@ export class RelationshipService {
         notificationDirty: true,
       },
     });
+
+    for (const member of membership.couple.members) {
+      this.realtimeService.emitToUser(member.userId, 'relationship.updated', {
+        coupleId: couple.id,
+      });
+    }
+
+    return couple;
   }
 
   async getWorkspaceId(userId: string): Promise<string> {
@@ -413,7 +425,9 @@ export class RelationshipService {
   }
 
   private buildInviteUrl(token: string): string {
-    const frontendUrl = this.configService.getOrThrow<string>('FRONTEND_URL');
+    const frontendUrl = getFrontendUrl(
+      this.configService.getOrThrow<string>('FRONTEND_URL'),
+    );
 
     return `${frontendUrl}/invite/${token}`;
   }

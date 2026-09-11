@@ -6,15 +6,8 @@ import {
   OnModuleDestroy,
   OnModuleInit,
 } from '@nestjs/common';
-import { Prisma, Repeat, Task } from '@prisma/client';
-import {
-  addDays,
-  addMonths,
-  addWeeks,
-  endOfDay,
-  startOfDay,
-  subDays,
-} from 'date-fns';
+import { Prisma, Task } from '@prisma/client';
+import { subDays } from 'date-fns';
 import { randomUUID } from 'node:crypto';
 
 import { PrismaService } from '../prisma/prisma.service';
@@ -24,6 +17,16 @@ import { RelationshipService } from '../relationship/relationship.service';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
 import { assignedTaskUsers, resolveTaskAssignment } from './task-assignment';
+import { activateTask, completeTask } from './task-lifecycle';
+import { moveTask } from './task-order';
+import {
+  assertColumnInCouple,
+  findActiveTasks,
+  getCoupleMemberIds,
+  getTaskSummary,
+  getTodayTasks,
+} from './task-queries';
+import { isOverdue } from './task-recurrence';
 
 type TaskDeleteMode = 'THIS' | 'FOLLOWING';
 
@@ -37,8 +40,6 @@ export class TasksService implements OnModuleInit, OnModuleDestroy {
     private readonly relationshipService: RelationshipService,
     private readonly pushService: PushService,
   ) {}
-
-  // ─── BACKEND CLEANUP ─────────────────────────────────
 
   onModuleInit() {
     void this.cleanupCompletedTasks();
@@ -79,8 +80,6 @@ export class TasksService implements OnModuleInit, OnModuleDestroy {
     }
   }
 
-  // ─── ACCESS ──────────────────────────────────────────
-
   private async getUserCoupleId(userId: string): Promise<string> {
     const couple = await this.relationshipService.getCurrentCouple(userId);
 
@@ -117,107 +116,17 @@ export class TasksService implements OnModuleInit, OnModuleDestroy {
     return task;
   }
 
-  private async getCoupleMemberIds(coupleId: string): Promise<string[]> {
-    const members = await this.prisma.coupleMember.findMany({
-      where: { coupleId },
-      select: { userId: true },
-    });
-
-    return members.map((member) => member.userId);
-  }
-
-  // ─── RECURRENCE ──────────────────────────────────────
-
-  private computeNextDueAt(currentDueAt: Date, repeat: Repeat): Date {
-    switch (repeat) {
-      case 'DAILY':
-        return addDays(currentDueAt, 1);
-
-      case 'WEEKLY':
-        return addWeeks(currentDueAt, 1);
-
-      case 'MONTHLY':
-        return addMonths(currentDueAt, 1);
-
-      case 'CUSTOM':
-      default:
-        return addDays(currentDueAt, 1);
-    }
-  }
-
-  private computeNextAssignee(task: Task, members: string[]): string | null {
-    if (task.assigneeMode !== 'ROTATE') {
-      return task.assigneeId ?? null;
-    }
-
-    const firstId = task.rotationFirstAssigneeId;
-
-    if (!firstId || members.length < 2) {
-      return task.assigneeId ?? null;
-    }
-
-    const partnerId = members.find((id) => id !== firstId);
-
-    if (!partnerId) {
-      return firstId;
-    }
-
-    const nextIndex = task.occurrenceIndex + 1;
-
-    return nextIndex % 2 === 0 ? firstId : partnerId;
-  }
-
-  /**
-   * Проверяет, является ли dueAt задачей сегодняшнего дня
-   * или будущего дня.
-   *
-   * Для lifecycle задачи важна именно дата, а не время.
-   */
-  private isFutureTask(dueAt: Date | null): boolean {
-    if (!dueAt) {
-      return false;
-    }
-
-    const today = startOfDay(new Date());
-    const taskDate = startOfDay(dueAt);
-
-    return taskDate > today;
-  }
-
-  /**
-   * Просрочена, если дата задачи уже прошла
-   * и экземпляр ещё не выполнен.
-   */
-  private isOverdue(task: Pick<Task, 'dueAt' | 'completed'>): boolean {
-    if (task.completed || !task.dueAt) {
-      return false;
-    }
-
-    return startOfDay(task.dueAt) < startOfDay(new Date());
-  }
-
-  // ─── CRUD ───────────────────────────────────────────
-
   async create(dto: CreateTaskDto, userId: string) {
     const coupleId = await this.getUserCoupleId(userId);
 
-    const column = await this.prisma.column.findFirst({
-      where: {
-        id: dto.columnId,
-        board: { coupleId },
-      },
-    });
-
-    if (!column) {
-      throw new NotFoundException('Column not found');
-    }
+    await assertColumnInCouple(this.prisma, dto.columnId, coupleId);
 
     const maxOrder = await this.prisma.task.aggregate({
       where: { columnId: dto.columnId },
       _max: { order: true },
     });
 
-    const members = await this.getCoupleMemberIds(coupleId);
+    const members = await getCoupleMemberIds(this.prisma, coupleId);
     const assignment = resolveTaskAssignment(dto, userId, members);
     const isRecurring = dto.repeat !== undefined && dto.repeat !== 'NONE';
 
@@ -258,32 +167,9 @@ export class TasksService implements OnModuleInit, OnModuleDestroy {
     return task;
   }
 
-  /**
-   * Активные задачи являются режимом по умолчанию.
-   *
-   * Completed никогда не возвращаются.
-   */
   async findAll(userId: string) {
     const coupleId = await this.getUserCoupleId(userId);
-
-    return this.prisma.task.findMany({
-      where: {
-        coupleId,
-        completed: false,
-      },
-      orderBy: [
-        { priority: 'desc' },
-        { dueAt: 'asc' },
-        { order: 'asc' },
-        { createdAt: 'desc' },
-      ],
-      include: {
-        completions: {
-          select: { userId: true },
-        },
-        column: true,
-      },
-    });
+    return findActiveTasks(this.prisma, coupleId);
   }
 
   async findOne(taskId: string, userId: string) {
@@ -298,19 +184,10 @@ export class TasksService implements OnModuleInit, OnModuleDestroy {
     const oldTask = await this.assertTaskInCouple(taskId, coupleId);
 
     if (dto.columnId) {
-      const column = await this.prisma.column.findFirst({
-        where: {
-          id: dto.columnId,
-          board: { coupleId },
-        },
-      });
-
-      if (!column) {
-        throw new NotFoundException('Column not found');
-      }
+      await assertColumnInCouple(this.prisma, dto.columnId, coupleId);
     }
 
-    const members = await this.getCoupleMemberIds(coupleId);
+    const members = await getCoupleMemberIds(this.prisma, coupleId);
     const changesAssignment =
       dto.assigneeMode !== undefined ||
       dto.assigneeId !== undefined ||
@@ -412,118 +289,10 @@ export class TasksService implements OnModuleInit, OnModuleDestroy {
     userId: string,
   ) {
     const coupleId = await this.getUserCoupleId(userId);
-
     const task = await this.assertTaskInCouple(taskId, coupleId);
-
-    if (task.completed) {
-      throw new ForbiddenException('Completed task cannot be moved');
-    }
-
-    if (this.isOverdue(task)) {
-      throw new ForbiddenException('Overdue task cannot be moved');
-    }
-
-    if (!Number.isInteger(order) || order < 0) {
-      throw new ForbiddenException('Invalid task order');
-    }
-
-    const column = await this.prisma.column.findFirst({
-      where: {
-        id: columnId,
-        board: { coupleId },
-      },
-    });
-
-    if (!column) {
-      throw new NotFoundException('Column not found');
-    }
-
-    return this.prisma.$transaction(async (tx) => {
-      const sourceColumnId = task.columnId;
-
-      if (sourceColumnId === columnId) {
-        const tasks = await tx.task.findMany({
-          where: {
-            columnId: sourceColumnId,
-            id: { not: taskId },
-          },
-          orderBy: [{ order: 'asc' }, { createdAt: 'asc' }],
-          select: {
-            id: true,
-          },
-        });
-
-        const targetOrder = Math.min(order, tasks.length);
-
-        const reorderedIds = [
-          ...tasks.slice(0, targetOrder).map((item) => item.id),
-          taskId,
-          ...tasks.slice(targetOrder).map((item) => item.id),
-        ];
-
-        await Promise.all(
-          reorderedIds.map((id, index) =>
-            tx.task.update({
-              where: { id },
-              data: {
-                order: index,
-              },
-            }),
-          ),
-        );
-      } else {
-        await tx.task.updateMany({
-          where: {
-            columnId: sourceColumnId,
-            order: { gt: task.order },
-          },
-          data: {
-            order: { decrement: 1 },
-          },
-        });
-
-        const targetTasksCount = await tx.task.count({
-          where: {
-            columnId,
-            id: { not: taskId },
-          },
-        });
-
-        const targetOrder = Math.min(order, targetTasksCount);
-
-        await tx.task.updateMany({
-          where: {
-            columnId,
-            order: { gte: targetOrder },
-          },
-          data: {
-            order: { increment: 1 },
-          },
-        });
-
-        await tx.task.update({
-          where: { id: taskId },
-          data: {
-            columnId,
-            order: targetOrder,
-          },
-        });
-      }
-
-      return tx.task.findUniqueOrThrow({
-        where: { id: taskId },
-        include: {
-          completions: {
-            select: { userId: true },
-          },
-        },
-      });
-    });
+    return moveTask(this.prisma, task, columnId, order, coupleId);
   }
 
-  /**
-   * Удаление задачи.
-   */
   async remove(taskId: string, userId: string, mode: TaskDeleteMode = 'THIS') {
     const coupleId = await this.getUserCoupleId(userId);
 
@@ -535,20 +304,13 @@ export class TasksService implements OnModuleInit, OnModuleDestroy {
       });
     }
 
-    /**
-     * Просроченная recurring-задача всегда удаляется
-     * только как текущий экземпляр.
-     */
-    if (this.isOverdue(task)) {
+    // An overdue recurring task is deleted only as a single occurrence.
+    if (isOverdue(task)) {
       return this.prisma.task.delete({
         where: { id: taskId },
       });
     }
 
-    /**
-     * Для active/future пользователь может выбрать:
-     * "Это и все последующие".
-     */
     if (mode === 'FOLLOWING' && task.dueAt) {
       return this.prisma.task.deleteMany({
         where: {
@@ -565,232 +327,22 @@ export class TasksService implements OnModuleInit, OnModuleDestroy {
     });
   }
 
-  // ─── COMPLETION ─────────────────────────────────────
-
   async complete(taskId: string, userId: string) {
     const coupleId = await this.getUserCoupleId(userId);
-
     const task = await this.assertTaskInCouple(taskId, coupleId);
-
-    /**
-     * Будущую задачу нельзя выполнить.
-     *
-     * Проверяем именно дату, поэтому задача на сегодня
-     * разрешена независимо от времени dueAt.
-     */
-    if (this.isFutureTask(task.dueAt)) {
-      throw new ForbiddenException('Нельзя выполнить задачу раньше её даты');
-    }
-
-    if (task.completed) {
-      return task;
-    }
-
-    const updated = await this.prisma.$transaction(async (tx) => {
-      await tx.$queryRaw`SELECT "id" FROM "Task" WHERE "id" = ${taskId} FOR UPDATE`;
-      const current = await tx.task.findUniqueOrThrow({
-        where: { id: taskId },
-      });
-      if (current.completed) return null;
-      if (this.isFutureTask(current.dueAt))
-        throw new ForbiddenException('Нельзя выполнить задачу раньше её даты');
-      if (current.assigneeMode !== 'BOTH' && current.assigneeId !== userId)
-        throw new ForbiddenException(
-          'Выполнить задачу может только исполнитель',
-        );
-      const existing = await tx.taskCompletion.findUnique({
-        where: {
-          taskId_userId: {
-            taskId,
-            userId,
-          },
-        },
-      });
-
-      if (existing) {
-        return null;
-      }
-
-      await tx.taskCompletion.create({
-        data: {
-          taskId,
-          userId,
-        },
-      });
-
-      const count = await tx.taskCompletion.count({
-        where: { taskId },
-      });
-
-      const members = await tx.coupleMember.findMany({
-        where: { coupleId },
-        select: { userId: true },
-      });
-
-      const memberIds = members.map((member) => member.userId);
-
-      const isBoth = current.assigneeMode === 'BOTH';
-      const required = isBoth ? memberIds.length : 1;
-
-      if (count >= required) {
-        return tx.task.update({
-          where: { id: taskId },
-          data: {
-            completed: true,
-            completedAt: new Date(),
-          },
-          include: {
-            completions: {
-              select: { userId: true },
-            },
-          },
-        });
-      }
-
-      return tx.task.findUnique({
-        where: { id: taskId },
-        include: {
-          completions: {
-            select: { userId: true },
-          },
-        },
-      });
-    });
-
-    if (!updated) {
-      return task;
-    }
-
-    /**
-     * Следующий экземпляр создаётся только после
-     * фактического завершения текущего.
-     */
-    if (updated.completed && updated.repeat !== 'NONE') {
-      await this.createNextOccurrence(updated, coupleId);
-    }
-
-    return updated;
+    return completeTask(this.prisma, task, coupleId, userId);
   }
 
-  /**
-   * Возвращает обычную выполненную задачу
-   * обратно в активные.
-   *
-   * Recurring-задачи намеренно не восстанавливаются.
-   *
-   * Completion records удаляются, потому что после
-   * восстановления задача должна снова считаться
-   * невыполненной для всех участников.
-   */
   async activate(taskId: string, userId: string) {
     const coupleId = await this.getUserCoupleId(userId);
-
     const task = await this.assertTaskInCouple(taskId, coupleId);
-
-    if (!task.completed) {
-      return task;
-    }
-
-    if (task.repeat !== 'NONE' || task.recurringGroupId !== null) {
-      throw new ForbiddenException('Recurring task cannot be activated');
-    }
-
-    return this.prisma.$transaction(async (tx) => {
-      await tx.taskCompletion.deleteMany({
-        where: {
-          taskId,
-        },
-      });
-
-      return tx.task.update({
-        where: {
-          id: taskId,
-        },
-        data: {
-          completed: false,
-          completedAt: null,
-        },
-        include: {
-          completions: {
-            select: {
-              userId: true,
-            },
-          },
-        },
-      });
-    });
+    return activateTask(this.prisma, task);
   }
-
-  // ─── RECURRING ──────────────────────────────────────
-
-  private async createNextOccurrence(task: Task, coupleId: string) {
-    if (!task.dueAt || !task.recurringGroupId) {
-      return;
-    }
-
-    const nextDueAt = this.computeNextDueAt(task.dueAt, task.repeat);
-
-    if (task.repeatUntil && nextDueAt > task.repeatUntil) {
-      return;
-    }
-
-    /**
-     * В серии может существовать максимум один
-     * ближайший будущий экземпляр.
-     */
-    const existingFuture = await this.prisma.task.findFirst({
-      where: {
-        recurringGroupId: task.recurringGroupId,
-        completed: false,
-        dueAt: {
-          gt: task.dueAt,
-        },
-      },
-      orderBy: {
-        dueAt: 'asc',
-      },
-    });
-
-    if (existingFuture) {
-      return;
-    }
-
-    const members = await this.getCoupleMemberIds(coupleId);
-
-    const nextAssigneeId = this.computeNextAssignee(task, members);
-
-    const data: Prisma.TaskUncheckedCreateInput = {
-      title: task.title,
-      description: task.description,
-      columnId: task.columnId,
-      coupleId,
-      order: task.order,
-      priority: task.priority,
-      assigneeId: nextAssigneeId,
-      assigneeMode: task.assigneeMode,
-      rotationFirstAssigneeId: task.rotationFirstAssigneeId,
-      dueAt: nextDueAt,
-      repeat: task.repeat,
-      repeatUntil: task.repeatUntil,
-      repeatConfig: task.repeatConfig
-        ? (task.repeatConfig as Prisma.InputJsonValue)
-        : Prisma.DbNull,
-      recurringGroupId: task.recurringGroupId,
-      occurrenceIndex: task.occurrenceIndex + 1,
-      createdById: task.createdById,
-    };
-
-    await this.prisma.task.create({
-      data,
-    });
-  }
-
-  // ─── NUDGE ──────────────────────────────────────────
 
   async nudge(taskId: string, userId: string) {
     const coupleId = await this.getUserCoupleId(userId);
     await this.assertTaskInCouple(taskId, coupleId);
-    const members = await this.getCoupleMemberIds(coupleId);
+    const members = await getCoupleMemberIds(this.prisma, coupleId);
     const result = await this.prisma.$transaction(async (tx) => {
       await tx.$queryRaw`SELECT "id" FROM "Task" WHERE "id" = ${taskId} FOR UPDATE`;
       const task = await tx.task.findUniqueOrThrow({ where: { id: taskId } });
@@ -839,113 +391,13 @@ export class TasksService implements OnModuleInit, OnModuleDestroy {
     return result.nudge;
   }
 
-  // ─── TODAY INTELLIGENCE ─────────────────────────────
-
   async getTodayTasks(userId: string) {
     const coupleId = await this.getUserCoupleId(userId);
-
-    const todayStart = startOfDay(new Date());
-    const todayEnd = endOfDay(new Date());
-
-    return this.prisma.task.findMany({
-      where: {
-        coupleId,
-        completed: false,
-        OR: [
-          {
-            dueAt: {
-              lt: todayStart,
-            },
-          },
-          {
-            dueAt: {
-              gte: todayStart,
-              lte: todayEnd,
-            },
-          },
-          {
-            dueAt: null,
-            repeat: {
-              not: 'NONE',
-            },
-          },
-        ],
-      },
-      orderBy: [{ priority: 'desc' }, { dueAt: 'asc' }, { createdAt: 'desc' }],
-      include: {
-        completions: {
-          select: { userId: true },
-        },
-        column: true,
-      },
-    });
+    return getTodayTasks(this.prisma, coupleId);
   }
 
   async getSummary(userId: string) {
     const coupleId = await this.getUserCoupleId(userId);
-
-    const todayStart = startOfDay(new Date());
-    const todayEnd = endOfDay(new Date());
-
-    const [my, partner, both, completedToday] = await Promise.all([
-      this.prisma.task.count({
-        where: {
-          coupleId,
-          completed: false,
-          assigneeId: userId,
-          dueAt: {
-            gte: todayStart,
-            lte: todayEnd,
-          },
-        },
-      }),
-
-      this.prisma.task.count({
-        where: {
-          coupleId,
-          completed: false,
-          assigneeId: {
-            not: userId,
-          },
-          assigneeMode: {
-            not: 'BOTH',
-          },
-          dueAt: {
-            gte: todayStart,
-            lte: todayEnd,
-          },
-        },
-      }),
-
-      this.prisma.task.count({
-        where: {
-          coupleId,
-          completed: false,
-          assigneeMode: 'BOTH',
-          dueAt: {
-            gte: todayStart,
-            lte: todayEnd,
-          },
-        },
-      }),
-
-      this.prisma.task.count({
-        where: {
-          coupleId,
-          completed: true,
-          completedAt: {
-            gte: todayStart,
-            lte: todayEnd,
-          },
-        },
-      }),
-    ]);
-
-    return {
-      my,
-      partner,
-      both,
-      completedToday,
-    };
+    return getTaskSummary(this.prisma, coupleId, userId);
   }
 }

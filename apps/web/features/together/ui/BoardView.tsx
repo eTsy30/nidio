@@ -77,14 +77,8 @@ export function BoardView({
     useSensor(TouchSensor, { activationConstraint: { delay: 250, tolerance: 8 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
   );
+  // Completion mode and assignee filter are independent.
 
-  /**
-   * Фильтрация задач внутри колонок.
-   *
-   * Режим active/completed применяется
-   * отдельно от существующего фильтра
-   * assignee.
-   */
   const filterTasks = (tasks: TogetherTask[]): TogetherTask[] => {
     const tasksByMode = tasks.filter((task) =>
       taskViewMode === "completed" ? task.completed : !task.completed,
@@ -117,10 +111,6 @@ export function BoardView({
         return tasksByMode;
     }
   };
-
-  /**
-   * Создание колонки.
-   */
   const createColumnMutation = useMutation({
     retry: false,
     mutationFn: boardApi.createColumn,
@@ -177,12 +167,6 @@ export function BoardView({
     const activeType = active.data.current?.type;
 
     const overType = over.data.current?.type;
-
-    /**
-     * ==========================================
-     * REORDER COLUMNS
-     * ==========================================
-     */
     if (activeType === "column" && overType === "column") {
       const oldIndex = board.columns.findIndex((column) => column.id === active.id);
 
@@ -198,12 +182,6 @@ export function BoardView({
 
       return;
     }
-
-    /**
-     * ==========================================
-     * MOVE TASK
-     * ==========================================
-     */
     if (activeType !== "task") {
       return;
     }

@@ -12,30 +12,14 @@ export interface InviteResponse {
   senderAvatarUrl: string | null;
   expiresAt: string;
 }
-
-/**
- * Ответ GET /relationship/couple
- */
 export type { CurrentCoupleResponse } from "@/shared/contracts/relationship";
-
-/**
- * Запрос PATCH /relationship/couple
- */
 export interface UpdateRelationshipRequest {
   relationshipAt: string | null;
 }
-
-/**
- * Ответ PATCH /relationship/couple
- */
 export interface UpdateRelationshipResponse {
   id: string;
   relationshipAt: string | null;
 }
-
-/**
- * Ответ POST /relationship/invite/:token/accept
- */
 export interface AcceptInviteResponse {
   id: string;
   createdAt: string;

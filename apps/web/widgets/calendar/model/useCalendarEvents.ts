@@ -4,26 +4,13 @@ import { useMemo } from "react";
 import { useMutation, useQuery } from "@apollo/client/react";
 
 import { CREATE_EVENT, GET_EVENTS, UPDATE_EVENT } from "@/features/calendar/graphql";
+import { getCalendarRange } from "@/features/calendar/model/utils";
 import {
   type CalendarEvent,
-  EventRepeat,
+  type CalendarEventFormValues,
   EventScope,
-  EventType,
   type ViewMode,
 } from "@/features/calendar/types";
-
-import { getCalendarRange } from "./utils";
-
-export type CalendarEventFormValues = {
-  title: string;
-  description: string;
-  type: EventType;
-  startAt: Date;
-  endAt: Date | null;
-  allDay: boolean;
-  repeat: EventRepeat;
-  reminderAt: Date | null;
-};
 
 export function useCalendarEvents({
   currentDate,

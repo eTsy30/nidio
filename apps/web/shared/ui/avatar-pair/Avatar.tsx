@@ -3,6 +3,7 @@
 import * as React from "react";
 import { Avatar as AvatarPrimitive } from "@base-ui/react/avatar";
 
+import { useAvatarSource } from "@/shared/api/storage/use-avatar-source";
 import { cn } from "@/shared/lib/cn";
 
 type AvatarRootProps = React.ComponentProps<typeof AvatarPrimitive.Root>;
@@ -28,9 +29,11 @@ function Avatar({ className, size = "default", ...props }: AvatarProps) {
   );
 }
 
-function AvatarImage({ className, ...props }: AvatarImageProps) {
+function AvatarImage({ className, src, ...props }: AvatarImageProps) {
+  const imageSource = useAvatarSource(typeof src === "string" ? src : undefined);
   return (
     <AvatarPrimitive.Image
+      src={typeof src === "string" ? imageSource : src}
       data-slot="avatar-image"
       className={cn("size-full object-cover transition-opacity duration-200", className)}
       {...props}

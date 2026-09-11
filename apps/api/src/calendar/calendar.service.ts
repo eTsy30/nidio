@@ -15,35 +15,23 @@ import { PrismaService } from '../prisma/prisma.service';
 import { validTimeZone } from '../push/calendar-notification-time';
 import { CalendarPushService } from '../push/calendar-push.service';
 
+import {
+  expandRecurringEvent,
+  isRecurringOccurrence,
+} from './domain/event-occurrences';
 import { eventRangeWhere } from './domain/event-range-query';
-import { nextOccurrence, previousOccurrence } from './domain/recurrence';
+import { previousOccurrence } from './domain/recurrence';
 import { CreateEventInput } from './dto/create-event.input';
 import { EventsFilterInput } from './dto/events-filter.input';
 import { UpdateEventInput } from './dto/update-event.input';
 import { EventScope as GraphQLEventScope } from './models/event.model';
 import { EventDeleteMode } from './models/event-delete-mode';
-
-type CalendarEvent = {
-  id: string;
-  seriesId?: string;
-
-  title: string;
-  description: string | null;
-  startAt: Date;
-  endAt: Date | null;
-  allDay: boolean;
-  repeat: EventRepeat;
-  type: string;
-  scope: PrismaEventScope;
-  createdById: string;
-  userId: string | null;
-  coupleId: string | null;
-  reminderAt: Date | null;
-  createdAt: Date;
-  updatedAt: Date;
-  repeatUntil: Date | null;
-  excludedDates: Date[];
-};
+import {
+  CalendarEvent,
+  mapEventUpdate,
+  toGraphQLScope,
+  toPrismaScope,
+} from './calendar-event.mapper';
 
 const MAX_CALENDAR_RANGE_MS = 366 * 24 * 60 * 60 * 1000;
 
@@ -115,24 +103,14 @@ export class CalendarService {
         continue;
       }
 
-      result.push(...this.expandRecurringEvent(event, startFrom, startTo));
+      result.push(...expandRecurringEvent(event, startFrom, startTo));
     }
 
     return result.sort((a, b) => a.startAt.getTime() - b.startAt.getTime());
   }
 
   async findOne(userId: string, id: string): Promise<CalendarEvent> {
-    const event = await this.prisma.event.findUnique({
-      where: {
-        id,
-      },
-    });
-
-    if (!event) {
-      throw new NotFoundException('Событие не найдено');
-    }
-
-    await this.checkAccess(userId, event);
+    const event = await this.findAccessibleEvent(userId, id);
 
     return {
       ...event,
@@ -146,7 +124,7 @@ export class CalendarService {
   ): Promise<CalendarEvent> {
     if (input.timeZone && !validTimeZone(input.timeZone))
       throw new BadRequestException('Некорректный часовой пояс');
-    const scope = this.toPrismaScope(input.scope);
+    const scope = toPrismaScope(input.scope);
 
     const data: Prisma.EventCreateInput = {
       title: input.title,
@@ -214,22 +192,12 @@ export class CalendarService {
     incomingInput: UpdateEventInput,
   ): Promise<CalendarEvent> {
     let input = incomingInput;
-    const event = await this.prisma.event.findUnique({
-      where: {
-        id,
-      },
-    });
-
-    if (!event) {
-      throw new NotFoundException('Событие не найдено');
-    }
-
-    await this.checkAccess(userId, event);
+    const event = await this.findAccessibleEvent(userId, id);
 
     if (input.timeZone && !validTimeZone(input.timeZone))
       throw new BadRequestException('Некорректный часовой пояс');
     if (input.occurrenceDate && event.repeat !== EventRepeat.NONE) {
-      if (!this.isRecurringOccurrence(event, input.occurrenceDate))
+      if (!isRecurringOccurrence(event, input.occurrenceDate))
         throw new BadRequestException('Некорректный экземпляр серии');
       const offset = input.occurrenceDate.getTime() - event.startAt.getTime();
       input = {
@@ -245,50 +213,12 @@ export class CalendarService {
           : {}),
       };
     }
-    const data: Prisma.EventUpdateInput = { notificationDirty: true };
-    if (input.timeZone !== undefined) data.timeZone = input.timeZone;
-
-    if (input.title !== undefined) {
-      data.title = input.title;
-    }
-
-    if (input.description !== undefined) {
-      data.description = input.description;
-    }
-
-    if (input.startAt !== undefined) {
-      data.startAt = input.startAt;
-    }
-
-    if (input.endAt !== undefined) {
-      data.endAt = input.endAt;
-    }
-
-    if (input.allDay !== undefined) {
-      data.allDay = input.allDay;
-    }
-
-    if (input.type !== undefined) {
-      data.type = input.type;
-    }
-
-    if (input.repeat !== undefined) {
-      data.repeat = input.repeat;
-    }
-
-    if (input.reminderAt !== undefined) {
-      data.reminderAt = input.reminderAt;
-    }
-
-    if (input.repeatUntil !== undefined) {
-      data.repeatUntil = input.repeatUntil;
-    }
-
+    const data = mapEventUpdate(input);
     if (
       input.scope !== undefined &&
-      input.scope !== this.toGraphQLScope(event.scope)
+      input.scope !== toGraphQLScope(event.scope)
     ) {
-      const scope = this.toPrismaScope(input.scope);
+      const scope = toPrismaScope(input.scope);
 
       data.scope = scope;
 
@@ -351,31 +281,12 @@ export class CalendarService {
     mode: EventDeleteMode = EventDeleteMode.ALL,
     occurrenceDate?: Date,
   ): Promise<CalendarEvent> {
-    const event = await this.prisma.event.findUnique({
-      where: {
-        id,
-      },
-    });
+    const event = await this.findAccessibleEvent(userId, id);
 
-    if (!event) {
-      throw new NotFoundException('Событие не найдено');
-    }
-
-    await this.checkAccess(userId, event);
-
-    /*
-     * Обычное событие.
-     * Для него нет отдельных экземпляров,
-     * поэтому удаляем его целиком.
-     */
     if (event.repeat === EventRepeat.NONE) {
       return this.deleteWithNotification(event, userId, mode);
     }
 
-    /*
-     * Для THIS и FOLLOWING нужна дата
-     * конкретного экземпляра.
-     */
     if (
       (mode === EventDeleteMode.THIS || mode === EventDeleteMode.FOLLOWING) &&
       !occurrenceDate
@@ -385,9 +296,6 @@ export class CalendarService {
       );
     }
 
-    /*
-     * Удалить всю серию.
-     */
     if (mode === EventDeleteMode.ALL) {
       return this.deleteWithNotification(event, userId, mode);
     }
@@ -398,11 +306,7 @@ export class CalendarService {
       throw new ForbiddenException('Некорректная дата повторения');
     }
 
-    /*
-     * Проверяем, что указанная дата
-     * действительно является экземпляром серии.
-     */
-    const isOccurrence = this.isRecurringOccurrence(event, occurrence);
+    const isOccurrence = isRecurringOccurrence(event, occurrence);
 
     if (!isOccurrence) {
       throw new ForbiddenException(
@@ -410,9 +314,6 @@ export class CalendarService {
       );
     }
 
-    /*
-     * Удалить только этот экземпляр.
-     */
     if (mode === EventDeleteMode.THIS) {
       const excludedDates = [...event.excludedDates];
 
@@ -442,17 +343,7 @@ export class CalendarService {
       });
     }
 
-    /*
-     * Удалить этот и все последующие.
-     *
-     * Например:
-     *
-     * 1 сентября
-     * 2 сентября
-     * 3 сентября ← удаляем начиная отсюда
-     *
-     * repeatUntil = 2 сентября
-     */
+    // FOLLOWING ends the series at the previous occurrence.
     if (mode === EventDeleteMode.FOLLOWING) {
       const repeatUntil = previousOccurrence(occurrence, event.repeat);
 
@@ -511,102 +402,11 @@ export class CalendarService {
     });
   }
 
-  private toPrismaScope(scope: GraphQLEventScope): PrismaEventScope {
-    switch (scope) {
-      case GraphQLEventScope.PERSONAL:
-        return PrismaEventScope.PERSONAL;
-
-      case GraphQLEventScope.COUPLE:
-        return PrismaEventScope.COUPLE;
-
-      default:
-        throw new ForbiddenException('Некорректная область события');
-    }
-  }
-
-  private toGraphQLScope(scope: PrismaEventScope): GraphQLEventScope {
-    switch (scope) {
-      case PrismaEventScope.PERSONAL:
-        return GraphQLEventScope.PERSONAL;
-
-      case PrismaEventScope.COUPLE:
-        return GraphQLEventScope.COUPLE;
-
-      default:
-        throw new ForbiddenException('Некорректная область события');
-    }
-  }
-
-  private expandRecurringEvent(
-    event: CalendarEvent,
-    rangeStart: Date,
-    rangeEnd: Date,
-  ): CalendarEvent[] {
-    const occurrences: CalendarEvent[] = [];
-
-    let occurrenceStart = new Date(event.startAt);
-
-    const duration = event.endAt
-      ? event.endAt.getTime() - event.startAt.getTime()
-      : 0;
-
-    let safetyCounter = 0;
-
-    const MAX_OCCURRENCES = 1000;
-
-    while (occurrenceStart <= rangeEnd && safetyCounter < MAX_OCCURRENCES) {
-      safetyCounter++;
-
-      /*
-       * Серия закончилась.
-       */
-      if (event.repeatUntil && occurrenceStart > event.repeatUntil) {
-        break;
-      }
-
-      const insideRange =
-        occurrenceStart >= rangeStart && occurrenceStart <= rangeEnd;
-
-      /*
-       * Проверяем исключённый экземпляр.
-       */
-      const isExcluded = event.excludedDates.some(
-        (excludedDate) => excludedDate.getTime() === occurrenceStart.getTime(),
-      );
-
-      if (insideRange && !isExcluded) {
-        const occurrenceEnd = event.endAt
-          ? new Date(occurrenceStart.getTime() + duration)
-          : null;
-
-        const occurrenceId = `${event.id}-${occurrenceStart.toISOString()}`;
-
-        occurrences.push({
-          ...event,
-          id: occurrenceId,
-          seriesId: event.id,
-          startAt: new Date(occurrenceStart),
-          reminderAt: event.reminderAt
-            ? new Date(
-                event.reminderAt.getTime() +
-                  occurrenceStart.getTime() -
-                  event.startAt.getTime(),
-              )
-            : null,
-          endAt: occurrenceEnd,
-        });
-      }
-
-      const next = nextOccurrence(occurrenceStart, event.repeat);
-
-      if (!next || next.getTime() <= occurrenceStart.getTime()) {
-        break;
-      }
-
-      occurrenceStart = next;
-    }
-
-    return occurrences;
+  private async findAccessibleEvent(userId: string, id: string) {
+    const event = await this.prisma.event.findUnique({ where: { id } });
+    if (!event) throw new NotFoundException('Событие не найдено');
+    await this.checkAccess(userId, event);
+    return event;
   }
 
   private async checkAccess(
@@ -617,9 +417,6 @@ export class CalendarService {
       coupleId: string | null;
     },
   ): Promise<void> {
-    /*
-     * Личное событие.
-     */
     if (event.scope === PrismaEventScope.PERSONAL) {
       if (event.userId !== userId) {
         throw new ForbiddenException('Нет доступа к личному событию');
@@ -628,9 +425,6 @@ export class CalendarService {
       return;
     }
 
-    /*
-     * Событие пары.
-     */
     const member = await this.prisma.coupleMember.findUnique({
       where: {
         userId,
@@ -640,44 +434,5 @@ export class CalendarService {
     if (!member || member.coupleId !== event.coupleId) {
       throw new ForbiddenException('Нет доступа к событию пары');
     }
-  }
-
-  private isRecurringOccurrence(
-    event: CalendarEvent,
-    occurrenceDate: Date,
-  ): boolean {
-    if (event.repeat === EventRepeat.NONE) {
-      return false;
-    }
-
-    if (occurrenceDate < event.startAt) {
-      return false;
-    }
-
-    if (event.repeatUntil && occurrenceDate > event.repeatUntil) {
-      return false;
-    }
-
-    let current = new Date(event.startAt);
-
-    for (let i = 0; i < 1000; i++) {
-      if (current.getTime() === occurrenceDate.getTime()) {
-        return true;
-      }
-
-      if (current > occurrenceDate) {
-        return false;
-      }
-
-      const next = nextOccurrence(current, event.repeat);
-
-      if (!next || next.getTime() <= current.getTime()) {
-        return false;
-      }
-
-      current = next;
-    }
-
-    return false;
   }
 }

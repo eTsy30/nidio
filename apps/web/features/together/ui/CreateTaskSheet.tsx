@@ -170,7 +170,6 @@ export function CreateTaskSheet({
           <div className="min-h-0 space-y-3 overflow-y-auto overscroll-contain px-1">
             {step === 0 && (
               <>
-                {/* Column select */}
                 <div>
                   <label className="mb-1.5 block text-sm font-medium">Колонка</label>
                   <select
@@ -193,7 +192,6 @@ export function CreateTaskSheet({
                   )}
                 </div>
 
-                {/* Title */}
                 <div>
                   <label className="mb-1.5 block text-sm font-medium">Что нужно сделать?</label>
                   <input
@@ -215,7 +213,6 @@ export function CreateTaskSheet({
                   )}
                 </div>
 
-                {/* Priority */}
                 <button
                   type="button"
                   onClick={() => setValue("priority", !priority, { shouldValidate: true })}
@@ -228,7 +225,6 @@ export function CreateTaskSheet({
                   {priority ? "Приоритетная задача" : "Отметить приоритетной"}
                 </button>
 
-                {/* Assignee */}
                 <div>
                   <label className="mb-2 block text-sm font-medium">Кому?</label>
                   <select
@@ -247,7 +243,6 @@ export function CreateTaskSheet({
             )}
             {step === 1 && (
               <>
-                {/* Rotation settings */}
                 {isRotate && (
                   <div className="rounded-xl bg-muted/50 p-3 space-y-3">
                     <p className="text-xs font-semibold text-muted-foreground uppercase">
@@ -283,7 +278,6 @@ export function CreateTaskSheet({
                   </div>
                 )}
 
-                {/* Due Date */}
                 <div>
                   <label className="mb-2 block text-sm font-medium">Когда?</label>
                   <div className="grid grid-cols-4 gap-2 mb-2">
@@ -330,7 +324,6 @@ export function CreateTaskSheet({
                   )}
                 </div>
 
-                {/* Repeat */}
                 <div>
                   <label className="mb-2 block text-sm font-medium">Повторение</label>
                   <select

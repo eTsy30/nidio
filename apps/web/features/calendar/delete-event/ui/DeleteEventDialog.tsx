@@ -65,8 +65,8 @@ export function DeleteEventDialog({
 
       onOpenChange(false);
       onDeleted?.();
-    } catch (error) {
-      console.error("Не удалось удалить событие:", error);
+    } catch {
+      // Keep the dialog open after a failed mutation.
     }
   };
 

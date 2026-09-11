@@ -1,4 +1,3 @@
-// features/together/ui/TaskList.tsx
 "use client";
 
 import { TaskFilter, TogetherTask } from "../model/task.types";

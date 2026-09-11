@@ -1,18 +1,15 @@
 "use client";
 
-import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { format, isToday } from "date-fns";
 import { ru } from "date-fns/locale";
 import { BellRing, CheckCircle2, CircleCheck, Flag, Pencil, Repeat, Trash2 } from "lucide-react";
 
-import { togetherKeys } from "@/features/together/api/query-keys";
-import { tasksApi } from "@/features/together/api/tasks.api";
 import { cn } from "@/shared/lib/cn";
 import { Checkbox } from "@/shared/ui/checkbox/Checkbox";
 
-import { useNudge } from "../hooks/use-nudge";
-import { formatFutureDate, formatOverdueStatus, getTaskTemporalState } from "../lib/task-utils";
+import { formatFutureDate, formatOverdueStatus } from "../lib/task-utils";
 import { TogetherTask } from "../model/task.types";
+import { useTaskCard } from "../model/use-task-card";
 
 interface TaskCardProps {
   task: TogetherTask;
@@ -36,156 +33,32 @@ function formatDue(dueAt: string | null): string {
 }
 
 export function TaskCard({ task, currentUserId, partnerId, onEdit }: TaskCardProps) {
-  const queryClient = useQueryClient();
-
-  const temporalState = getTaskTemporalState(task);
-
-  const isCompleted = temporalState === "completed";
-  const isFuture = temporalState === "future";
-  const isOverdue = temporalState === "overdue";
-
-  const isCreator = task.createdById === currentUserId;
-  const isTogetherTask = task.assigneeMode === "BOTH";
-
-  /*
-   * Для BOTH assigneeId === null.
-   *
-   * Поэтому определяем выполнение каждой стороны
-   * только через task.completions.
-   */
-  const myCompletion = task.completions?.some((completion) => completion.userId === currentUserId);
-
-  const partnerCompletion = task.completions?.some((completion) =>
-    partnerId ? completion.userId === partnerId : completion.userId !== currentUserId,
-  );
-  const assigneeLabel = (() => {
-    if (task.assigneeMode === "BOTH") {
-      return "Вместе";
-    }
-
-    if (task.assigneeMode === "ROTATE") {
-      return "По очереди";
-    }
-
-    if (isCreator) {
-      return task.assigneeMode === "ME" ? "Мне" : "Партнёру";
-    }
-
-    return task.assigneeMode === "ME" ? "Партнёру" : "Мне";
-  })();
-
-  /*
-   * Для BOTH каждый участник может выполнить свою часть.
-   * Для остальных режимов выполнить задачу может только assignee.
-   */
-  const canCompleteMyPart =
-    !isCompleted && !isFuture && (isTogetherTask || task.assigneeId === currentUserId);
-
-  const completeMutation = useMutation({
-    retry: false,
-    mutationFn: tasksApi.complete,
-
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: togetherKeys.all,
-      });
-    },
-  });
-
-  const activateMutation = useMutation({
-    retry: false,
-    mutationFn: tasksApi.activate,
-
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: togetherKeys.all,
-      });
-    },
-  });
-
-  const deleteMutation = useMutation({
-    retry: false,
-    mutationFn: tasksApi.remove,
-
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: togetherKeys.all,
-      });
-    },
-  });
-
-  const canNudge =
-    isCreator &&
-    !isCompleted &&
-    !isTogetherTask &&
-    Boolean(task.assigneeId) &&
-    task.assigneeId !== currentUserId;
-  const nudgeMutation = useNudge();
-
-  const canActivate = isCompleted && task.repeat === "NONE" && task.recurringGroupId === null;
-
-  const handleCardClick = () => {
-    if (!canCompleteMyPart || completeMutation.isPending) {
-      return;
-    }
-
-    /*
-     * Если пользователь уже выполнил свою часть BOTH,
-     * повторно complete не отправляем.
-     */
-    if (isTogetherTask && myCompletion) {
-      return;
-    }
-
-    completeMutation.mutate(task.id);
-  };
-
-  const handleComplete = () => {
-    if (!canCompleteMyPart || completeMutation.isPending) {
-      return;
-    }
-
-    if (isTogetherTask && myCompletion) {
-      return;
-    }
-
-    completeMutation.mutate(task.id);
-  };
-
-  const handleEdit = (event: React.MouseEvent<HTMLButtonElement>) => {
-    event.stopPropagation();
-
-    if (!isCreator || isCompleted) {
-      return;
-    }
-
-    onEdit?.(task);
-  };
-
-  const handleActivate = (event: React.MouseEvent<HTMLButtonElement>) => {
-    event.stopPropagation();
-
-    if (!canActivate || activateMutation.isPending) {
-      return;
-    }
-
-    activateMutation.mutate(task.id);
-  };
-
-  const handleDelete = (event: React.MouseEvent<HTMLButtonElement>) => {
-    event.stopPropagation();
-
-    if (deleteMutation.isPending) {
-      return;
-    }
-
-    deleteMutation.mutate(task.id);
-  };
+  const {
+    isCompleted,
+    isFuture,
+    isOverdue,
+    isCreator,
+    isTogetherTask,
+    myCompletion,
+    partnerCompletion,
+    assigneeLabel,
+    canCompleteMyPart,
+    completeMutation,
+    activateMutation,
+    deleteMutation,
+    canNudge,
+    nudgeMutation,
+    canActivate,
+    handleComplete,
+    handleEdit,
+    handleActivate,
+    handleDelete,
+  } = useTaskCard({ task, currentUserId, partnerId, onEdit });
 
   return (
     <div
       aria-disabled={isCompleted || !canCompleteMyPart}
-      onClick={handleCardClick}
+      onClick={handleComplete}
       className={cn(
         "group relative rounded-2xl border p-3 shadow-sm",
         "transition-all duration-150",
@@ -206,7 +79,6 @@ export function TaskCard({ task, currentUserId, partnerId, onEdit }: TaskCardPro
         task.priority && !task.completed && isOverdue && "ring-1 ring-destructive/30",
       )}
     >
-      {/* Actions */}
       <div
         className={cn(
           "absolute right-2 top-1/2 z-10",
@@ -280,7 +152,6 @@ export function TaskCard({ task, currentUserId, partnerId, onEdit }: TaskCardPro
       </div>
 
       <div className="flex items-start gap-2">
-        {/* Main checkbox */}
         <div
           className="mt-0.5 shrink-0"
           onClick={(event) => event.stopPropagation()}
@@ -299,7 +170,6 @@ export function TaskCard({ task, currentUserId, partnerId, onEdit }: TaskCardPro
         </div>
 
         <div className="min-w-0 flex-1">
-          {/* Title */}
           <div className="flex items-start justify-between gap-1">
             <p
               className={cn(
@@ -311,7 +181,6 @@ export function TaskCard({ task, currentUserId, partnerId, onEdit }: TaskCardPro
             </p>
           </div>
 
-          {/* Meta */}
           <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1">
             <span className="text-[11px] font-medium text-muted-foreground">{assigneeLabel}</span>
 
@@ -356,7 +225,6 @@ export function TaskCard({ task, currentUserId, partnerId, onEdit }: TaskCardPro
             </button>
           )}
 
-          {/* BOTH participants status */}
           {isTogetherTask && (
             <div className="mt-1.5 flex items-center gap-2">
               <span

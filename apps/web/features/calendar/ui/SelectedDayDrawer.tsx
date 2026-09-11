@@ -124,7 +124,6 @@ export function SelectedDayDrawer({
 
   return (
     <>
-      {/* Mobile backdrop */}
       <div
         className="fixed inset-0 z-40 bg-black/20 backdrop-blur-sm lg:hidden"
         onClick={handleClose}
@@ -140,7 +139,6 @@ export function SelectedDayDrawer({
           "lg:rounded-none lg:border-l lg:shadow-none",
         )}
       >
-        {/* HEADER */}
         <div className="flex items-center justify-between px-5 pt-5">
           <Button
             variant="ghost"
@@ -152,7 +150,6 @@ export function SelectedDayDrawer({
           />
         </div>
 
-        {/* EVENT DETAILS */}
         {selectedEvent ? (
           <>
             <div
@@ -178,7 +175,6 @@ export function SelectedDayDrawer({
                   </p>
                 )}
 
-                {/* EVENT META */}
                 <div className="mt-4 flex flex-wrap gap-2">
                   <span className="rounded-full bg-muted px-3 py-1 text-xs">
                     {scope === EventScope.PERSONAL ? "Мой" : "Наш"}
@@ -193,7 +189,6 @@ export function SelectedDayDrawer({
                   )}
                 </div>
 
-                {/* CREATOR */}
                 {selectedEvent.creator && (
                   <div className="mt-5 flex items-center gap-2">
                     <div className="flex h-8 w-8 items-center justify-center overflow-hidden rounded-full bg-muted text-xs font-medium">
@@ -223,7 +218,6 @@ export function SelectedDayDrawer({
               </div>
             </ScrollArea>
 
-            {/* ACTIONS */}
             {isEventOwner && onDeleteEvent && (
               <div className="flex shrink-0 mt-auto border-t gap-3 bg-background p-3 sm:p-5">
                 <Button
@@ -249,7 +243,6 @@ export function SelectedDayDrawer({
           </>
         ) : (
           <>
-            {/* DAY ILLUSTRATION */}
             <div
               className={cn(
                 "mx-5 mt-2 flex h-16 shrink-0 sm:h-28 items-center justify-center rounded-2xl",
@@ -263,7 +256,6 @@ export function SelectedDayDrawer({
               )}
             </div>
 
-            {/* DATE */}
             <div className="px-5 pt-4">
               <h2 className="text-2xl font-bold tracking-tight">
                 {format(date, "d MMMM", {
@@ -285,7 +277,6 @@ export function SelectedDayDrawer({
               )}
             </div>
 
-            {/* EVENTS */}
             <ScrollArea className="flex-1 px-5 py-3">
               {events.length === 0 ? (
                 <EmptyDayMessage date={date} />
@@ -302,7 +293,6 @@ export function SelectedDayDrawer({
               )}
             </ScrollArea>
 
-            {/* ADD */}
             <div className="shrink-0 border-t bg-background p-3 sm:p-5">
               <Button className="h-12 w-full gap-2 rounded-xl" onClick={onAddEvent}>
                 <Plus className="h-5 w-5" />

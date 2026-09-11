@@ -1,5 +1,21 @@
 const DEFAULT_DEV_ORIGINS = ['http://localhost:3000'];
 
+/** The first configured origin is the public website used in outgoing links. */
+export function getFrontendUrl(configured = process.env.FRONTEND_URL): string {
+  const firstOrigin = configured
+    ?.split(',')
+    .map((value) => value.trim())
+    .find(Boolean);
+
+  if (!firstOrigin) throw new Error('FRONTEND_URL is not configured');
+
+  const url = new URL(firstOrigin);
+  if (url.protocol !== 'https:' && url.protocol !== 'http:') {
+    throw new Error('FRONTEND_URL must use HTTP or HTTPS');
+  }
+  return url.origin;
+}
+
 export function isAllowedOrigin(origin?: string): boolean {
   if (!origin) return true;
 

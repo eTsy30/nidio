@@ -3,10 +3,9 @@
 import { format, isSameDay, isToday } from "date-fns";
 import { ru } from "date-fns/locale";
 
+import { getDateKey, getDaysForWeek } from "@/features/calendar/model/utils";
 import { type CalendarEvent } from "@/features/calendar/types";
 import { cn } from "@/shared/lib/cn";
-
-import { getDateKey, getDaysForWeek } from "../model/utils";
 
 import { EventCard } from "./EventCard";
 

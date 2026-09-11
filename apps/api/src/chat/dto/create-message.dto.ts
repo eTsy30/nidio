@@ -9,13 +9,7 @@ import {
 import { MessageType } from '../enums/message-type.enum';
 
 export class CreateMessageDto {
-  /**
-   * Временный идентификатор сообщения, который генерирует клиент.
-   * Используется для optimistic UI и сопоставления ответа сервера.
-   * !!!!!! ВАЖНО
-   *  clientId никогда не сохраняется как основной идентификатор сообщения.
-   *  Он нужен только для сопоставления временного сообщения на клиенте с сообщением, созданным сервером.
-   */
+  /** Client-generated idempotency key; distinct from the persisted message ID. */
   @IsString()
   @MaxLength(100)
   clientId!: string;

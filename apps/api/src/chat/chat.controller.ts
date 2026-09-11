@@ -64,8 +64,6 @@ export class ChatController {
   ) {
     return this.chatService.addReaction(userId, id, dto);
   }
-
-  /** Удаляет реакцию с сообщения. */
   @Delete('messages/:id/reactions/:emoji')
   async removeReaction(
     @Authorized('id') userId: string,

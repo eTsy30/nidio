@@ -86,9 +86,7 @@ export function CalendarHeader({
           ></Button>
         </div>
 
-        {/* CENTER */}
         <div className="order-3 col-span-2 flex min-w-0 flex-wrap items-center justify-between gap-2 xl:order-none xl:col-span-1 xl:justify-center">
-          {/* MONTH / YEAR PICKER */}
           <div className="relative">
             <button
               type="button"
@@ -121,7 +119,6 @@ export function CalendarHeader({
 
             {monthPickerOpen && (
               <>
-                {/* OUTSIDE CLICK */}
                 <button
                   type="button"
                   aria-label="Закрыть выбор месяца"
@@ -129,12 +126,10 @@ export function CalendarHeader({
                   onClick={() => setMonthPickerOpen(false)}
                 />
 
-                {/* PICKER */}
                 <div
                   className="absolute left-0 top-full z-50 mt-2 w-72 max-w-[calc(100vw-24px)] rounded-2xl border bg-background p-3 shadow-xl"
                   onClick={(event) => event.stopPropagation()}
                 >
-                  {/* YEAR NAVIGATION */}
                   <div className="mb-3 flex items-center justify-between">
                     <button
                       type="button"
@@ -157,7 +152,6 @@ export function CalendarHeader({
                     </button>
                   </div>
 
-                  {/* MONTHS */}
                   <div className="grid grid-cols-3 gap-1">
                     {months.map((date) => {
                       const selected = date.getMonth() === currentMonth;
@@ -187,7 +181,6 @@ export function CalendarHeader({
             )}
           </div>
 
-          {/* VIEW MODE */}
           <div className="flex shrink-0 items-center rounded-xl bg-muted p-1">
             {(["week", "month", "year"] as ViewMode[]).map((view) => (
               <button
@@ -211,9 +204,7 @@ export function CalendarHeader({
           </div>
         </div>
 
-        {/* RIGHT */}
         <div className="flex shrink-0 items-center gap-2">
-          {/* SCOPE */}
           <div className="flex items-center rounded-xl bg-muted p-1">
             <button
               type="button"
@@ -244,7 +235,6 @@ export function CalendarHeader({
             </button>
           </div>
 
-          {/* FILTER */}
           <div className="relative">
             <Button
               variant="ghost"

@@ -1,6 +1,5 @@
 import { Dispatch, SetStateAction, useCallback, useEffect } from "react";
 
-import type { ApiError } from "@/shared/api/client/api";
 import { http } from "@/shared/api/client/api";
 
 import { ChatMessageItem } from "../type/chat";
@@ -25,14 +24,8 @@ export function useLoadMessages(setMessages: Dispatch<SetStateAction<ChatMessage
         status: getMessageStatus(message),
       }));
       setMessages((current) => mergeMessages(current, messages));
-    } catch (error) {
-      if (error instanceof Error) {
-        const apiError = error as ApiError;
-        console.error(
-          "Failed to load chat messages",
-          apiError.response?.data?.message ?? apiError.message,
-        );
-      }
+    } catch {
+      // Keep the current history; reconnect will retry the load.
     }
   }, [setMessages]);
 

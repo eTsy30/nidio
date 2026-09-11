@@ -141,8 +141,8 @@ export function useChatRealtime({
           );
 
           if (!nextReactions || nextReactions.length === 0) {
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
-            const { reactions: _, ...rest } = item;
+            const rest = { ...item };
+            delete rest.reactions;
 
             return {
               ...rest,

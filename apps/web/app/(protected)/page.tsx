@@ -10,13 +10,13 @@ import { routes } from "@/shared/router/paths";
 export default function HomePage() {
   const router = useRouter();
 
-  const { data: couple, isLoading } = useCurrentCouple();
+  const { data: couple, isLoading, isSuccess } = useCurrentCouple();
 
   useEffect(() => {
-    if (!isLoading && !couple) {
+    if (isSuccess && couple === null) {
       router.replace(routes.invite);
     }
-  }, [couple, isLoading, router]);
+  }, [couple, isSuccess, router]);
 
   if (isLoading) {
     return null;

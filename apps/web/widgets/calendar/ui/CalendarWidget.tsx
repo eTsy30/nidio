@@ -15,6 +15,8 @@ import {
 import { CreateEventForm } from "@/features/calendar/create-event/ui/CreateEventForm";
 import { DeleteEventDialog } from "@/features/calendar/delete-event/ui/DeleteEventDialog";
 import { EditEventForm } from "@/features/calendar/edit-event/ui/EditEventForm";
+import { getDateKey } from "@/features/calendar/model/utils";
+import type { CalendarEventFormValues } from "@/features/calendar/types";
 import {
   type CalendarEvent,
   EventScope,
@@ -26,9 +28,8 @@ import { useAuth } from "@/shared/api/provider/auth-provider";
 import { cn } from "@/shared/lib/cn";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/shared/ui/dialog/dialog";
 
-import { type CalendarEventFormValues, useCalendarEvents } from "../model/useCalendarEvents";
+import { useCalendarEvents } from "../model/useCalendarEvents";
 import { useCalendarModal } from "../model/useCalendarModal";
-import { getDateKey } from "../model/utils";
 
 import { CalendarHeader } from "./CalendarHeader";
 import { CalendarYear } from "./CalendarYear";
@@ -260,8 +261,8 @@ export default function CalendarWidget() {
     try {
       await update(selectedEditEvent, values);
       closeModal();
-    } catch (error) {
-      console.error("Не удалось обновить событие:", error);
+    } catch {
+      // Keep the dialog open after a failed mutation.
     }
   };
 

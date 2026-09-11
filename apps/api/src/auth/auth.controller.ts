@@ -129,10 +129,4 @@ export class AuthController {
   resetPassword(@Body() dto: ResetPasswordDto) {
     return this.authService.resetPassword(dto.token, dto.newPassword);
   }
-
-  // @Authorization()
-  // @Get('@me')
-  // me(@Authorized() user: unknown) {
-  //   return user;
-  // }
 }

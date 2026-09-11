@@ -1,9 +1,11 @@
 "use client";
 
 import { createContext, type ReactNode, useCallback, useContext, useEffect, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import type { Socket } from "socket.io-client";
 
 import { useAuth } from "@/shared/api/provider/auth-provider";
+import { queryKeys } from "@/shared/api/query/query-keys";
 import { subscribeAuth } from "@/shared/lib/token";
 
 import { connectSocket, disconnectSocket, getSocket } from "../lib/socket";
@@ -26,6 +28,7 @@ const RealtimeContext = createContext<RealtimeContextValue>({
 export function RealtimeProvider({ children }: { children: ReactNode }) {
   const { user, isLoading } = useAuth();
   const socket = getSocket();
+  const queryClient = useQueryClient();
 
   const [typingUserId, setTypingUserId] = useState<string | null>(null);
   const [connectionEvent, setConnectionEvent] = useState(false);
@@ -69,20 +72,36 @@ export function RealtimeProvider({ children }: { children: ReactNode }) {
       setTypingUserId((current) => (current === data.userId ? null : current));
     }
 
-    function handleRelationshipConnected() {
-      setConnectionEvent(true);
+    function refreshCouple() {
+      void queryClient.invalidateQueries({
+        queryKey: queryKeys.relationship.couple,
+      });
     }
 
+    function handleRelationshipConnected() {
+      setConnectionEvent(true);
+      void queryClient.invalidateQueries({
+        queryKey: queryKeys.relationship.couple,
+      });
+      void queryClient.invalidateQueries({
+        queryKey: queryKeys.relationship.invite,
+      });
+    }
+
+    socket.on("connect", refreshCouple);
+    socket.on("relationship.updated", refreshCouple);
     socket.on("chat.typing.start", handleTypingStart);
     socket.on("chat.typing.stop", handleTypingStop);
     socket.on("relationship.connected", handleRelationshipConnected);
 
     return () => {
+      socket.off("connect", refreshCouple);
+      socket.off("relationship.updated", refreshCouple);
       socket.off("chat.typing.start", handleTypingStart);
       socket.off("chat.typing.stop", handleTypingStop);
       socket.off("relationship.connected", handleRelationshipConnected);
     };
-  }, [socket]);
+  }, [queryClient, socket]);
 
   return (
     <RealtimeContext.Provider

@@ -180,27 +180,6 @@ export class RealtimeGateway
     });
   }
 
-  // @SubscribeMessage("relationship:sync")
-  // async handleRelationshipSync(client: Socket) {
-  //   const userId = client.data.user?.sub;
-
-  //   if (!userId) {
-  //     return;
-  //   }
-
-  //   const relationship = await this.relationshipService.getCurrentCouple(userId);
-
-  //   if (!relationship) {
-  //     return;
-  //   }
-
-  //   client.emit("relationship.connected", {
-  //     userId: relationship.partnerId,
-
-  //     online: true,
-  //   });
-  // }
-
   @SubscribeMessage('chat:presence')
   async handleChatPresence(
     @ConnectedSocket() client: Socket,

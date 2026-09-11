@@ -3,10 +3,10 @@
 import { format } from "date-fns";
 import { ru } from "date-fns/locale";
 
+import { getDateKey } from "@/features/calendar/model/utils";
 import { Calendar } from "@/shared/ui/calendar";
 
 import { CalendarEvent } from "../model/types";
-import { getDateKey } from "../model/utils";
 
 import { CalendarDay } from "./CalendarDay";
 

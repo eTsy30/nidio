@@ -60,7 +60,6 @@ export function CalendarYear({ year, events, onMonthClick, onDayClick }: Calenda
                 "transition-all hover:border-primary/30 hover:shadow-sm",
               )}
             >
-              {/* MONTH TITLE */}
               <div className="mb-3 flex items-center justify-between">
                 <span className="text-sm font-semibold capitalize">
                   {format(month, "LLLL", {
@@ -71,7 +70,6 @@ export function CalendarYear({ year, events, onMonthClick, onDayClick }: Calenda
                 <span className="text-xs text-muted-foreground">{format(month, "yyyy")}</span>
               </div>
 
-              {/* WEEK DAYS */}
               <div className="mb-1 grid grid-cols-7">
                 {["пн", "вт", "ср", "чт", "пт", "сб", "вс"].map((day) => (
                   <span
@@ -83,7 +81,6 @@ export function CalendarYear({ year, events, onMonthClick, onDayClick }: Calenda
                 ))}
               </div>
 
-              {/* DAYS */}
               <div className="grid grid-cols-7 gap-y-1">
                 {days.map((day) => {
                   const dayEvents = getDayEvents(day);
@@ -120,7 +117,6 @@ export function CalendarYear({ year, events, onMonthClick, onDayClick }: Calenda
                     >
                       {format(day, "d")}
 
-                      {/* EVENTS */}
                       {dayEvents.length > 0 && !isToday(day) && (
                         <span
                           className="absolute bottom-0.5 h-1 w-1 rounded-full bg-primary"

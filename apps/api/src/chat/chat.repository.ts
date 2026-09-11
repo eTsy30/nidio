@@ -208,8 +208,6 @@ export class ChatRepository {
       },
     });
   }
-
-  /** Отметить сообщение как доставленное. */
   async markDelivered(messageId: string) {
     return this.prisma.message.updateMany({
       where: {
@@ -221,8 +219,6 @@ export class ChatRepository {
       },
     });
   }
-
-  /** Отметить сообщение как прочитанное. */
   async markRead(messageId: string) {
     return this.prisma.message.updateMany({
       where: {

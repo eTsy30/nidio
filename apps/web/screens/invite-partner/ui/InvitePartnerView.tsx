@@ -5,12 +5,12 @@ import { toast } from "sonner";
 
 import {
   useCreateInvite,
+  useCurrentCouple,
   useCurrentInvite,
   useLeaveCouple,
 } from "@/features/relationship/hook/use-relationship";
 import { InvitePartnerCard } from "@/features/relationship/ui";
 import { cn } from "@/shared/lib/cn";
-import { useRealtimeContext } from "@/shared/realtime/provider/RealtimeProvider";
 import { routes } from "@/shared/router/paths";
 
 export function InvitePartnerView() {
@@ -18,13 +18,13 @@ export function InvitePartnerView() {
   const createInvite = useCreateInvite();
   const revokeInvite = useLeaveCouple();
   const router = useRouter();
-  const { connectionEvent } = useRealtimeContext();
+  const { data: couple, isSuccess } = useCurrentCouple();
 
   useEffect(() => {
-    if (connectionEvent) {
+    if (isSuccess && couple) {
       router.replace(routes.home);
     }
-  }, [connectionEvent, router]);
+  }, [couple, isSuccess, router]);
 
   const copyInvite = async () => {
     if (!invite?.url) return;
