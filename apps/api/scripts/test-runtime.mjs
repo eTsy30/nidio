@@ -141,47 +141,8 @@ try {
     ]);
     return socket;
   };
-  let socket = await connect(users[0]);
-  const payload = {
-    clientId: randomUUID(),
-    type: 'TEXT',
-    content: 'Release runtime message',
-  };
-  const ack = await socket.timeout(5000).emitWithAck('chat:send', payload);
-  assert(ack.messageId, JSON.stringify(ack));
-  const duplicate = await ok('/chat/messages', users[0], payload);
-  assert.equal(duplicate.data.id, ack.messageId);
-  assert.equal(
-    (
-      await request(
-        `/chat/messages/${ack.messageId}`,
-        users[2],
-        { content: 'forbidden' },
-        'PATCH',
-      )
-    ).status,
-    404,
-  );
-  assert.equal(
-    (
-      await request(
-        `/chat/messages/${ack.messageId}`,
-        users[1],
-        { content: 'forbidden' },
-        'PATCH',
-      )
-    ).status,
-    404,
-  );
+  const socket = await connect(users[0]);
   socket.disconnect();
-  await ok('/chat/messages', users[1], {
-    ...payload,
-    clientId: randomUUID(),
-    content: 'While disconnected',
-  });
-  socket = await connect(users[0]);
-  const history = await ok('/chat/messages', users[0]);
-  assert(JSON.stringify(history.data).includes('While disconnected'));
   await ok('/boards', users[0]);
   const column = await ok('/boards/columns', users[0], { title: 'Runtime' });
   const columnId = column.data.id;

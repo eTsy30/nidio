@@ -2,8 +2,6 @@
 import { JwtService } from '@nestjs/jwt';
 import type { Socket } from 'socket.io';
 
-import { ChatService } from '../chat/chat.service';
-import { PushService } from '../push/push.service';
 import { RelationshipService } from '../relationship/relationship.service';
 
 import { RealtimeGateway } from './realtime.gateway';
@@ -13,11 +11,9 @@ describe('RealtimeGateway token access', () => {
   const jwt = { verify: jest.fn() };
   const relationship = { getCurrentCouple: jest.fn() };
   const gateway = new RealtimeGateway(
-    {} as PushService,
     jwt as unknown as JwtService,
     {} as RealtimeService,
     relationship as unknown as RelationshipService,
-    {} as ChatService,
   );
 
   function socket() {

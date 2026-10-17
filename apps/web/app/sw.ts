@@ -24,13 +24,13 @@ self.addEventListener("push", (event: PushEvent) => {
   }
   event.waitUntil(
     self.registration.showNotification(payload.title || "Nidio", {
-      body: payload.body || "Новое сообщение",
+      body: payload.body || "Новое уведомление",
       icon: "/icons/icon-192x192.png",
       ...(payload.tag ? { tag: payload.tag } : {}),
       data: {
-        url: ["/chat", "/calendar", "/profile", "/together"].includes(payload.url ?? "")
+        url: ["/", "/calendar", "/profile", "/together"].includes(payload.url ?? "")
           ? payload.url
-          : "/chat",
+          : "/",
       },
     }),
   );
@@ -41,9 +41,7 @@ self.addEventListener("notificationclick", (event: NotificationEvent) => {
   event.waitUntil(
     (async () => {
       const target = event.notification.data?.url;
-      const path = ["/chat", "/calendar", "/profile", "/together"].includes(target)
-        ? target
-        : "/chat";
+      const path = ["/", "/calendar", "/profile", "/together"].includes(target) ? target : "/";
       const url = new URL(path, self.location.origin).href;
       const windows = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
       for (const client of windows) {

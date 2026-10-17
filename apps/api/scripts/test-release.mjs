@@ -15,7 +15,6 @@ assert.equal(
 );
 const admin = new Client({ connectionString: url });
 const suites = [
-  ['chat_access_test', 'CHAT_ACCESS_TEST_DATABASE_URL', 'chat-access'],
   ['auth_refresh_test', 'AUTH_REFRESH_TEST_DATABASE_URL', 'auth-refresh'],
   ['todo_push_test', 'TODO_TEST_DATABASE_URL', 'todo'],
   ['calendar_push_test', 'CALENDAR_PUSH_TEST_DATABASE_URL', 'calendar-push'],
@@ -47,7 +46,7 @@ try {
     run(['exec', 'tsx', `test/${file}.integration.ts`], env);
   }
   console.info(
-    'Release PostgreSQL checks passed: four suites, migration deploy and repeat deploy.',
+    'Release PostgreSQL checks passed: three suites, migration deploy and repeat deploy.',
   );
 } finally {
   await admin.end();

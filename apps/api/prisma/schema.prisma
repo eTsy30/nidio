@@ -17,14 +17,11 @@ model User {
   createdAt              DateTime                @default(now())
   updatedAt              DateTime                @updatedAt
   timeZone               String?
-  chatPresence           ChatPresence[]
   memberships            CoupleMember?
   emailVerifications     EmailVerification[]
   createdEvents          Event[]                 @relation("CreatedEvents")
   personalEvents         Event[]                 @relation("PersonalEvents")
   createdInvites         Invite[]
-  messages               Message[]
-  messageReactions       MessageReaction[]
   passwordResets         PasswordReset[]
   pushSubscriptions      PushSubscription[]
   refreshTokens          RefreshToken[]
@@ -210,71 +207,11 @@ model Workspace {
   coupleId  String?       @unique
   createdAt DateTime      @default(now())
   updatedAt DateTime      @updatedAt
-  messages  Message[]
   spaces    Space[]
   couple    Couple?       @relation(fields: [coupleId], references: [id])
   user      User?         @relation(fields: [userId], references: [id])
 
   @@index([userId])
-}
-
-model Message {
-  id             String              @id @default(cuid())
-  workspaceId    String
-  senderId       String
-  createdAt      DateTime            @default(now())
-  editedAt       DateTime?
-  deletedAt      DateTime?
-  content        String?
-  deliveredAt    DateTime?
-  metadata       Json?
-  readAt         DateTime?
-  replyToId      String?
-  type           MessageType         @default(TEXT)
-  updatedAt      DateTime            @updatedAt
-  clientId       String?             @unique
-  replyTo        Message?            @relation("MessageReply", fields: [replyToId], references: [id])
-  replies        Message[]           @relation("MessageReply")
-  sender         User                @relation(fields: [senderId], references: [id])
-  workspace      Workspace           @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
-  attachments    MessageAttachment[]
-  reactions      MessageReaction[]
-  pushDeliveries PushDelivery[]
-
-  @@index([workspaceId, createdAt])
-  @@index([senderId])
-  @@index([replyToId])
-  @@index([clientId])
-}
-
-model MessageAttachment {
-  id        String         @id @default(cuid())
-  messageId String
-  type      AttachmentType
-  url       String
-  mimeType  String
-  fileName  String?
-  fileSize  Int
-  width     Int?
-  height    Int?
-  duration  Int?
-  createdAt DateTime       @default(now())
-  message   Message        @relation(fields: [messageId], references: [id], onDelete: Cascade)
-
-  @@index([messageId])
-}
-
-model MessageReaction {
-  id        String   @id @default(cuid())
-  messageId String
-  userId    String
-  emoji     String   @db.VarChar(20)
-  createdAt DateTime @default(now())
-  message   Message  @relation(fields: [messageId], references: [id], onDelete: Cascade)
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([messageId, userId, emoji])
-  @@index([messageId])
 }
 
 model Space {
@@ -381,30 +318,9 @@ model PushSubscription {
   auth                 String
   createdAt            DateTime              @default(now())
   notificationAttempts NotificationAttempt[]
-  deliveries           PushDelivery[]
   user                 User                  @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
   @@index([userId])
-}
-
-model PushDelivery {
-  subscriptionId String
-  messageId      String
-  createdAt      DateTime         @default(now())
-  message        Message          @relation(fields: [messageId], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  subscription   PushSubscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade, onUpdate: NoAction)
-
-  @@id([subscriptionId, messageId])
-}
-
-model ChatPresence {
-  socketId    String   @id
-  userId      String
-  workspaceId String
-  expiresAt   DateTime
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
-
-  @@index([userId, workspaceId, expiresAt])
 }
 
 model ScheduledNotification {
@@ -466,19 +382,6 @@ enum AssigneeMode {
 enum WorkspaceType {
   PERSONAL
   COUPLE
-}
-
-enum MessageType {
-  TEXT
-  IMAGE
-  SYSTEM
-}
-
-enum AttachmentType {
-  IMAGE
-  VIDEO
-  VOICE
-  FILE
 }
 
 enum BlockType {

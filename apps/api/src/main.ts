@@ -33,10 +33,6 @@ async function bootstrap() {
     '/auth/refresh',
     rateLimit({ windowMs: 60 * 1000, limit: 30, standardHeaders: true }),
   );
-  app.use(
-    '/chat',
-    rateLimit({ windowMs: 60 * 1000, limit: 60, standardHeaders: true }),
-  );
 
   app.useGlobalPipes(
     new ValidationPipe({

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { differenceInCalendarDays, format, parseISO } from "date-fns";
 import { ru } from "date-fns/locale";
-import { ArrowUpRight, Heart, MessageCircle } from "lucide-react";
+import { ArrowUpRight, Heart, ListTodo } from "lucide-react";
 
 import { useMe } from "@/features/auth";
 import { useCurrentCouple } from "@/features/relationship/hook/use-relationship";
@@ -40,9 +40,9 @@ export function HomeHero({ now }: { now: Date }) {
         </p>
         <div className="mt-6 flex flex-wrap items-center gap-3">
           <Button asChild>
-            <Link href="/chat">
-              <MessageCircle aria-hidden="true" />
-              Написать партнёру
+            <Link href="/together">
+              <ListTodo aria-hidden="true" />
+              Открыть задачи
             </Link>
           </Button>
           <Link

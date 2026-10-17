@@ -11,7 +11,6 @@ export const routes = {
   connected: "/connected",
 
   home: "/",
-  chat: "/chat",
   calendar: "/calendar",
   together: "/together",
   space: "/space",

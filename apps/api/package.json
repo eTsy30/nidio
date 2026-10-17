@@ -12,7 +12,6 @@
     "lint": "eslint \"{src,test}/**/*.ts\"",
     "typecheck": "pnpm db:generate && tsc --noEmit",
     "test": "pnpm db:generate && jest --runInBand --watchman=false",
-    "test:chat-access:integration": "tsx test/chat-access.integration.ts",
     "test:auth-refresh:integration": "tsx test/auth-refresh.integration.ts",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",

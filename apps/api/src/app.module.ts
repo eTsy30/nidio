@@ -7,8 +7,8 @@ import { join } from 'path';
 import { AuthModule } from './auth/auth.module';
 import { BoardModule } from './board/board.module';
 import { CalendarModule } from './calendar/calendar.module';
-import { ChatModule } from './chat/chat.module';
 import { EmailModule } from './email/email.module';
+import { HealthController } from './health/health.controller';
 import { PrismaModule } from './prisma/prisma.module';
 import { RealtimeModule } from './realtime/realtime.module';
 import { RelationshipModule } from './relationship/relationship.module';
@@ -18,6 +18,7 @@ import { TemplatesModule } from './templates/templates.module';
 import { UsersModule } from './users/users.module';
 
 @Module({
+  controllers: [HealthController],
   imports: [
     ConfigModule.forRoot({
       envFilePath:
@@ -31,7 +32,6 @@ import { UsersModule } from './users/users.module';
     AuthModule,
     EmailModule,
     RealtimeModule,
-    ChatModule,
     TasksModule,
     BoardModule,
     TemplatesModule,

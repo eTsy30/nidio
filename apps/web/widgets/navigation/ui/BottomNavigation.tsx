@@ -2,11 +2,10 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { CalendarDays, Heart, House, ListTodo, MessageCircle, UserRound } from "lucide-react";
+import { CalendarDays, Heart, House, ListTodo, UserRound } from "lucide-react";
 
 const navigation = [
   { href: "/", label: "Главная", icon: House },
-  { href: "/chat", label: "Чат", icon: MessageCircle },
   { href: "/calendar", label: "Календарь", icon: CalendarDays },
   { href: "/together", label: "Задачи", icon: ListTodo },
   { href: "/profile", label: "Профиль", icon: UserRound },

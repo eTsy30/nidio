@@ -13,14 +13,12 @@ import type { ClientToServerEvents, ServerToClientEvents } from "../types/events
 
 type RealtimeContextValue = {
   socket: Socket<ServerToClientEvents, ClientToServerEvents> | null;
-  typingUserId: string | null;
   connectionEvent: boolean;
   clearConnectionEvent: () => void;
 };
 
 const RealtimeContext = createContext<RealtimeContextValue>({
   socket: null,
-  typingUserId: null,
   connectionEvent: false,
   clearConnectionEvent: () => {},
 });
@@ -30,7 +28,6 @@ export function RealtimeProvider({ children }: { children: ReactNode }) {
   const socket = getSocket();
   const queryClient = useQueryClient();
 
-  const [typingUserId, setTypingUserId] = useState<string | null>(null);
   const [connectionEvent, setConnectionEvent] = useState(false);
 
   const clearConnectionEvent = useCallback(() => {
@@ -61,14 +58,6 @@ export function RealtimeProvider({ children }: { children: ReactNode }) {
   }, [isLoading, user]);
 
   useEffect(() => {
-    function handleTypingStart(data: { userId: string }) {
-      setTypingUserId(data.userId);
-    }
-
-    function handleTypingStop(data: { userId: string }) {
-      setTypingUserId((current) => (current === data.userId ? null : current));
-    }
-
     function refreshCouple() {
       void queryClient.invalidateQueries({
         queryKey: queryKeys.relationship.couple,
@@ -87,23 +76,17 @@ export function RealtimeProvider({ children }: { children: ReactNode }) {
 
     socket.on("connect", refreshCouple);
     socket.on("relationship.updated", refreshCouple);
-    socket.on("chat.typing.start", handleTypingStart);
-    socket.on("chat.typing.stop", handleTypingStop);
     socket.on("relationship.connected", handleRelationshipConnected);
 
     return () => {
       socket.off("connect", refreshCouple);
       socket.off("relationship.updated", refreshCouple);
-      socket.off("chat.typing.start", handleTypingStart);
-      socket.off("chat.typing.stop", handleTypingStop);
       socket.off("relationship.connected", handleRelationshipConnected);
     };
   }, [queryClient, socket]);
 
   return (
-    <RealtimeContext.Provider
-      value={{ socket, typingUserId, connectionEvent, clearConnectionEvent }}
-    >
+    <RealtimeContext.Provider value={{ socket, connectionEvent, clearConnectionEvent }}>
       {children}
     </RealtimeContext.Provider>
   );
