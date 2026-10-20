@@ -5,6 +5,7 @@ import nextTs from "eslint-config-next/typescript";
 
 export default [
   globalIgnores([
+    ".agents/skills/**",
     "**/node_modules/**",
     "**/dist/**",
     "**/.next/**",
@@ -14,6 +15,9 @@ export default [
     "apps/web/public/sw.js.map",
     "apps/web/public/swe-worker-*.js",
     "apps/web/public/swe-worker-*.js.map",
+    ".agents/skills/**",
+    "node_modules/**",
+    "dist/**",
   ]),
   ...base,
 

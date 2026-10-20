@@ -1,10 +1,16 @@
 "use client";
 
-import { format } from "date-fns";
+import {
+  eachDayOfInterval,
+  endOfMonth,
+  endOfWeek,
+  format,
+  startOfMonth,
+  startOfWeek,
+} from "date-fns";
 import { ru } from "date-fns/locale";
 
 import { getDateKey } from "@/features/calendar/model/utils";
-import { Calendar } from "@/shared/ui/calendar";
 
 import { CalendarEvent } from "../model/types";
 
@@ -18,69 +24,45 @@ interface MonthViewProps {
   onMonthChange: (date: Date) => void;
 }
 
-export function MonthView({
-  month,
-  eventsByDate,
-  selectedDate,
-  onSelectDate,
-  onMonthChange,
-}: MonthViewProps) {
+export function MonthView({ month, eventsByDate, selectedDate, onSelectDate }: MonthViewProps) {
+  const days = eachDayOfInterval({
+    start: startOfWeek(startOfMonth(month), { weekStartsOn: 1 }),
+    end: endOfWeek(endOfMonth(month), { weekStartsOn: 1 }),
+  });
   return (
-    <div className="h-full min-h-0">
-      <Calendar
-        mode="single"
-        month={month}
-        onMonthChange={onMonthChange}
-        selected={selectedDate ?? undefined}
-        onSelect={(date) => {
-          if (date) {
-            onSelectDate(date);
-          }
-        }}
-        required={false}
-        showOutsideDays
-        locale={ru}
-        className="h-full w-full p-0"
-        classNames={{
-          months: "flex h-full w-full flex-col",
-          month: "flex h-full w-full flex-col",
-
-          month_caption: "hidden",
-          nav: "hidden",
-
-          month_grid: "w-full flex-1",
-
-          weekdays: "grid h-8 grid-cols-7",
-
-          weekday: "flex items-center justify-center text-xs font-medium text-muted-foreground",
-
-          week: "grid min-h-0 flex-1 grid-cols-7",
-
-          day: "h-full w-full p-0",
-        }}
-        components={{
-          Day: ({ day }) => {
-            const date = day.date;
-            const key = getDateKey(date);
-
-            return (
+    <table
+      className="w-full table-fixed border-collapse"
+      aria-label={format(month, "LLLL yyyy", { locale: ru })}
+    >
+      <thead>
+        <tr>
+          {["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"].map((day) => (
+            <th
+              key={day}
+              scope="col"
+              className="h-10 text-center text-xs font-medium text-muted-foreground"
+            >
+              {day}
+            </th>
+          ))}
+        </tr>
+      </thead>
+      <tbody>
+        {Array.from({ length: days.length / 7 }, (_, week) => (
+          <tr key={week}>
+            {days.slice(week * 7, week * 7 + 7).map((date) => (
               <CalendarDay
+                key={getDateKey(date)}
                 date={date}
                 month={month}
-                events={eventsByDate.get(key) ?? []}
+                events={eventsByDate.get(getDateKey(date)) ?? []}
                 selectedDate={selectedDate}
                 onSelect={onSelectDate}
               />
-            );
-          },
-        }}
-      />
-
-      <div className="sr-only">
-        {format(month, "LLLL yyyy", {
-          locale: ru,
-        })}
-      </div>
-    </div>
+            ))}
+          </tr>
+        ))}
+      </tbody>
+    </table>
   );
 }

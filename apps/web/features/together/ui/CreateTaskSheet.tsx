@@ -12,6 +12,8 @@ import { useAuth } from "@/shared/api/provider/auth-provider";
 import { cn } from "@/shared/lib/cn";
 import { Button } from "@/shared/ui";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/shared/ui/dialog/dialog";
+import { InputControl } from "@/shared/ui/input/InputControl";
+import { Select } from "@/shared/ui/select/Select";
 
 import { Column } from "../api/board.api";
 import { togetherKeys } from "../api/query-keys";
@@ -171,20 +173,20 @@ export function CreateTaskSheet({
             {step === 0 && (
               <>
                 <div>
-                  <label className="mb-1.5 block text-sm font-medium">Колонка</label>
-                  <select
+                  <label htmlFor="create-columnId" className="mb-1.5 block text-sm font-medium">
+                    Колонка
+                  </label>
+                  <Select
+                    id="create-columnId"
                     {...register("columnId")}
-                    className={cn(
-                      "h-11 w-full rounded-xl border bg-background px-3 text-base outline-none focus:border-primary",
-                      errors.columnId && "border-destructive",
-                    )}
+                    aria-invalid={Boolean(errors.columnId)}
                   >
                     {columns.map((col) => (
                       <option key={col.id} value={col.id}>
                         {col.title}
                       </option>
                     ))}
-                  </select>
+                  </Select>
                   {errors.columnId && (
                     <p className="text-xs text-destructive font-medium mt-1.5">
                       {errors.columnId.message}
@@ -193,18 +195,17 @@ export function CreateTaskSheet({
                 </div>
 
                 <div>
-                  <label className="mb-1.5 block text-sm font-medium">Что нужно сделать?</label>
-                  <input
+                  <label htmlFor="create-title" className="mb-1.5 block text-sm font-medium">
+                    Что нужно сделать?
+                  </label>
+                  <InputControl
+                    id="create-title"
                     {...register("title")}
                     type="text"
                     placeholder="Например, купить молоко"
                     autoComplete="off"
                     disabled={createMutation.isPending}
-                    className={cn(
-                      "h-11 w-full rounded-xl border bg-background px-3 text-base outline-none focus:border-primary",
-                      "disabled:opacity-50",
-                      errors.title && "border-destructive",
-                    )}
+                    aria-invalid={Boolean(errors.title)}
                   />
                   {errors.title && (
                     <p className="text-xs text-destructive font-medium mt-1.5">
@@ -213,31 +214,36 @@ export function CreateTaskSheet({
                   )}
                 </div>
 
-                <button
+                <Button
+                  variant="plain"
+                  size="none"
                   type="button"
+                  aria-pressed={Boolean(priority)}
                   onClick={() => setValue("priority", !priority, { shouldValidate: true })}
                   className={cn(
                     "w-full h-11 rounded-xl border flex items-center justify-center gap-2 text-sm font-medium transition-all",
-                    priority ? "border-amber-400 bg-amber-50 text-amber-700" : "hover:bg-muted",
+                    priority ? "border-warning bg-warning/10 text-warning" : "hover:bg-muted",
                   )}
                 >
-                  <Flag className={cn("w-4 h-4", priority && "fill-amber-500 text-amber-500")} />
+                  <Flag className={cn("w-4 h-4", priority && "fill-warning text-warning")} />
                   {priority ? "Приоритетная задача" : "Отметить приоритетной"}
-                </button>
+                </Button>
 
                 <div>
-                  <label className="mb-2 block text-sm font-medium">Кому?</label>
-                  <select
+                  <label htmlFor="create-assignee" className="mb-2 block text-sm font-medium">
+                    Кому?
+                  </label>
+                  <Select
+                    id="create-assignee"
                     {...register("assignee")}
                     disabled={createMutation.isPending}
-                    className="h-11 w-full rounded-xl border bg-background px-3 text-base"
                   >
                     {assigneeOptions.map((option) => (
                       <option key={option.value} value={option.value}>
                         {option.label}
                       </option>
                     ))}
-                  </select>
+                  </Select>
                 </div>
               </>
             )}
@@ -255,7 +261,9 @@ export function CreateTaskSheet({
                           { value: "ME" as const, label: "Я" },
                           { value: "PARTNER" as const, label: "Партнёр" },
                         ].map((opt) => (
-                          <button
+                          <Button
+                            variant="plain"
+                            size="none"
                             key={opt.value}
                             type="button"
                             onClick={() => {
@@ -271,7 +279,7 @@ export function CreateTaskSheet({
                             )}
                           >
                             {opt.label}
-                          </button>
+                          </Button>
                         ))}
                       </div>
                     </div>
@@ -287,7 +295,9 @@ export function CreateTaskSheet({
                       { key: "custom" as DueMode, label: "Выбрать" },
                       { key: "none" as DueMode, label: "Без срока" },
                     ].map((d) => (
-                      <button
+                      <Button
+                        variant="plain"
+                        size="none"
                         key={d.key}
                         type="button"
                         onClick={() => setDueMode(d.key)}
@@ -299,17 +309,16 @@ export function CreateTaskSheet({
                         )}
                       >
                         {d.label}
-                      </button>
+                      </Button>
                     ))}
                   </div>
                   {dueMode === "custom" && (
-                    <input
+                    <InputControl
                       aria-label="Дата задачи"
                       required
                       type="date"
                       value={customDate}
                       onChange={(e) => setCustomDate(e.target.value)}
-                      className="h-11 w-full rounded-xl border bg-background px-3 text-base outline-none focus:border-primary"
                     />
                   )}
                   {dueMode === "today" && (
@@ -325,18 +334,20 @@ export function CreateTaskSheet({
                 </div>
 
                 <div>
-                  <label className="mb-2 block text-sm font-medium">Повторение</label>
-                  <select
+                  <label htmlFor="create-repeat" className="mb-2 block text-sm font-medium">
+                    Повторение
+                  </label>
+                  <Select
+                    id="create-repeat"
                     {...register("repeat")}
                     disabled={createMutation.isPending}
-                    className="h-11 w-full rounded-xl border bg-background px-3 text-base outline-none focus:border-primary disabled:opacity-50"
                   >
                     {repeatOptions.map((opt) => (
                       <option key={opt.value} value={opt.value}>
                         {opt.label}
                       </option>
                     ))}
-                  </select>
+                  </Select>
                 </div>
               </>
             )}

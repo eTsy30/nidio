@@ -12,6 +12,9 @@ import { useAuth } from "@/shared/api/provider/auth-provider";
 import { cn } from "@/shared/lib/cn";
 import { Button } from "@/shared/ui";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/shared/ui/dialog/dialog";
+import { InputControl } from "@/shared/ui/input/InputControl";
+import { Textarea } from "@/shared/ui/input/Textarea";
+import { Select } from "@/shared/ui/select/Select";
 
 import { Column } from "../api/board.api";
 import { togetherKeys } from "../api/query-keys";
@@ -146,65 +149,59 @@ export function EditTaskSheet({ task, open, onClose, columns, partnerId }: EditT
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
           <div>
-            <label className="mb-1.5 block text-sm font-medium">Колонка</label>
-            <select
-              {...register("columnId")}
-              className="h-11 w-full rounded-xl border bg-background px-3 text-sm outline-none focus:border-primary"
-            >
+            <label htmlFor="edit-columnId" className="mb-1.5 block text-sm font-medium">
+              Колонка
+            </label>
+            <Select id="edit-columnId" {...register("columnId")}>
               {columns.map((col) => (
                 <option key={col.id} value={col.id}>
                   {col.title}
                 </option>
               ))}
-            </select>
+            </Select>
           </div>
 
           <div>
-            <label className="mb-1.5 block text-sm font-medium">Название</label>
-            <input
-              {...register("title")}
-              type="text"
-              className="h-11 w-full rounded-xl border bg-background px-3 text-sm outline-none focus:border-primary"
-            />
+            <label htmlFor="edit-title" className="mb-1.5 block text-sm font-medium">
+              Название
+            </label>
+            <InputControl id="edit-title" {...register("title")} type="text" />
           </div>
 
           <label className="block">
             <span className="mb-1.5 block text-sm font-medium">Описание</span>
-            <textarea
-              {...register("description")}
-              rows={3}
-              className="w-full rounded-xl border bg-background p-3 text-sm"
-            />
+            <Textarea {...register("description")} rows={3} />
           </label>
           <label className="block">
             <span className="mb-1.5 block text-sm font-medium">Дата задачи</span>
-            <input
-              type="date"
-              {...register("dueDate")}
-              className="h-11 w-full rounded-xl border bg-background px-3 text-sm"
-            />
+            <InputControl type="date" {...register("dueDate")} />
             <span className="mt-1 block text-xs text-muted-foreground">
               Оставьте пустым, если срока нет.
             </span>
           </label>
 
-          <button
+          <Button
+            variant="plain"
+            size="none"
             type="button"
+            aria-pressed={Boolean(priority)}
             onClick={() => setValue("priority", !priority, { shouldValidate: true })}
             className={cn(
               "w-full h-11 rounded-xl border flex items-center justify-center gap-2 text-sm font-medium transition-all",
-              priority ? "border-amber-400 bg-amber-50 text-amber-700" : "hover:bg-muted",
+              priority ? "border-warning bg-warning/10 text-warning" : "hover:bg-muted",
             )}
           >
-            <Flag className={cn("w-4 h-4", priority && "fill-amber-500 text-amber-500")} />
+            <Flag className={cn("w-4 h-4", priority && "fill-warning text-warning")} />
             {priority ? "Приоритетная" : "Отметить приоритетной"}
-          </button>
+          </Button>
 
           <div>
             <label className="mb-2 block text-sm font-medium">Кому?</label>
             <div className="grid grid-cols-4 gap-2">
               {assigneeOptions.map((opt) => (
-                <button
+                <Button
+                  variant="plain"
+                  size="none"
                   key={opt.value}
                   type="button"
                   onClick={() => setValue("assigneeMode", opt.value, { shouldValidate: true })}
@@ -216,7 +213,7 @@ export function EditTaskSheet({ task, open, onClose, columns, partnerId }: EditT
                   )}
                 >
                   {opt.label}
-                </button>
+                </Button>
               ))}
             </div>
           </div>
@@ -224,22 +221,18 @@ export function EditTaskSheet({ task, open, onClose, columns, partnerId }: EditT
           {assignee === "ROTATE" && (
             <label className="block">
               <span className="mb-1.5 block text-sm font-medium">Первым выполняет</span>
-              <select
-                {...register("rotationFirst")}
-                className="h-11 w-full rounded-xl border bg-background px-3 text-sm"
-              >
+              <Select {...register("rotationFirst")}>
                 <option value={user?.id}>Я</option>
                 <option value={partnerId}>Партнёр</option>
-              </select>
+              </Select>
             </label>
           )}
 
           <div>
-            <label className="mb-2 block text-sm font-medium">Повторение</label>
-            <select
-              {...register("repeat")}
-              className="h-11 w-full rounded-xl border bg-background px-3 text-sm outline-none focus:border-primary"
-            >
+            <label htmlFor="edit-repeat" className="mb-2 block text-sm font-medium">
+              Повторение
+            </label>
+            <Select id="edit-repeat" {...register("repeat")}>
               {repeatOptions
                 .filter((opt) => opt.value !== "CUSTOM" || task.repeat === "CUSTOM")
                 .map((opt) => (
@@ -247,7 +240,7 @@ export function EditTaskSheet({ task, open, onClose, columns, partnerId }: EditT
                     {opt.label}
                   </option>
                 ))}
-            </select>
+            </Select>
           </div>
 
           {updateMutation.isError && (

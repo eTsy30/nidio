@@ -18,6 +18,7 @@ import { memoryStorage } from 'multer';
 import { Authorization } from '../auth/decorators/Authorization.decorator';
 import { Authorized } from '../auth/decorators/authorized.decorator';
 
+import { detectImageMime } from './image-mime';
 import { StorageService } from './storage.service';
 
 const ALLOWED_IMAGE_TYPES = {
@@ -37,36 +38,6 @@ function maxImageSizeBytes(): number {
       : DEFAULT_MAX_IMAGE_SIZE_MB;
 
   return Math.floor(megabytes * 1024 * 1024);
-}
-
-function detectImageMime(
-  buffer: Buffer,
-): keyof typeof ALLOWED_IMAGE_TYPES | null {
-  if (
-    buffer.length >= 3 &&
-    buffer[0] === 0xff &&
-    buffer[1] === 0xd8 &&
-    buffer[2] === 0xff
-  ) {
-    return 'image/jpeg';
-  }
-
-  if (
-    buffer.length >= 8 &&
-    buffer.subarray(0, 8).equals(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]))
-  ) {
-    return 'image/png';
-  }
-
-  if (
-    buffer.length >= 12 &&
-    buffer.subarray(0, 4).toString() === 'RIFF' &&
-    buffer.subarray(8, 12).toString() === 'WEBP'
-  ) {
-    return 'image/webp';
-  }
-
-  return null;
 }
 
 @Controller('storage')
@@ -123,7 +94,7 @@ export class StorageController {
 
     const key = Array.isArray(rawKey) ? rawKey.join('/') : rawKey;
 
-    if (!key) {
+    if (!key || key.startsWith('finance/')) {
       throw new BadRequestException('Некорректный URL файла');
     }
 

@@ -3,6 +3,7 @@
 import { format, isSameDay, isSameMonth, isToday } from "date-fns";
 
 import { cn } from "@/shared/lib/cn";
+import { Button } from "@/shared/ui/button/Button";
 
 import { typeMeta } from "../model/constants";
 import { CalendarEvent } from "../model/types";
@@ -21,23 +22,25 @@ export function CalendarDay({ date, month, events, selectedDate, onSelect }: Cal
   const today = isToday(date);
   const currentMonth = isSameMonth(date, month);
 
-  const firstEvent = events[0];
-  const visibleEvents = events.slice(0, 1);
-  const hiddenCount = Math.max(events.length - 1, 0);
+  const visibleEvents = events.slice(0, 2);
+  const hiddenCount = Math.max(events.length - 2, 0);
 
   return (
-    <td>
-      <button
+    <td className="border border-border align-top">
+      <Button
+        variant="plain"
+        size="none"
         type="button"
+        aria-pressed={selected}
+        aria-current={today ? "date" : undefined}
+        aria-label={`${date.toLocaleDateString("ru-RU", { day: "numeric", month: "long", year: "numeric" })}, событий: ${events.length}`}
         onClick={() => onSelect(date)}
         className={cn(
-          "group relative flex  min-h-[78px] w-full flex-col",
-          "rounded-2xl border p-1.5 transition-all",
-          "sm:min-h-[110px] sm:p-2.5",
-          selected
-            ? "border-primary/20 bg-primary/[0.06] shadow-sm"
-            : "border-transparent hover:bg-muted/50",
-          !currentMonth && "opacity-35",
+          "group relative flex min-h-[64px] w-full min-w-0 flex-col items-stretch",
+          "rounded-none border-0 p-1 transition-colors",
+          "sm:min-h-[112px] sm:p-2",
+          selected ? "bg-primary/10 ring-2 ring-inset ring-primary" : "hover:bg-muted/50",
+          !currentMonth && "text-muted-foreground bg-muted/30",
         )}
       >
         <span
@@ -51,14 +54,14 @@ export function CalendarDay({ date, month, events, selectedDate, onSelect }: Cal
           {format(date, "d")}
         </span>
 
-        <div className="mt-2 min-w-0 flex-1">
+        <div className="mt-1 min-w-0 space-y-1">
           {visibleEvents.map((event) => (
             <div key={event.id}>
               <div className="hidden sm:block">
                 <span
                   className={cn(
-                    "flex items-center gap-1 rounded-full px-2 py-1",
-                    "truncate text-[10px] font-medium",
+                    "flex items-center gap-1 rounded-sm px-1 py-1",
+                    "truncate text-xs font-medium",
                     typeMeta[event.type].bg,
                     typeMeta[event.type].color,
                   )}
@@ -86,18 +89,7 @@ export function CalendarDay({ date, month, events, selectedDate, onSelect }: Cal
             </span>
           )}
         </div>
-
-        {firstEvent && (
-          <div className="absolute bottom-2 left-1/2 hidden -translate-x-1/2 sm:block">
-            <span
-              className="block h-1.5 w-1.5 rounded-full"
-              style={{
-                backgroundColor: typeMeta[firstEvent.type].border,
-              }}
-            />
-          </div>
-        )}
-      </button>
+      </Button>
     </td>
   );
 }

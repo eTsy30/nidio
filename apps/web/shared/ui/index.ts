@@ -1,8 +1,13 @@
 export { AuthLayout } from "./auth-layout/AuthLayout";
 export { Badge } from "./badge/Badge";
 export { Button } from "./button/Button";
+export { ChoiceButton } from "./button/ChoiceButton";
+export { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "./card/Card";
 export { Checkbox } from "./checkbox/Checkbox";
 export { Feature } from "./feature/Feature";
 export { Input } from "./input/Input";
+export { InputControl } from "./input/InputControl";
 export { PasswordInput } from "./input/PasswordInput";
+export { Textarea } from "./input/Textarea";
 export { Link } from "./link/Link";
+export { Select } from "./select/Select";

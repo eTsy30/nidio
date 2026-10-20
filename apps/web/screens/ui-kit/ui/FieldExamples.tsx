@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { Search } from "lucide-react";
 
-import { Checkbox, Input, PasswordInput } from "@/shared/ui";
+import { Checkbox, Input, PasswordInput, Textarea } from "@/shared/ui";
 import { RadioGroup, RadioGroupItem } from "@/shared/ui/radio-group";
 import { Select } from "@/shared/ui/select/Select";
 
@@ -55,6 +55,11 @@ export function FieldExamples() {
           description="Пример предупреждения."
         />
         <Input label="Без фона и рамки" variant="ghost" placeholder="Ghost" />
+        <label className="space-y-2 text-sm font-semibold">
+          <span>Заметка</span>
+          <Textarea placeholder="Необязательно" rows={3} />
+        </label>
+        <Input label="Дата события" type="date" />
       </div>
       <div className="mt-6 grid grid-cols-2 gap-3">
         <Select label="Повторять" defaultValue="none">

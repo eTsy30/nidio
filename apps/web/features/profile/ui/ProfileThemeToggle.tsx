@@ -1,32 +1,29 @@
 "use client";
 
-import { useSyncExternalStore } from "react";
-import { Moon, Sun } from "lucide-react";
+import { Check } from "lucide-react";
 
+import { themes, useTheme } from "@/shared/theme/ThemeProvider";
 import { Button } from "@/shared/ui";
 
-function subscribe(onChange: () => void) {
-  const observer = new MutationObserver(onChange);
-  observer.observe(document.documentElement, { attributes: true, attributeFilter: ["class"] });
-  return () => observer.disconnect();
-}
-
 export function ProfileThemeToggle() {
-  const dark = useSyncExternalStore(
-    subscribe,
-    () => document.documentElement.classList.contains("dark"),
-    () => false,
-  );
+  const { theme, setTheme } = useTheme();
   return (
-    <Button
-      variant="ghost"
-      className="w-full justify-start px-5"
-      aria-label={dark ? "Включить светлую тему" : "Включить тёмную тему"}
-      aria-pressed={dark}
-      onClick={() => document.documentElement.classList.toggle("dark", !dark)}
-      leftIcon={dark ? <Sun className="size-5" /> : <Moon className="size-5" />}
-    >
-      {dark ? "Тёмная тема" : "Светлая тема"}
-    </Button>
+    <fieldset className="space-y-3 p-5">
+      <legend className="px-1 font-semibold">Оформление</legend>
+      <div className="grid grid-cols-2 gap-2">
+        {themes.map(({ id, label }) => (
+          <Button
+            key={id}
+            variant={theme === id ? "primary" : "secondary"}
+            aria-pressed={theme === id}
+            onClick={() => setTheme(id)}
+          >
+            {theme === id && <Check className="size-4" aria-hidden="true" />}
+            {label}
+          </Button>
+        ))}
+      </div>
+      <p className="text-sm text-muted-foreground">Ваш выбор сохраняется на этом устройстве.</p>
+    </fieldset>
   );
 }

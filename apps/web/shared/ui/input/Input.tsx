@@ -3,6 +3,8 @@ import { cva, type VariantProps } from "class-variance-authority";
 
 import { cn } from "@/shared/lib/cn";
 
+import { InputControl } from "./InputControl";
+
 const inputVariants = cva(
   [
     "inline-flex w-full items-center",
@@ -117,7 +119,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
               {leftIcon}
             </span>
           )}
-          <input
+          <InputControl
             id={inputId}
             ref={ref}
             required={required}

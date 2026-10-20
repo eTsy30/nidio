@@ -90,7 +90,9 @@ export function CalendarHeader({
 
         <div className="order-3 col-span-2 flex min-w-0 flex-wrap items-center justify-between gap-2 xl:order-none xl:col-span-1 xl:justify-center">
           <div className="relative">
-            <button
+            <Button
+              variant="plain"
+              size="none"
               type="button"
               onClick={() => {
                 setMonthPickerOpen((open) => !open);
@@ -117,11 +119,13 @@ export function CalendarHeader({
                   monthPickerOpen && "rotate-180",
                 )}
               />
-            </button>
+            </Button>
 
             {monthPickerOpen && (
               <>
-                <button
+                <Button
+                  variant="plain"
+                  size="none"
                   type="button"
                   aria-label="Закрыть выбор месяца"
                   className="fixed inset-0 z-40 cursor-default"
@@ -133,25 +137,29 @@ export function CalendarHeader({
                   onClick={(event) => event.stopPropagation()}
                 >
                   <div className="mb-3 flex items-center justify-between">
-                    <button
+                    <Button
+                      variant="plain"
+                      size="none"
                       type="button"
                       onClick={() => handleMonthChange(new Date(currentYear - 1, currentMonth, 1))}
                       className="flex h-9 w-9 items-center justify-center rounded-xl transition-colors hover:bg-muted"
                       aria-label="Предыдущий год"
                     >
                       <ChevronLeft className="h-4 w-4" />
-                    </button>
+                    </Button>
 
                     <span className="text-sm font-semibold">{currentYear}</span>
 
-                    <button
+                    <Button
+                      variant="plain"
+                      size="none"
                       type="button"
                       onClick={() => handleMonthChange(new Date(currentYear + 1, currentMonth, 1))}
                       className="flex h-9 w-9 items-center justify-center rounded-xl transition-colors hover:bg-muted"
                       aria-label="Следующий год"
                     >
                       <ChevronRight className="h-4 w-4" />
-                    </button>
+                    </Button>
                   </div>
 
                   <div className="grid grid-cols-3 gap-1">
@@ -159,7 +167,9 @@ export function CalendarHeader({
                       const selected = date.getMonth() === currentMonth;
 
                       return (
-                        <button
+                        <Button
+                          variant="plain"
+                          size="none"
                           key={date.getMonth()}
                           type="button"
                           onClick={() => {
@@ -174,7 +184,7 @@ export function CalendarHeader({
                           {format(date, "LLL", {
                             locale: ru,
                           })}
-                        </button>
+                        </Button>
                       );
                     })}
                   </div>
@@ -185,7 +195,9 @@ export function CalendarHeader({
 
           <div className="flex shrink-0 items-center rounded-xl bg-muted p-1">
             {(["week", "month", "year"] as ViewMode[]).map((view) => (
-              <button
+              <Button
+                variant="plain"
+                size="none"
                 key={view}
                 type="button"
                 onClick={() => {
@@ -201,14 +213,16 @@ export function CalendarHeader({
                 )}
               >
                 {view === "month" ? "Месяц" : view === "week" ? "Неделя" : "Год"}
-              </button>
+              </Button>
             ))}
           </div>
         </div>
 
         <div className="flex shrink-0 items-center gap-2">
           <div className="flex items-center rounded-xl bg-muted p-1">
-            <button
+            <Button
+              variant="plain"
+              size="none"
               type="button"
               onClick={() => onScopeChange(EventScope.PERSONAL)}
               className={cn(
@@ -220,9 +234,11 @@ export function CalendarHeader({
               )}
             >
               Мой
-            </button>
+            </Button>
 
-            <button
+            <Button
+              variant="plain"
+              size="none"
               type="button"
               onClick={() => onScopeChange(EventScope.COUPLE)}
               className={cn(
@@ -234,7 +250,7 @@ export function CalendarHeader({
               )}
             >
               Наш
-            </button>
+            </Button>
           </div>
 
           <div className="relative">
@@ -257,7 +273,9 @@ export function CalendarHeader({
 
             {filterOpen && (
               <>
-                <button
+                <Button
+                  variant="plain"
+                  size="none"
                   type="button"
                   aria-label="Закрыть фильтр"
                   className="fixed inset-0 z-40 cursor-default"

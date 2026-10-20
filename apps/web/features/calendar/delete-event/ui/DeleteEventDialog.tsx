@@ -7,6 +7,7 @@ import { ru } from "date-fns/locale";
 
 import { DELETE_EVENT } from "@/features/calendar/graphql";
 import { type CalendarEvent, EventRepeat } from "@/features/calendar/types";
+import { Button } from "@/shared/ui/button/Button";
 import {
   Dialog,
   DialogContent,
@@ -136,23 +137,23 @@ export function DeleteEventDialog({
         )}
 
         <DialogFooter className="mt-2 gap-2 sm:gap-2">
-          <button
+          <Button
+            variant="secondary"
             type="button"
             disabled={loading}
             onClick={() => handleOpenChange(false)}
-            className="rounded-xl border px-4 py-2 text-sm font-medium transition-colors hover:bg-muted disabled:pointer-events-none disabled:opacity-50"
           >
             Отмена
-          </button>
+          </Button>
 
-          <button
+          <Button
+            variant="destructive"
             type="button"
             disabled={loading}
             onClick={() => void handleDelete()}
-            className="rounded-xl bg-destructive px-4 py-2 text-sm font-medium text-destructive-foreground transition-colors hover:bg-destructive/90 disabled:pointer-events-none disabled:opacity-50"
           >
             {loading ? "Удаляем…" : "Удалить"}
-          </button>
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

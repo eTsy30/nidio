@@ -214,6 +214,7 @@ function CalendarDayButton({
 
   return (
     <Button
+      ref={ref}
       variant="ghost"
       data-day={day.date.toLocaleDateString(locale?.code)}
       data-selected-single={
@@ -227,7 +228,7 @@ function CalendarDayButton({
       data-range-middle={modifiers.range_middle}
       className={cn(
         "relative isolate z-10 flex",
-        "aspect-square size-auto w-full min-w-(--cell-size)",
+        "aspect-square size-auto w-full min-w-(--cell-size) p-0",
         "flex-col gap-1 border-0",
         "leading-none font-normal",
         "group-data-[focused=true]/day:relative",

@@ -6,6 +6,7 @@ import { ru } from "date-fns/locale";
 import { getDateKey, getDaysForWeek } from "@/features/calendar/model/utils";
 import { type CalendarEvent } from "@/features/calendar/types";
 import { cn } from "@/shared/lib/cn";
+import { Button } from "@/shared/ui/button/Button";
 
 import { EventCard } from "./EventCard";
 
@@ -33,7 +34,9 @@ export function WeekView({
           const today = isToday(date);
 
           return (
-            <button
+            <Button
+              variant="plain"
+              size="none"
               key={date.toISOString()}
               type="button"
               onClick={() => onSelectDate(date)}
@@ -52,7 +55,7 @@ export function WeekView({
               </span>
 
               <span className="ml-1">{format(date, "d")}</span>
-            </button>
+            </Button>
           );
         })}
       </div>
@@ -74,7 +77,9 @@ export function WeekView({
                   : "border-transparent hover:bg-muted/50",
               )}
             >
-              <button
+              <Button
+                variant="plain"
+                size="none"
                 type="button"
                 onClick={() => onSelectDate(date)}
                 className="flex w-full justify-center rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/30"
@@ -90,7 +95,7 @@ export function WeekView({
                 >
                   {format(date, "d")}
                 </span>
-              </button>
+              </Button>
 
               <div className="mt-2 flex min-h-0 flex-col gap-1 overflow-y-auto">
                 {events.map((event) => (

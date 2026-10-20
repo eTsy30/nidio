@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Info, Lock, LogOut, Mail, Palette } from "lucide-react";
+import { Info, Lock, LogOut, Mail } from "lucide-react";
 
 import { useMe } from "@/features/auth";
 import {
@@ -12,6 +12,7 @@ import {
   ProfileRow,
   ProfileSection,
 } from "@/features/profile";
+import { ProfileThemeToggle } from "@/features/profile/ui/ProfileThemeToggle";
 import { PushSettings } from "@/features/push/PushSettings";
 import { useCurrentCouple } from "@/features/relationship/hook/use-relationship";
 import { useUpdateRelationship } from "@/features/relationship/hook/use-relationship";
@@ -60,12 +61,7 @@ export function ProfileView() {
         <ProfileSection title="Настройки">
           <PushSettings />
 
-          <ProfileRow
-            label="Внешний вид"
-            description="Настройки внешнего вида приложения"
-            icon={<Palette className="size-4" />}
-            disabled
-          />
+          <ProfileThemeToggle />
         </ProfileSection>
 
         <ProfileSection title="Безопасность">

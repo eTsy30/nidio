@@ -12,6 +12,7 @@ export const routes = {
 
   home: "/",
   calendar: "/calendar",
+  finances: "/finances",
   together: "/together",
   space: "/space",
   profile: "/profile",

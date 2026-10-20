@@ -2,7 +2,17 @@ import { Checkbox, Input } from "@/shared/ui";
 
 import type { EventFormModel } from "../model/use-event-form";
 
-export function EventDateFields({ form }: { form: EventFormModel }) {
+type DateForm = Pick<
+  EventFormModel,
+  "allDay" | "setAllDay" | "startTime" | "setStartTime" | "endTime" | "setEndTime"
+> & {
+  startDate: string;
+  endDate: string;
+  setStartDate: (date: string) => void;
+  setEndDate: (date: string) => void;
+};
+
+export function EventDateFields({ form }: { form: DateForm }) {
   return (
     <div className="space-y-3 border-y border-border py-3">
       <div className="flex min-h-11 items-center">

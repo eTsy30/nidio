@@ -8,6 +8,7 @@ import { AuthModule } from './auth/auth.module';
 import { BoardModule } from './board/board.module';
 import { CalendarModule } from './calendar/calendar.module';
 import { EmailModule } from './email/email.module';
+import { FinanceModule } from './finance/finance.module';
 import { HealthController } from './health/health.controller';
 import { PrismaModule } from './prisma/prisma.module';
 import { RealtimeModule } from './realtime/realtime.module';
@@ -48,6 +49,7 @@ import { UsersModule } from './users/users.module';
       }),
     }),
     CalendarModule,
+    FinanceModule,
   ],
 })
 export class AppModule {}

@@ -12,6 +12,7 @@ import { togetherKeys } from "@/features/together/api/query-keys";
 import { templatesApi } from "@/features/together/api/templates.api";
 import { cn } from "@/shared/lib/cn";
 import { Button } from "@/shared/ui";
+import { InputControl } from "@/shared/ui/input/InputControl";
 
 import { Column } from "../api/board.api";
 import { TogetherTask } from "../model/task.types";
@@ -162,7 +163,9 @@ export function ColumnCard({
           </div>
 
           <div ref={menuRef} className="relative shrink-0">
-            <button
+            <Button
+              variant="plain"
+              size="none"
               type="button"
               aria-label="Меню колонки"
               aria-expanded={showMenu}
@@ -173,34 +176,38 @@ export function ColumnCard({
               className="p-1.5 rounded-full hover:bg-black/5 transition-colors"
             >
               <MoreVertical className="w-4 h-4 text-muted-foreground" />
-            </button>
+            </Button>
 
             {showMenu && (
-              <div className="absolute right-0 top-8 z-20 w-48 bg-card border rounded-xl shadow-lg p-1">
-                <button
+              <div className="absolute right-0 top-8 z-20 w-48 bg-card border rounded-md shadow-lg p-1">
+                <Button
+                  variant="plain"
+                  size="none"
                   type="button"
                   onPointerDown={(event) => {
                     event.stopPropagation();
                   }}
                   onClick={handleSaveAsTemplate}
-                  className="w-full flex items-center gap-2 px-3 py-2 text-xs rounded-lg hover:bg-muted transition-colors text-left"
+                  className="w-full flex items-center gap-2 px-3 py-2 text-xs rounded-md hover:bg-muted transition-colors text-left"
                 >
                   <Save className="w-3.5 h-3.5" />
                   Сохранить как шаблон
-                </button>
+                </Button>
 
-                <button
+                <Button
+                  variant="plain"
+                  size="none"
                   type="button"
                   disabled={deleteMutation.isPending}
                   onPointerDown={(event) => {
                     event.stopPropagation();
                   }}
                   onClick={handleDelete}
-                  className="w-full flex items-center gap-2 px-3 py-2 text-xs rounded-lg hover:bg-destructive/10 text-destructive transition-colors text-left disabled:opacity-50"
+                  className="w-full flex items-center gap-2 px-3 py-2 text-xs rounded-md hover:bg-destructive/10 text-destructive transition-colors text-left disabled:opacity-50"
                 >
                   <Trash2 className="w-3.5 h-3.5" />
                   Удалить
-                </button>
+                </Button>
               </div>
             )}
           </div>
@@ -208,7 +215,7 @@ export function ColumnCard({
 
         {showSaveTemplate && (
           <div className="bg-white/80 rounded-xl p-2 space-y-2">
-            <input
+            <InputControl
               type="text"
               value={templateName}
               onChange={(event) => setTemplateName(event.target.value)}
@@ -265,7 +272,9 @@ export function ColumnCard({
           </SortableContext>
         </div>
 
-        <button
+        <Button
+          variant="plain"
+          size="none"
           type="button"
           onClick={onCreateTask}
           className={cn(
@@ -276,7 +285,7 @@ export function ColumnCard({
         >
           <Plus className="w-3.5 h-3.5" />
           Добавить задачу
-        </button>
+        </Button>
       </div>
     </div>
   );

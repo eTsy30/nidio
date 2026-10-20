@@ -25,6 +25,8 @@ import { boardApi } from "@/features/together/api/board.api";
 import { togetherKeys } from "@/features/together/api/query-keys";
 import { cn } from "@/shared/lib/cn";
 import { Button } from "@/shared/ui";
+import { Card } from "@/shared/ui/card/Card";
+import { InputControl } from "@/shared/ui/input/InputControl";
 
 import type { Board } from "../api/board.api";
 import { isTaskOverdue } from "../lib/task-utils";
@@ -206,7 +208,9 @@ export function BoardView({
   return (
     <>
       <div className="shrink-0 flex items-center gap-1 rounded-xl border bg-muted/40 p-1 w-fit">
-        <button
+        <Button
+          variant="plain"
+          size="none"
           type="button"
           onClick={() => setTaskViewMode("active")}
           className={cn(
@@ -219,9 +223,11 @@ export function BoardView({
           )}
         >
           Активные
-        </button>
+        </Button>
 
-        <button
+        <Button
+          variant="plain"
+          size="none"
           type="button"
           onClick={() => setTaskViewMode("completed")}
           className={cn(
@@ -234,7 +240,7 @@ export function BoardView({
           )}
         >
           Выполненные
-        </button>
+        </Button>
       </div>
 
       <DndContext
@@ -264,8 +270,8 @@ export function BoardView({
 
             <div className="w-[min(82vw,320px)] shrink-0">
               {isAdding ? (
-                <div className="bg-card border rounded-3xl p-4 space-y-3">
-                  <input
+                <Card padding="sm" className="space-y-3">
+                  <InputControl
                     type="text"
                     value={newColumnTitle}
                     onChange={(event) => setNewColumnTitle(event.target.value)}
@@ -326,9 +332,11 @@ export function BoardView({
                       Отмена
                     </Button>
                   </div>
-                </div>
+                </Card>
               ) : (
-                <button
+                <Button
+                  variant="plain"
+                  size="none"
                   type="button"
                   onClick={() => setIsAdding(true)}
                   className={cn(
@@ -341,13 +349,13 @@ export function BoardView({
                 >
                   <Plus className="w-4 h-4" />
                   Новая колонка
-                </button>
+                </Button>
               )}
             </div>
           </div>
         </SortableContext>
 
-        <DragOverlay>
+        <DragOverlay dropAnimation={null}>
           {activeTask ? (
             <TaskCard
               task={activeTask}

@@ -26,6 +26,7 @@ import {
 import { SelectedDayDrawer } from "@/features/calendar/ui/SelectedDayDrawer";
 import { useAuth } from "@/shared/api/provider/auth-provider";
 import { cn } from "@/shared/lib/cn";
+import { Button } from "@/shared/ui/button/Button";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/shared/ui/dialog/dialog";
 
 import { useCalendarEvents } from "../model/useCalendarEvents";
@@ -287,13 +288,15 @@ export default function CalendarWidget() {
 
           <p className="mt-1 text-xs text-muted-foreground">{error.message}</p>
 
-          <button
+          <Button
+            variant="plain"
+            size="none"
             type="button"
             className="mt-4 rounded-xl border px-4 py-2 text-sm"
             onClick={() => void refetch()}
           >
             Повторить
-          </button>
+          </Button>
         </div>
       </main>
     );
@@ -395,8 +398,8 @@ export default function CalendarWidget() {
 
       {modal.kind === "create" && selectedDate && (
         <Dialog open onOpenChange={(open) => !open && closeModal()}>
-          <DialogContent className="z-[60] flex max-h-[calc(100dvh-32px-env(safe-area-inset-bottom))] flex-col gap-3 overflow-hidden rounded-2xl p-5 sm:max-w-lg">
-            <div className="shrink-0 pr-8">
+          <DialogContent className="z-[60] flex max-h-[calc(100dvh-32px-env(safe-area-inset-bottom))] flex-col gap-5 overflow-hidden rounded-2xl p-5 sm:max-w-lg">
+            <div className="shrink-0 space-y-2 pr-12">
               <DialogTitle>Новое событие</DialogTitle>
               <DialogDescription>Добавьте момент в календарь</DialogDescription>
             </div>

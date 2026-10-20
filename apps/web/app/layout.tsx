@@ -5,11 +5,12 @@ import { AuthProvider } from "@/app/providers/AuthProvider";
 import { ApolloProviderWrapper } from "@/shared/api/provider/apollo-provider";
 import { QueryProvider } from "@/shared/api/query/query-provider";
 import { RealtimeProvider } from "@/shared/realtime";
+import { ThemeProvider } from "@/shared/theme/ThemeProvider";
 
 import "@/shared/styles/globals.css";
 
 export const viewport: Viewport = {
-  themeColor: "#af4b2b",
+  themeColor: "#f6f7f9",
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
@@ -44,9 +45,11 @@ export default function RootLayout({
         <Toaster />
         <QueryProvider>
           <AuthProvider>
-            <ApolloProviderWrapper>
-              <RealtimeProvider>{children}</RealtimeProvider>
-            </ApolloProviderWrapper>
+            <ThemeProvider>
+              <ApolloProviderWrapper>
+                <RealtimeProvider>{children}</RealtimeProvider>
+              </ApolloProviderWrapper>
+            </ThemeProvider>
           </AuthProvider>
         </QueryProvider>
       </body>

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useAcceptInvite, useInvite } from "@/features/relationship/hook/use-relationship";
 import { AcceptInviteCard } from "@/features/relationship/ui/accept-invite-card/AcceptInviteCard";
 import { cn } from "@/shared/lib/cn";
+import { Card } from "@/shared/ui/card/Card";
 
 interface InviteLandingViewProps {
   token: string;
@@ -39,12 +40,12 @@ export function InviteLandingView({ token }: InviteLandingViewProps) {
             }}
           />
         ) : (
-          <div className="rounded-3xl border border-border bg-card p-8 text-center shadow-sm">
+          <Card padding="lg" className="text-center">
             <h1 className="text-xl font-semibold">Приглашение недействительно</h1>
             <p className="mt-2 text-sm text-muted-foreground">
               Возможно, срок действия приглашения истёк или оно было отозвано.
             </p>
-          </div>
+          </Card>
         )}
       </div>
     </main>

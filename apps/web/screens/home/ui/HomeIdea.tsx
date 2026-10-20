@@ -4,6 +4,8 @@ import { useState } from "react";
 import Link from "next/link";
 import { ArrowRight, Shuffle, Sparkles } from "lucide-react";
 
+import { Button } from "@/shared/ui/button/Button";
+
 const ideas = [
   {
     title: "Вечер без спешки",
@@ -33,15 +35,17 @@ export function HomeIdea() {
           <Sparkles className="size-4" aria-hidden="true" />
           Идея для вас
         </p>
-        <button
+        <Button
+          variant="ghost"
+          size="sm"
           type="button"
           onClick={() => setIndex((value) => (value + 1) % ideas.length)}
-          className="flex min-h-11 items-center gap-2 rounded-xl px-3 text-xs font-medium text-foreground transition-colors hover:bg-success/10"
+          className="hover:bg-success/10"
           aria-label="Показать другую идею"
         >
           <Shuffle className="size-4" aria-hidden="true" />
           Другая
-        </button>
+        </Button>
       </div>
       <div key={index} className="animate-fade-up" aria-live="polite" aria-atomic="true">
         <h2 className="mt-4 text-xl font-semibold">{idea.title}</h2>

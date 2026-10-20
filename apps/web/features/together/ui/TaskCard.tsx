@@ -5,6 +5,7 @@ import { ru } from "date-fns/locale";
 import { BellRing, CheckCircle2, CircleCheck, Flag, Pencil, Repeat, Trash2 } from "lucide-react";
 
 import { cn } from "@/shared/lib/cn";
+import { Button } from "@/shared/ui/button/Button";
 import { Checkbox } from "@/shared/ui/checkbox/Checkbox";
 
 import { formatFutureDate, formatOverdueStatus } from "../lib/task-utils";
@@ -92,7 +93,9 @@ export function TaskCard({ task, currentUserId, partnerId, onEdit }: TaskCardPro
         onPointerDown={(event) => event.stopPropagation()}
       >
         {isCreator && !isCompleted && (
-          <button
+          <Button
+            variant="plain"
+            size="none"
             type="button"
             aria-label="Редактировать задачу"
             title="Редактировать"
@@ -107,11 +110,13 @@ export function TaskCard({ task, currentUserId, partnerId, onEdit }: TaskCardPro
             )}
           >
             <Pencil className="h-3.5 w-3.5" />
-          </button>
+          </Button>
         )}
 
         {canActivate && (
-          <button
+          <Button
+            variant="plain"
+            size="none"
             type="button"
             aria-label="Сделать задачу активной"
             title="Сделать активной"
@@ -128,10 +133,12 @@ export function TaskCard({ task, currentUserId, partnerId, onEdit }: TaskCardPro
             )}
           >
             <CheckCircle2 className="h-3.5 w-3.5" />
-          </button>
+          </Button>
         )}
 
-        <button
+        <Button
+          variant="plain"
+          size="none"
           type="button"
           aria-label="Удалить задачу"
           title="Удалить"
@@ -148,7 +155,7 @@ export function TaskCard({ task, currentUserId, partnerId, onEdit }: TaskCardPro
           )}
         >
           <Trash2 className="h-3.5 w-3.5" />
-        </button>
+        </Button>
       </div>
 
       <div className="flex items-start gap-2">
@@ -210,7 +217,9 @@ export function TaskCard({ task, currentUserId, partnerId, onEdit }: TaskCardPro
           </div>
 
           {canNudge && (
-            <button
+            <Button
+              variant="plain"
+              size="none"
               type="button"
               disabled={nudgeMutation.isPending}
               onPointerDown={(event) => event.stopPropagation()}
@@ -222,7 +231,7 @@ export function TaskCard({ task, currentUserId, partnerId, onEdit }: TaskCardPro
             >
               <BellRing className="h-3.5 w-3.5" />
               {nudgeMutation.isPending ? "Отправляем…" : "Пни меня"}
-            </button>
+            </Button>
           )}
 
           {isTogetherTask && (

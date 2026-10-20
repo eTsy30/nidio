@@ -3,39 +3,39 @@
      Colors
   ========================================== */
 
-  --primary: #af4b2b;
+  --primary: #244cce;
   --primary-foreground: #ffffff;
 
-  --accent: #ff7f50;
+  --accent: #244cce;
   --accent-foreground: #ffffff;
 
-  --background: #f8f6f2;
+  --background: #f6f7f9;
   --card: #ffffff;
   --popover: var(--card);
 
-  --foreground: #292923;
+  --foreground: #191d27;
 
-  --muted: #ede8e2;
-  --muted-foreground: #69675f;
+  --muted: #e9ecf2;
+  --muted-foreground: #596170;
 
   --secondary: var(--muted);
   --secondary-foreground: var(--foreground);
 
-  --border: #e6e3dc;
+  --border: #d8dde7;
   --input: var(--border);
 
   --ring: var(--primary);
 
   --overlay: rgb(0 0 0 / 0.45);
-  --success: #4f8a5b;
+  --success: #297442;
 
   --success-foreground: #ffffff;
 
-  --warning: #d79a2b;
+  --warning: #946000;
 
   --warning-foreground: #ffffff;
 
-  --destructive: #c95a4a;
+  --destructive: #b93636;
 
   --destructive-foreground: #ffffff;
 
@@ -78,25 +78,25 @@
 }
 
 .dark {
-  --primary: #c56240;
-  --primary-foreground: #ffffff;
+  --primary: #a7bcff;
+  --primary-foreground: #12151d;
 
-  --accent: #ff9068;
-  --accent-foreground: #ffffff;
+  --accent: #a7bcff;
+  --accent-foreground: #12151d;
 
-  --background: #121212;
-  --card: #222120;
+  --background: #12151d;
+  --card: #1c212d;
   --popover: var(--card);
 
   --foreground: #f5f5f5;
 
-  --muted: #2a2a2a;
+  --muted: #272e3d;
   --muted-foreground: #a1a1aa;
 
   --secondary: var(--muted);
   --secondary-foreground: var(--foreground);
 
-  --border: #2c2c2c;
+  --border: #3b4457;
   --input: var(--border);
 
   --ring: var(--primary);
@@ -109,7 +109,7 @@
   --shadow-modal: 0 32px 80px rgb(0 0 0 / 0.45);
   --success: #63b873;
 
-  --success-foreground: #ffffff;
+  --success-foreground: #12151d;
 
   --warning: #f2b84b;
 
@@ -117,7 +117,27 @@
 
   --destructive: #e37a6b;
 
-  --destructive-foreground: #ffffff;
+  --destructive-foreground: #12151d;
+}
+
+[data-theme="sea"] {
+  --primary: #086878;
+  --accent: #086878;
+  --background: #f0f8f8;
+  --foreground: #15363c;
+  --muted: #dceeee;
+  --muted-foreground: #48676d;
+  --border: #bed9dc;
+}
+
+[data-theme="berry"] {
+  --primary: #9b285f;
+  --accent: #9b285f;
+  --background: #fcf5f9;
+  --foreground: #36202c;
+  --muted: #f2e3ec;
+  --muted-foreground: #76576a;
+  --border: #e4cdd9;
 }
 
 @theme inline {
@@ -137,6 +157,8 @@
   --color-card-foreground: var(--foreground);
   --color-surface: var(--muted);
   --color-popover: var(--popover);
+  --color-popover-foreground: var(--foreground);
+  --color-overlay: var(--overlay);
 
   --color-foreground: var(--foreground);
 

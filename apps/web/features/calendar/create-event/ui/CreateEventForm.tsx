@@ -37,12 +37,12 @@ export function CreateEventForm({ scope, date, onCancel, onSubmit }: CreateEvent
   );
   const { step, setStep, saving, error, title, handleSubmit } = form;
   return (
-    <form onSubmit={handleSubmit} className="flex min-h-0 flex-col gap-3 px-1 pb-1">
+    <form onSubmit={handleSubmit} className="flex min-h-0 flex-col gap-5">
       <p className="text-sm text-muted-foreground">
         {format(date, "d MMMM yyyy", { locale: ru })} ·{" "}
         {scope === EventScope.PERSONAL ? "Мой" : "Наш"} · Шаг {step + 1} из 2
       </p>
-      <div className="min-h-0 space-y-3 overflow-y-auto overscroll-contain px-1">
+      <div className="min-h-0 space-y-4 overflow-y-auto overscroll-contain p-1">
         <EventFormFields form={form} mode="create" />
         {error && (
           <p role="alert" className="text-sm text-destructive">
@@ -50,7 +50,7 @@ export function CreateEventForm({ scope, date, onCancel, onSubmit }: CreateEvent
           </p>
         )}
       </div>
-      <div className="flex shrink-0 gap-2 border-t pt-3">
+      <div className="flex shrink-0 gap-2 pt-1">
         <Button
           type="button"
           variant="ghost"

@@ -1,0 +1,503 @@
+{
+  "version": 1,
+  "skills": {
+    "animate": {
+      "source": "emilkowalski/skills",
+      "sourceType": "github",
+      "skillPath": "skills/animate/SKILL.md",
+      "computedHash": "7598d33e7f60dd5c24531eaaa897621cc3bdb48e8050324211627973bc59c4ce"
+    },
+    "animate-expo": {
+      "source": "emilkowalski/skills",
+      "sourceType": "github",
+      "skillPath": "skills/animate-expo/SKILL.md",
+      "computedHash": "5de09593d564091f9db60aabede7bed760251e118548272050a247c653c417d2"
+    },
+    "animation-performance": {
+      "source": "emilkowalski/skills",
+      "sourceType": "github",
+      "skillPath": "skills/animation-performance/SKILL.md",
+      "computedHash": "b68ba704106e27b1f83df0cb817e09ec947abb76825d86eabdee2954b6c1bb84"
+    },
+    "animation-vocabulary": {
+      "source": "emilkowalski/skills",
+      "sourceType": "github",
+      "skillPath": "skills/animation-vocabulary/SKILL.md",
+      "computedHash": "0058036865ecbb864fd0c4132efcc62425355d6e99c7e6ef6a936742d62a5dea"
+    },
+    "api-and-interface-design": {
+      "source": "addyosmani/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/api-and-interface-design/SKILL.md",
+      "computedHash": "8bdbf1fca81bef9258d7e0d9726f933f25677ec8537792e084a3fb7c54acf2ba"
+    },
+    "apple-design": {
+      "source": "emilkowalski/skills",
+      "sourceType": "github",
+      "skillPath": "skills/apple-design/SKILL.md",
+      "computedHash": "0190417d092a0df447b000154e39733ea6d97efad6d3bec8a6ce3845aeb88914"
+    },
+    "ask-sonner": {
+      "source": "emilkowalski/skills",
+      "sourceType": "github",
+      "skillPath": "skills/ask-sonner/SKILL.md",
+      "computedHash": "8bd257b845985f4b35b603b510a126604176521094af79c4b7347ffeb8a8f7ab"
+    },
+    "brandkit": {
+      "source": "Leonxlnx/taste-skill",
+      "sourceType": "github",
+      "skillPath": "skills/brandkit/SKILL.md",
+      "computedHash": "ebf6dac89786b795836c1cf3b8d4bdbb865dd4cbf4ce35740115c767d2a47bbb"
+    },
+    "break-ui": {
+      "source": "emilkowalski/skills",
+      "sourceType": "github",
+      "skillPath": "skills/break-ui/SKILL.md",
+      "computedHash": "60ada67662925f4df5e3c6ff41cac3ab241b66f8898100a5ffcd7ba7196cb868"
+    },
+    "browser-qa": {
+      "source": "argenr123-cmd/codex-frontend-skills",
+      "sourceType": "github",
+      "skillPath": "plugins/frontend-browser-qa/skills/browser-qa/SKILL.md",
+      "computedHash": "a1f213f6bb5c01b0c279e9df59613d1efabf2148662f54fbfd7784b22787ce67"
+    },
+    "browser-testing-with-devtools": {
+      "source": "addyosmani/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/browser-testing-with-devtools/SKILL.md",
+      "computedHash": "639950ea71851d9c4919608cba8b6276cd1ba30cd82acdc4949c701537eed661"
+    },
+    "ci-cd-and-automation": {
+      "source": "addyosmani/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/ci-cd-and-automation/SKILL.md",
+      "computedHash": "578b098a7d2352ccdac8b8abdc40eb6803538e81cf8382f138da6188a655087c"
+    },
+    "code-review-and-quality": {
+      "source": "addyosmani/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/code-review-and-quality/SKILL.md",
+      "computedHash": "0667c7af98996c0bec4fb0eb444680bdbf1da1d6a3cfdf5dbe8cbd350d9d2752"
+    },
+    "code-review-excellence": {
+      "source": "argenr123-cmd/codex-frontend-skills",
+      "sourceType": "github",
+      "skillPath": "source-packs/frontend-trusted-upstreams/awesome-skills__code-review-skill/SKILL.md",
+      "computedHash": "3dbfcabe687633e3ef2c75ff136f9d3d6cb8e6f236de60d7c616957d8b23a85f"
+    },
+    "code-simplification": {
+      "source": "addyosmani/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/code-simplification/SKILL.md",
+      "computedHash": "7973e746e8e2ea5004d520da970c15a106824b8d6be1bcff48908aec021f3677"
+    },
+    "constraint-driven-development": {
+      "source": "addyosmani/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/constraint-driven-development/SKILL.md",
+      "computedHash": "7cdf20ff7d27eb3103b206033a1d87af7afe4a648162f09cd382fc8e3cb9a42b"
+    },
+    "context-engineering": {
+      "source": "addyosmani/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/context-engineering/SKILL.md",
+      "computedHash": "807434a4b178635a5539a1da241815ba7228f00b71f8e3ccd529472ce3bcaf80"
+    },
+    "dashboard-prototype": {
+      "source": "argenr123-cmd/codex-frontend-skills",
+      "sourceType": "github",
+      "skillPath": "plugins/frontend-prototypes/skills/dashboard-prototype/SKILL.md",
+      "computedHash": "f8220463e7f60989b1a9e7762c4f6359221ba497a6c47cb2dbebab4f94de6b07"
+    },
+    "debugging-and-error-recovery": {
+      "source": "addyosmani/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/debugging-and-error-recovery/SKILL.md",
+      "computedHash": "6f437bc609eb8d0dc7f4768c17c9aeb85c9c7632bc36703af9f1367ffb47237a"
+    },
+    "deprecation-and-migration": {
+      "source": "addyosmani/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/deprecation-and-migration/SKILL.md",
+      "computedHash": "0d7b2002e250c02a260f6bc502d7a798ab8e8ca0c020c54d7b0f16053935c72c"
+    },
+    "design-brainstorming": {
+      "source": "argenr123-cmd/codex-frontend-skills",
+      "sourceType": "github",
+      "skillPath": "plugins/frontend-strategy-review/skills/design-brainstorming/SKILL.md",
+      "computedHash": "30efaea683a5e72c09faac32115cbdf6aed57cd6aa66e96156a79ec8add587c2"
+    },
+    "design-taste-frontend": {
+      "source": "Leonxlnx/taste-skill",
+      "sourceType": "github",
+      "skillPath": "skills/taste-skill/SKILL.md",
+      "computedHash": "a5d2a6d7613d5f6665997cca26d5a3472c46a39857dd34ba3329212945da0dc7"
+    },
+    "design-taste-frontend-v1": {
+      "source": "Leonxlnx/taste-skill",
+      "sourceType": "github",
+      "skillPath": "skills/taste-skill-v1/SKILL.md",
+      "computedHash": "f9d5d320e20564a6047ef5e8e707e350c45b9a5b1e58e392252333967c885425"
+    },
+    "design-taste-frontend-v2-experimental": {
+      "source": "Leonxlnx/taste-skill",
+      "sourceType": "github",
+      "skillPath": "skills/taste-skill-v2-experimental/SKILL.md",
+      "computedHash": "e0d90342a08c0bfb9160574f82f6f43b3e0e4b77168d0efaf2b9b24a6228eb4c"
+    },
+    "documentation-and-adrs": {
+      "source": "addyosmani/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/documentation-and-adrs/SKILL.md",
+      "computedHash": "f1bd038e74194364c1dcdb3dd0a72194ffd3ca9d3a103c125ca1a62e801a0cc4"
+    },
+    "doubt-driven-development": {
+      "source": "addyosmani/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/doubt-driven-development/SKILL.md",
+      "computedHash": "b13f18a68abf2a1fd0c30adeac9bec0ee551adec9f2a1dc2700f1a6e3eb48092"
+    },
+    "editorial-prototype": {
+      "source": "argenr123-cmd/codex-frontend-skills",
+      "sourceType": "github",
+      "skillPath": "plugins/frontend-prototypes/skills/editorial-prototype/SKILL.md",
+      "computedHash": "958e74219df7d6a20f615129dfe20fad68a99761187b18194aa631102d09cb34"
+    },
+    "emil-design-eng": {
+      "source": "emilkowalski/skills",
+      "sourceType": "github",
+      "skillPath": "skills/emil-design-eng/SKILL.md",
+      "computedHash": "51f2537e04d15911b41d78e2de24c36a0e26d41beae15e82a954fe5496a5eda9"
+    },
+    "find-animation-opportunities": {
+      "source": "emilkowalski/skills",
+      "sourceType": "github",
+      "skillPath": "skills/find-animation-opportunities/SKILL.md",
+      "computedHash": "465d087c41768e4f14ed640dd049036009f613feb55baaa5831b68b33178f9d2"
+    },
+    "framer-motion": {
+      "source": "argenr123-cmd/codex-frontend-skills",
+      "sourceType": "github",
+      "skillPath": "plugins/frontend-3d-motion/skills/framer-motion/SKILL.md",
+      "computedHash": "ebd7e9d50155d617d8fc4fc71aafb787fa62ae999517b5a99fa276bbec5722c8"
+    },
+    "frontend-accessibility-review": {
+      "source": "argenr123-cmd/codex-frontend-skills",
+      "sourceType": "github",
+      "skillPath": "plugins/frontend-strategy-review/skills/frontend-accessibility-review/SKILL.md",
+      "computedHash": "9abcfed2b5210641f9f1e8923cd7e0f61ddc15478fff7275e13e0c84d08c1222"
+    },
+    "frontend-code-review": {
+      "source": "argenr123-cmd/codex-frontend-skills",
+      "sourceType": "github",
+      "skillPath": "plugins/frontend-strategy-review/skills/frontend-code-review/SKILL.md",
+      "computedHash": "14623e763cb5ba1c9c210a6c4ff8ecb779776f983dfa5a8f54e8c596002089a6"
+    },
+    "frontend-component-craft": {
+      "source": "argenr123-cmd/codex-frontend-skills",
+      "sourceType": "github",
+      "skillPath": "plugins/frontend-react-ui/skills/frontend-component-craft/SKILL.md",
+      "computedHash": "1c25b0154796bf6f7b4041ac72d682b0d05a5a679de0f65768b71221a38768e3"
+    },
+    "frontend-debugging": {
+      "source": "argenr123-cmd/codex-frontend-skills",
+      "sourceType": "github",
+      "skillPath": "plugins/frontend-browser-qa/skills/frontend-debugging/SKILL.md",
+      "computedHash": "cf1d36b59804d0117f4a132af27ee3386d359e576ef07ac5ae03c5df6c87a8bd"
+    },
+    "frontend-design-core": {
+      "source": "argenr123-cmd/codex-frontend-skills",
+      "sourceType": "github",
+      "skillPath": "plugins/frontend-design-core/skills/frontend-design-core/SKILL.md",
+      "computedHash": "c082684a67105b37ea5046fb9fa215cdaa95fbefe508cb2a744b7f461c77bb60"
+    },
+    "frontend-performance-audit": {
+      "source": "argenr123-cmd/codex-frontend-skills",
+      "sourceType": "github",
+      "skillPath": "plugins/frontend-strategy-review/skills/frontend-performance-audit/SKILL.md",
+      "computedHash": "4001c9f8d6836dfcd1f8ad327d8103e9ad6def2d81ae3e76a8f5ce3203b99dd3"
+    },
+    "frontend-ui-engineering": {
+      "source": "addyosmani/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/frontend-ui-engineering/SKILL.md",
+      "computedHash": "49bb6ccfc41753bdd679f368ce75629ae9d424c5b8abc33faf949a4a55f919a1"
+    },
+    "git-workflow-and-versioning": {
+      "source": "addyosmani/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/git-workflow-and-versioning/SKILL.md",
+      "computedHash": "e8e0d1cc98c0a6b81d2979442ae92addae32cd5194fb5c4eac4ac5228b408770"
+    },
+    "gpt-taste": {
+      "source": "Leonxlnx/taste-skill",
+      "sourceType": "github",
+      "skillPath": "skills/gpt-tasteskill/SKILL.md",
+      "computedHash": "8b112002eb3a784c9e608877c19092374089174ef4cdee7b4be33cd38c2629c4"
+    },
+    "high-end-visual-design": {
+      "source": "Leonxlnx/taste-skill",
+      "sourceType": "github",
+      "skillPath": "skills/soft-skill/SKILL.md",
+      "computedHash": "ff7257d91fa767a37b200b4bd6682fae614009c586433122e57c322823ad8f25"
+    },
+    "idea-refine": {
+      "source": "addyosmani/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/idea-refine/SKILL.md",
+      "computedHash": "77739c4f6a29c0fad465a30bab9e862445a3f1b0f92808ffcd541fa02ed0637b"
+    },
+    "image-to-code": {
+      "source": "Leonxlnx/taste-skill",
+      "sourceType": "github",
+      "skillPath": "skills/image-to-code-skill/SKILL.md",
+      "computedHash": "b897c03456c9d01a0f307ad3ca50ebc853c1f46def1e38f35775358529e4053e"
+    },
+    "imagegen-frontend-mobile": {
+      "source": "Leonxlnx/taste-skill",
+      "sourceType": "github",
+      "skillPath": "skills/imagegen-frontend-mobile/SKILL.md",
+      "computedHash": "2fa28429f5ad9275721084deb0306ec7f34d9becb724bcc1eca394c9fef039cd"
+    },
+    "imagegen-frontend-web": {
+      "source": "Leonxlnx/taste-skill",
+      "sourceType": "github",
+      "skillPath": "skills/imagegen-frontend-web/SKILL.md",
+      "computedHash": "89ee60d6f460da12a5a4e028cc8584259e4716043000c916c73b44f57c02381c"
+    },
+    "impeccable": {
+      "source": "julesfleche/impeccable-skill",
+      "sourceType": "github",
+      "skillPath": "skill/SKILL.md",
+      "computedHash": "34e59a34b9705187e87039faa5d9585aebe0056ef657f761b905afef276a3362"
+    },
+    "improve-animations": {
+      "source": "emilkowalski/skills",
+      "sourceType": "github",
+      "skillPath": "skills/improve-animations/SKILL.md",
+      "computedHash": "524ea241e41d58bbdd8e288700fe24f5725e2a2f3ae7186ad7cebf9055058356"
+    },
+    "incremental-implementation": {
+      "source": "addyosmani/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/incremental-implementation/SKILL.md",
+      "computedHash": "bb1198705f46dc9ff75fb5685a7a872de5924d743b44eb202135f5046750ab7e"
+    },
+    "industrial-brutalist-ui": {
+      "source": "Leonxlnx/taste-skill",
+      "sourceType": "github",
+      "skillPath": "skills/brutalist-skill/SKILL.md",
+      "computedHash": "4ec2a42a613d0abbe32c2b841e0393f221644a44e78e3751220728a37c5e0d73"
+    },
+    "interview-me": {
+      "source": "addyosmani/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/interview-me/SKILL.md",
+      "computedHash": "4229002dd862e6e037c8a01c3e31d9af097465c58b2c3611912edb2af005f303"
+    },
+    "live-site-visual-audit": {
+      "source": "argenr123-cmd/codex-frontend-skills",
+      "sourceType": "github",
+      "skillPath": "plugins/frontend-browser-qa/skills/live-site-visual-audit/SKILL.md",
+      "computedHash": "0f858b953dbfa76bd78385f6a39434a3884b2d39a6529b60b3e5b0435a46f5e0"
+    },
+    "magic-ui-motion": {
+      "source": "argenr123-cmd/codex-frontend-skills",
+      "sourceType": "github",
+      "skillPath": "plugins/frontend-react-ui/skills/magic-ui-motion/SKILL.md",
+      "computedHash": "ab3f09f6e6c6a7a8664e93e4c98c529e261aaa4d906543e0e59801df8771762e"
+    },
+    "minimalist-ui": {
+      "source": "Leonxlnx/taste-skill",
+      "sourceType": "github",
+      "skillPath": "skills/minimalist-skill/SKILL.md",
+      "computedHash": "1e37c8db6ad1589730a035a0298d125d3bafb4b9207c024d37b7638008aa1874"
+    },
+    "mobile-native": {
+      "source": "emilkowalski/skills",
+      "sourceType": "github",
+      "skillPath": "skills/mobile-native/SKILL.md",
+      "computedHash": "f221cea36642168df6d3d6d7f236237cbf1ae669138ff7df07775674223d49ad"
+    },
+    "mobile-screen": {
+      "source": "argenr123-cmd/codex-frontend-skills",
+      "sourceType": "github",
+      "skillPath": "plugins/frontend-prototypes/skills/mobile-screen/SKILL.md",
+      "computedHash": "6c6ff696be57ef88701c3eb406ca51779360d923258168b697e655d33013d279"
+    },
+    "observability-and-instrumentation": {
+      "source": "addyosmani/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/observability-and-instrumentation/SKILL.md",
+      "computedHash": "e5eba32f952a29d20c0383728a9505d0ca2a90f1d8d075603e53804b441b2dd2"
+    },
+    "performance-optimization": {
+      "source": "addyosmani/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/performance-optimization/SKILL.md",
+      "computedHash": "a2cdba94ff8f898183b3d5af736272dc439826083723b17a88782e75d2351530"
+    },
+    "pick-ui-library": {
+      "source": "emilkowalski/skills",
+      "sourceType": "github",
+      "skillPath": "skills/pick-ui-library/SKILL.md",
+      "computedHash": "5d2a77bf0ecafbda85aa95fb49999b6d77945d9066ec83d970b62e5b388cd686"
+    },
+    "planning-and-task-breakdown": {
+      "source": "addyosmani/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/planning-and-task-breakdown/SKILL.md",
+      "computedHash": "0dc14a1402cdabd376f2d81d2225fcb4a18ee63d58b945ff83affeb024285b8f"
+    },
+    "playwright-visual-qa": {
+      "source": "argenr123-cmd/codex-frontend-skills",
+      "sourceType": "github",
+      "skillPath": "plugins/frontend-browser-qa/skills/playwright-visual-qa/SKILL.md",
+      "computedHash": "8f1427b3eb352ecf9023e6379d4020f70d707a0c6ae43e3fcd5ffb166ccea3fb"
+    },
+    "prototype": {
+      "source": "emilkowalski/skills",
+      "sourceType": "github",
+      "skillPath": "skills/prototype/SKILL.md",
+      "computedHash": "77be567d8c946608fdd15e61b62ab383cdf289a194dce2479828b7eda860d3ba"
+    },
+    "r3f-model-viewer": {
+      "source": "argenr123-cmd/codex-frontend-skills",
+      "sourceType": "github",
+      "skillPath": "plugins/frontend-3d-motion/skills/r3f-model-viewer/SKILL.md",
+      "computedHash": "ce04f92e6492ea4ebcb4e4500078d841d23f496c518478b3f651b971d0603c4c"
+    },
+    "react-bits": {
+      "source": "argenr123-cmd/codex-frontend-skills",
+      "sourceType": "github",
+      "skillPath": "plugins/frontend-react-ui/skills/react-bits/SKILL.md",
+      "computedHash": "375ac6addc4cfa8c39c981dafce629a914458e0bfb2bd328ab161d8159ad55bb"
+    },
+    "react-composition-patterns": {
+      "source": "argenr123-cmd/codex-frontend-skills",
+      "sourceType": "github",
+      "skillPath": "plugins/frontend-strategy-review/skills/react-composition-patterns/SKILL.md",
+      "computedHash": "967fceec07f480afeb3eb66cc8608eff7d7a2ac3ffbf706afbd2ca4e2cbc4ae2"
+    },
+    "react-next-modern": {
+      "source": "argenr123-cmd/codex-frontend-skills",
+      "sourceType": "github",
+      "skillPath": "plugins/frontend-react-ui/skills/react-next-modern/SKILL.md",
+      "computedHash": "58c3d044ccd00f57cad2126f2f658af4264524a5ace6cbfc76e19cf849ed30de"
+    },
+    "redesign-existing-projects": {
+      "source": "Leonxlnx/taste-skill",
+      "sourceType": "github",
+      "skillPath": "skills/redesign-skill/SKILL.md",
+      "computedHash": "db7b69592f10645cc719a060f88beebeb79703a7db2d863bc62dd0a2003efad3"
+    },
+    "review-animations": {
+      "source": "emilkowalski/skills",
+      "sourceType": "github",
+      "skillPath": "skills/review-animations/SKILL.md",
+      "computedHash": "b4e5f0f4fe3e2743c85bf7354108f48a0b9d502cb20ef5c4a9c195da91f93736"
+    },
+    "security-and-hardening": {
+      "source": "addyosmani/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/security-and-hardening/SKILL.md",
+      "computedHash": "32a1243d6eb45fd342c1f4e9f9ee5f1651a1e9fdccb86dcbbbee5d6f455ed362"
+    },
+    "senior-frontend-architect": {
+      "source": "argenr123-cmd/codex-frontend-skills",
+      "sourceType": "github",
+      "skillPath": "plugins/frontend-strategy-review/skills/senior-frontend-architect/SKILL.md",
+      "computedHash": "aa8e59f0a050a34c59db238564caf73443017155d5f4448fbbe310c29df1ebc6"
+    },
+    "shadcn-registry": {
+      "source": "argenr123-cmd/codex-frontend-skills",
+      "sourceType": "github",
+      "skillPath": "plugins/frontend-react-ui/skills/shadcn-registry/SKILL.md",
+      "computedHash": "f931fb34ef89db43352df7206168f9a9d2629170feea8ce8c0f13903d8e7ccfc"
+    },
+    "shipping-and-launch": {
+      "source": "addyosmani/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/shipping-and-launch/SKILL.md",
+      "computedHash": "85afde7a62dac2d9abeef806f93a6920d11b4396bc637685a02f1637086c8aab"
+    },
+    "source-driven-development": {
+      "source": "addyosmani/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/source-driven-development/SKILL.md",
+      "computedHash": "d1923bb807f7db157a794f07a590ca639b3789b2f1a5eabef993f8df24791e2a"
+    },
+    "spec-driven-development": {
+      "source": "addyosmani/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/spec-driven-development/SKILL.md",
+      "computedHash": "90a53ee823e49fd1518a01e6cf64968d4848bce3fc0b0115b1c19b7e5a87a5ca"
+    },
+    "stitch-design-taste": {
+      "source": "Leonxlnx/taste-skill",
+      "sourceType": "github",
+      "skillPath": "skills/stitch-skill/SKILL.md",
+      "computedHash": "1ec8480d5b00fd2c5235fa1b960fda78fbac851afb95e1d104fe17ec1c5be6b1"
+    },
+    "test-driven-development": {
+      "source": "addyosmani/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/test-driven-development/SKILL.md",
+      "computedHash": "e4725d435cbd6e94c1da1a39eff634f6592c7ac303a06c61532d5c399b1f75c3"
+    },
+    "three-js": {
+      "source": "argenr123-cmd/codex-frontend-skills",
+      "sourceType": "github",
+      "skillPath": "plugins/frontend-3d-motion/skills/three-js/SKILL.md",
+      "computedHash": "c0a1240af81482bdf89da813c86b1723e75dd9e63355b4be040c3bca89578417"
+    },
+    "threejs-animation": {
+      "source": "argenr123-cmd/codex-frontend-skills",
+      "sourceType": "github",
+      "skillPath": "plugins/frontend-3d-motion/skills/threejs-animation/SKILL.md",
+      "computedHash": "f8c92317eef6f3e70b29eab12fdaf91f113e07e021aba39b4cb08eff0f31a0b1"
+    },
+    "ui-ux-audit": {
+      "source": "argenr123-cmd/codex-frontend-skills",
+      "sourceType": "github",
+      "skillPath": "plugins/frontend-design-core/skills/ui-ux-audit/SKILL.md",
+      "computedHash": "735eae7ad37819180772be123f75580882736c65fccb0f3939d69fe7e8b4504e"
+    },
+    "ui-ux-pro-max": {
+      "source": "argenr123-cmd/codex-frontend-skills",
+      "sourceType": "github",
+      "skillPath": "plugins/frontend-ui-ux-pro/skills/ui-ux-pro-max/SKILL.md",
+      "computedHash": "7b52e08fc338d847a7e4733bee1a4078ed13b6b80eed9e43597609d6d29df710"
+    },
+    "using-agent-skills": {
+      "source": "addyosmani/agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/using-agent-skills/SKILL.md",
+      "computedHash": "4221dc84c943696829025a42c7961b257afdb8f1ba20af42463434a0d9c03812"
+    },
+    "ux-enhancer": {
+      "source": "argenr123-cmd/codex-frontend-skills",
+      "sourceType": "github",
+      "skillPath": "source-packs/frontend-trusted-upstreams/gashiartim__ux-enhancer/SKILL.md",
+      "computedHash": "86bfc4f7031ed5e7dee01eaec083bcc84926f405107534ffbb83849a39fa7a12"
+    },
+    "web-prototype": {
+      "source": "argenr123-cmd/codex-frontend-skills",
+      "sourceType": "github",
+      "skillPath": "plugins/frontend-prototypes/skills/web-prototype/SKILL.md",
+      "computedHash": "644f2a4d27e9177b61ff78bb6e68125665d4bda3fdcfb83b7cd1e0de6cd46ef9"
+    },
+    "wireframe-sketch": {
+      "source": "argenr123-cmd/codex-frontend-skills",
+      "sourceType": "github",
+      "skillPath": "plugins/frontend-prototypes/skills/wireframe-sketch/SKILL.md",
+      "computedHash": "9ed120ce14af164cbb343a5ee3edb7ebd279575e91d7be40a58218e8d48aa40a"
+    },
+    "write-swift": {
+      "source": "emilkowalski/skills",
+      "sourceType": "github",
+      "skillPath": "skills/write-swift/SKILL.md",
+      "computedHash": "f20bb9cf51dbee1900b264820a12f1d3d378dc4d23ac758e7ba9e644c49a2459"
+    }
+  }
+}

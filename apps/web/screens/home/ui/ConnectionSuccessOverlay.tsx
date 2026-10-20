@@ -7,6 +7,8 @@ import { useCurrentCouple } from "@/features/relationship/hook/use-relationship"
 import { useRealtimeContext } from "@/shared/realtime/provider/RealtimeProvider";
 import { routes } from "@/shared/router/paths";
 import { AvatarPair } from "@/shared/ui/avatar-pair/AvatarPair";
+import { Button } from "@/shared/ui/button/Button";
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/shared/ui/dialog/dialog";
 
 export function ConnectionSuccessOverlay() {
   const router = useRouter();
@@ -37,11 +39,8 @@ export function ConnectionSuccessOverlay() {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-overlay/70 backdrop-blur-xl">
-      <div
-        className="animate-scale-in w-full max-w-md rounded-[var(--radius-lg)] bg-card p-10 text-center shadow-modal"
-        onClick={(event) => event.stopPropagation()}
-      >
+    <Dialog open={Boolean(visible)} onOpenChange={(open) => !open && handleClose()}>
+      <DialogContent className="text-center sm:max-w-md p-6 sm:p-10">
         <div className="mx-auto mb-8 flex justify-center">
           <AvatarPair
             leftAvatar={user?.avatarUrl ?? null}
@@ -54,22 +53,18 @@ export function ConnectionSuccessOverlay() {
           />
         </div>
 
-        <h2 className="text-3xl">Теперь вы вместе</h2>
+        <DialogTitle className="text-3xl">Теперь вы вместе</DialogTitle>
 
-        <p className="description mt-4">
+        <DialogDescription className="mt-4">
           {partner
             ? `${user?.firstName} и ${partner.firstName}, добро пожаловать в ваше общее пространство.`
             : "Ваше общее пространство создано."}
-        </p>
+        </DialogDescription>
 
-        <button
-          type="button"
-          onClick={handleClose}
-          className="mt-8 h-12 w-full rounded-xl bg-primary font-medium text-primary-foreground transition-opacity hover:opacity-90"
-        >
+        <Button variant="primary" fullWidth type="button" onClick={handleClose} className="mt-8">
           Перейти домой
-        </button>
-      </div>
-    </div>
+        </Button>
+      </DialogContent>
+    </Dialog>
   );
 }

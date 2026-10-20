@@ -9,6 +9,7 @@ import { routes } from "@/shared/router/paths";
 import { Avatar, AvatarFallback, AvatarImage } from "@/shared/ui/avatar-pair/Avatar";
 import { Button } from "@/shared/ui/button/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/ui/card/Card";
+import { InputControl } from "@/shared/ui/input/InputControl";
 
 interface CoupleCardProps {
   couple: CurrentCoupleResponse | null | undefined;
@@ -131,7 +132,7 @@ export function CoupleCard({
                     </p>
                   </div>
 
-                  <input
+                  <InputControl
                     type="date"
                     value={relationshipDate}
                     onChange={(event) => setRelationshipDate(event.target.value)}

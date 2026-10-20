@@ -49,7 +49,9 @@ export function TemplatePicker({ open, onClose }: TemplatePickerProps) {
   const customTemplates = templates.filter((template) => !template.isSystem);
 
   const renderTemplate = (template: Template) => (
-    <button
+    <Button
+      variant="plain"
+      size="none"
       key={template.id}
       type="button"
       disabled={applyMutation.isPending}
@@ -73,7 +75,7 @@ export function TemplatePicker({ open, onClose }: TemplatePickerProps) {
       <p className="text-xs text-muted-foreground mt-1">
         {template.items.length} {template.items.length === 1 ? "задача" : "задач"}
       </p>
-    </button>
+    </Button>
   );
 
   return (

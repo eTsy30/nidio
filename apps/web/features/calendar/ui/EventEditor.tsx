@@ -9,15 +9,17 @@ export function EventEditor({
   form,
   onCancel,
   recurring,
+  mode,
 }: {
   form: EventFormModel;
+  mode: "create" | "edit";
   onCancel: () => void;
   recurring?: boolean;
 }) {
   return (
     <form onSubmit={form.handleSubmit} className="min-w-0 space-y-3">
       <fieldset disabled={form.saving} className="min-w-0 space-y-3">
-        <EventFormFields form={form} recurring={recurring ?? false} />
+        <EventFormFields mode={mode} form={form} recurring={recurring ?? false} />
       </fieldset>
       {form.error && (
         <p role="alert" className="text-sm text-destructive">

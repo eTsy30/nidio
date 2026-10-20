@@ -6,6 +6,8 @@ import { ru } from "date-fns/locale";
 import { Heart, MoreVertical, Repeat } from "lucide-react";
 
 import { cn } from "@/shared/lib/cn";
+import { Button } from "@/shared/ui/button/Button";
+import { Card } from "@/shared/ui/card/Card";
 import { Checkbox } from "@/shared/ui/checkbox/Checkbox";
 
 import { useNudge } from "../hooks/use-nudge";
@@ -89,14 +91,15 @@ export function TaskItem({
   };
 
   return (
-    <div
+    <Card
+      padding="sm"
       className={cn(
         "group relative flex items-start gap-3 rounded-3xl border p-4",
         "border-border/60 bg-card",
-        "shadow-[0_10px_30px_rgba(15,23,42,0.05)]",
+        "shadow-soft",
         "transition-[opacity,transform,box-shadow]",
         "duration-150 ease-out cursor-pointer select-none",
-        "hover:shadow-[0_14px_36px_rgba(15,23,42,0.08)]",
+        "hover:shadow-floating",
         "active:scale-[0.99]",
 
         isCompleted && "opacity-60",
@@ -130,20 +133,25 @@ export function TaskItem({
 
           {canNudge && (
             <div className="relative">
-              <button
+              <Button
+                variant="plain"
+                size="none"
                 type="button"
                 onClick={(event) => {
                   event.stopPropagation();
                   setShowMenu((state) => !state);
                 }}
-                className="rounded-full p-1.5 opacity-0 transition-opacity hover:bg-muted group-hover:opacity-100"
+                aria-label="Действия задачи"
+                className="flex size-11 items-center justify-center rounded-full hover:bg-muted"
               >
                 <MoreVertical className="h-4 w-4 text-muted-foreground" />
-              </button>
+              </Button>
 
               {showMenu && (
                 <div className="absolute right-0 top-8 z-20 w-40 rounded-xl border bg-card p-1 shadow-[var(--shadow-floating)]">
-                  <button
+                  <Button
+                    variant="plain"
+                    size="none"
                     type="button"
                     onClick={(event) => {
                       event.stopPropagation();
@@ -154,7 +162,7 @@ export function TaskItem({
                   >
                     <Heart className="h-4 w-4 text-primary" />
                     Пни меня
-                  </button>
+                  </Button>
                 </div>
               )}
             </div>
@@ -232,6 +240,6 @@ export function TaskItem({
           </div>
         </div>
       )}
-    </div>
+    </Card>
   );
 }

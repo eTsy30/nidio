@@ -5,6 +5,7 @@ import Link from "next/link";
 import { CloudUpload, WifiOff } from "lucide-react";
 
 import { useAuth } from "@/shared/api/provider/auth-provider";
+import { Button } from "@/shared/ui/button/Button";
 
 import { useOnline } from "./connectivity";
 import { type OutboxOperation, queueSavingsSave, removeOutbox } from "./outbox";
@@ -15,7 +16,7 @@ const noSnapshotFailure = () => null;
 
 export function OfflineStatus() {
   const online = useOnline();
-  const { user, isOfflineSession } = useAuth();
+  const { user, isAuthenticated } = useAuth();
   const failedUserId = useSyncExternalStore(
     subscribeSnapshotFailure,
     getSnapshotFailure,
@@ -26,7 +27,7 @@ export function OfflineStatus() {
   const [actionError, setActionError] = useState("");
   const pending = operations.filter((operation) => operation.status === "pending");
   const failed = operations.filter((operation) => operation.status === "failed");
-  const connected = online && !isOfflineSession;
+  const connected = online && isAuthenticated;
   if (connected && !operations.length && !actionError && !snapshotFailed) return null;
   const act = (operation: OutboxOperation, retry: boolean) => {
     try {
@@ -89,20 +90,24 @@ export function OfflineStatus() {
                   Отметка взноса от {new Date(operation.createdAt).toLocaleString("ru-RU")}
                 </p>
                 <div className="mt-2 flex flex-wrap gap-3">
-                  <button
+                  <Button
+                    variant="plain"
+                    size="none"
                     type="button"
                     className="min-h-11 px-2 text-primary underline"
                     onClick={() => act(operation, true)}
                   >
                     Повторить
-                  </button>
-                  <button
+                  </Button>
+                  <Button
+                    variant="plain"
+                    size="none"
                     type="button"
                     className="min-h-11 px-2 underline"
                     onClick={() => act(operation, false)}
                   >
                     Убрать отметку с устройства
-                  </button>
+                  </Button>
                   <Link
                     href="/savings"
                     className="inline-flex min-h-11 items-center px-2 underline"

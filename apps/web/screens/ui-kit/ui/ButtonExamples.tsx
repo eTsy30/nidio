@@ -2,21 +2,22 @@
 import { useState } from "react";
 import { Plus } from "lucide-react";
 
-import { Button as PrimitiveButton } from "@/shared/ui/button";
 import { Button } from "@/shared/ui/button/Button";
+import { ChoiceButton } from "@/shared/ui/button/ChoiceButton";
 import { Link } from "@/shared/ui/link/Link";
 
 import { DemoSection } from "./DemoSection";
 
 export function ButtonExamples() {
+  const [selected, setSelected] = useState(false);
   const [message, setMessage] = useState("Нажмите любую доступную кнопку.");
   return (
     <DemoSection
       id="buttons"
       title="Кнопки и ссылки"
-      description="Обе реализации Button, которые уже используются в проекте."
+      description="Единая кнопка: действия, иконки, загрузка и недоступные состояния."
     >
-      <p className="mb-3 text-sm font-medium">Основные кнопки · button/Button.tsx</p>
+      <p className="mb-3 text-sm font-medium">Основные действия</p>
       <div className="flex flex-wrap items-center gap-3">
         {(["primary", "secondary", "ghost"] as const).map((variant) => (
           <Button
@@ -49,20 +50,17 @@ export function ButtonExamples() {
           </Button>
         ))}
       </div>
-      <p className="mb-3 mt-6 text-sm font-medium">Кнопки на Base UI · button.tsx</p>
+      <p className="mb-3 mt-6 text-sm font-medium">Дополнительные действия</p>
       <div className="flex flex-wrap items-center gap-3">
-        {(["default", "outline", "secondary", "ghost", "destructive", "link"] as const).map(
-          (variant) => (
-            <PrimitiveButton
-              key={variant}
-              variant={variant}
-              onClick={() => setMessage(`Base UI: ${variant}`)}
-            >
-              {variant}
-            </PrimitiveButton>
-          ),
-        )}
+        {(["destructive", "link"] as const).map((variant) => (
+          <Button key={variant} variant={variant} onClick={() => setMessage(`${variant}`)}>
+            {variant}
+          </Button>
+        ))}
       </div>
+      <ChoiceButton selected={selected} onClick={() => setSelected(!selected)} className="mt-4">
+        Выбор: {selected ? "включён" : "выключен"}
+      </ChoiceButton>
       <p role="status" className="mt-4 text-sm text-muted-foreground">
         {message}
       </p>

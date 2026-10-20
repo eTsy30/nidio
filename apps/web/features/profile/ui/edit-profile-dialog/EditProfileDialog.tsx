@@ -30,6 +30,7 @@ import {
   DialogTitle,
 } from "@/shared/ui/dialog/dialog";
 import { Input } from "@/shared/ui/input/Input";
+import { Select } from "@/shared/ui/select/Select";
 
 const MAX_IMAGE_SIZE = 5 * 1024 * 1024;
 
@@ -223,7 +224,9 @@ export function EditProfileDialog({ user, open, onOpenChange }: EditProfileDialo
               </Avatar>
 
               {previewUrl && (
-                <button
+                <Button
+                  variant="plain"
+                  size="none"
                   type="button"
                   onClick={handleRemoveSelectedFile}
                   disabled={isPending}
@@ -231,7 +234,7 @@ export function EditProfileDialog({ user, open, onOpenChange }: EditProfileDialo
                   className="absolute -right-1 -top-1 flex size-7 items-center justify-center rounded-full bg-background shadow-sm ring-1 ring-border disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   <X className="size-4" />
-                </button>
+                </Button>
               )}
             </div>
 
@@ -276,7 +279,7 @@ export function EditProfileDialog({ user, open, onOpenChange }: EditProfileDialo
               Пол
             </label>
 
-            <select
+            <Select
               id="profile-gender"
               {...register("gender")}
               disabled={isPending}
@@ -287,7 +290,7 @@ export function EditProfileDialog({ user, open, onOpenChange }: EditProfileDialo
               <option value="MALE">Мужской</option>
 
               <option value="FEMALE">Женский</option>
-            </select>
+            </Select>
           </div>
 
           {(uploadError || updateMutation.isError) && (

@@ -31,18 +31,22 @@ model User {
 }
 
 model Couple {
-  id                String         @id @default(cuid())
-  createdAt         DateTime       @default(now())
-  updatedAt         DateTime       @updatedAt
-  deletedAt         DateTime?
-  relationshipAt    DateTime?
-  notificationDirty Boolean        @default(true)
-  board             Board?
-  members           CoupleMember[]
-  events            Event[]
-  invites           Invite[]
-  templates         Template[]
-  workspace         Workspace?
+  id                    String                 @id @default(cuid())
+  createdAt             DateTime               @default(now())
+  updatedAt             DateTime               @updatedAt
+  deletedAt             DateTime?
+  relationshipAt        DateTime?
+  notificationDirty     Boolean                @default(true)
+  board                 Board?
+  members               CoupleMember[]
+  events                Event[]
+  invites               Invite[]
+  savingsGoals          SavingsGoal[]
+  loyaltyCards          LoyaltyCard[]
+  financialTransactions FinancialTransaction[]
+  budgetLimits          BudgetLimit[]
+  templates             Template[]
+  workspace             Workspace?
 
   @@index([createdAt])
   @@index([deletedAt])
@@ -411,4 +415,88 @@ enum EventType {
 enum EventScope {
   PERSONAL
   COUPLE
+}
+
+model SavingsGoal {
+  id           String               @id @default(cuid())
+  coupleId     String
+  title        String               @db.VarChar(100)
+  description  String               @default("")
+  targetMinor  Int
+  currency     String               @db.VarChar(3)
+  icon         String               @default("🎯")
+  color        String               @default("primary")
+  targetDate   String?
+  createdAt    DateTime             @default(now())
+  updatedAt    DateTime             @updatedAt
+  couple       Couple               @relation(fields: [coupleId], references: [id], onDelete: Cascade)
+  transactions SavingsTransaction[]
+
+  @@index([coupleId])
+}
+
+model SavingsTransaction {
+  id          String      @id @default(cuid())
+  goalId      String
+  requestId   String
+  amountMinor Int
+  type        String
+  createdBy   String
+  description String      @default("")
+  createdAt   DateTime    @default(now())
+  goal        SavingsGoal @relation(fields: [goalId], references: [id], onDelete: Cascade)
+
+  @@unique([goalId, requestId])
+}
+
+model LoyaltyCard {
+  id            String    @id @default(cuid())
+  coupleId      String
+  storeName     String    @db.VarChar(100)
+  cardNumber    String    @db.VarChar(256)
+  barcodeFormat String    @default("NONE")
+  category      String
+  comment       String    @default("")
+  color         String    @default("primary")
+  imageKey      String?
+  isFavorite    Boolean   @default(false)
+  lastUsedAt    DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  couple        Couple    @relation(fields: [coupleId], references: [id], onDelete: Cascade)
+
+  @@index([coupleId])
+}
+
+model FinancialTransaction {
+  id          String   @id @default(cuid())
+  coupleId    String
+  requestId   String
+  amountMinor Int
+  currency    String   @db.VarChar(3)
+  type        String
+  category    String
+  date        String   @db.VarChar(10)
+  description String   @default("")
+  createdBy   String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  couple      Couple   @relation(fields: [coupleId], references: [id], onDelete: Cascade)
+
+  @@unique([coupleId, requestId])
+  @@index([coupleId, date])
+}
+
+model BudgetLimit {
+  id          String   @id @default(cuid())
+  coupleId    String
+  currency    String   @db.VarChar(3)
+  category    String
+  month       String   @db.VarChar(7)
+  amountMinor Int
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  couple      Couple   @relation(fields: [coupleId], references: [id], onDelete: Cascade)
+
+  @@unique([coupleId, currency, category, month])
 }

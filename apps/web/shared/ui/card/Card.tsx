@@ -1,4 +1,5 @@
 import * as React from "react";
+import { Slot } from "@radix-ui/react-slot";
 import { cva } from "class-variance-authority";
 
 import { cn } from "@/shared/lib/cn";
@@ -13,7 +14,7 @@ import {
 } from "./card.types";
 
 export const cardVariants = cva(
-  "rounded-3xl border border-border/60 bg-card text-card-foreground shadow-[0_4px_20px_rgb(41_41_35_/_0.035)] transition-[border-color,box-shadow] duration-200",
+  "rounded-3xl border border-border/60 bg-card text-card-foreground shadow-soft transition-[border-color,box-shadow] duration-200",
   {
     variants: {
       padding: {
@@ -34,8 +35,9 @@ export const cardVariants = cva(
   },
 );
 
-export function Card({ className, padding, variant, ...props }: CardProps) {
-  return <div className={cn(cardVariants({ padding, variant }), className)} {...props} />;
+export function Card({ className, padding, variant, asChild = false, ...props }: CardProps) {
+  const Component = asChild ? Slot : "div";
+  return <Component className={cn(cardVariants({ padding, variant }), className)} {...props} />;
 }
 
 export function CardHeader({ className, ...props }: CardHeaderProps) {

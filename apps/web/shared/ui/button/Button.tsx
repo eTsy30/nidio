@@ -5,98 +5,37 @@ import { Loader2 } from "lucide-react";
 
 import { cn } from "@/shared/lib/cn";
 
-const buttonVariants = cva(
-  [
-    "inline-flex items-center justify-center gap-2",
-    "whitespace-nowrap",
-    "rounded-[var(--radius-md)]",
-    "text-primary-foreground",
-    "transition-[background-color,border-color,color,box-shadow,transform]",
-    "duration-150 ease-out",
-    "select-none",
-    "font-semibold",
-    "text-sm",
-    "leading-5",
-    "text-foreground",
-    "cursor-pointer",
-    "outline-none",
-    "shrink-0",
-    "hover:no-underline",
-    "focus-visible:ring-2",
-    "focus-visible:ring-ring/40",
-    "focus-visible:ring-offset-2",
-    "focus-visible:ring-offset-background",
-    "motion-safe:hover:-translate-y-px",
-    "active:translate-y-0",
-    "motion-safe:active:scale-[0.98]",
-    "disabled:pointer-events-none",
-    "disabled:opacity-50",
-    "[&_svg]:pointer-events-none",
-    "[&_svg]:size-5",
-    "[&_svg]:shrink-0",
-  ].join(" "),
+const appearance =
+  "inline-flex items-center justify-center gap-2 rounded-[var(--radius-md)] text-sm font-semibold whitespace-nowrap [&_svg]:pointer-events-none [&_svg]:size-5 [&_svg]:shrink-0";
+export const buttonVariants = cva(
+  "cursor-pointer outline-none transition-colors focus-visible:ring-2 focus-visible:ring-ring/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50",
   {
     variants: {
       variant: {
-        primary: [
-          "bg-primary",
-          "text-primary-foreground",
-          "shadow-[0_3px_10px_rgb(175_75_43_/_0.16)]",
-          "hover:brightness-[1.03]",
-          "hover:shadow-[0_6px_16px_rgb(175_75_43_/_0.22)]",
-        ].join(" "),
-
-        secondary: [
-          "bg-card",
-          "text-secondary-foreground",
-          "border",
-          "border-border",
-          "shadow-[0_6px_20px_rgb(0_0_0_/_0.05)]",
-          "hover:bg-surface",
-          "hover:border-primary/25",
-        ].join(" "),
-
-        ghost: ["bg-transparent", "hover:bg-surface"].join(" "),
-
-        icon: ["bg-transparent", "hover:bg-surface", "p-0"].join(" "),
+        primary: `${appearance} bg-primary text-primary-foreground shadow-soft hover:brightness-105`,
+        secondary: `${appearance} border border-border bg-card text-foreground shadow-soft hover:bg-muted`,
+        ghost: `${appearance} bg-transparent text-foreground hover:bg-muted`,
+        icon: `${appearance} bg-transparent text-foreground hover:bg-muted`,
+        destructive: `${appearance} bg-destructive/10 text-destructive hover:bg-destructive/20`,
+        link: `${appearance} text-primary underline-offset-4 hover:underline`,
+        plain: "",
       },
-
       size: {
-        sm: "h-[var(--control-sm)] px-2",
+        none: "",
+        sm: "min-h-11 px-3",
         md: "h-[var(--control-md)] px-4",
         lg: "h-[var(--control-lg)] px-6",
       },
-
-      fullWidth: {
-        true: "w-full",
-        false: "",
-      },
-
-      iconOnly: {
-        true: "aspect-square px-0",
-        false: "",
-      },
+      fullWidth: { true: "w-full", false: "" },
+      iconOnly: { true: "aspect-square p-0", false: "" },
     },
-
-    compoundVariants: [
-      {
-        variant: "icon",
-        iconOnly: true,
-        className: "aspect-square",
-      },
-    ],
-
-    defaultVariants: {
-      variant: "primary",
-      size: "md",
-      fullWidth: false,
-      iconOnly: false,
-    },
+    defaultVariants: { variant: "primary", size: "md", fullWidth: false, iconOnly: false },
   },
 );
 
 export interface ButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement>, VariantProps<typeof buttonVariants> {
+  ref?: React.Ref<HTMLButtonElement>;
   asChild?: boolean;
   leftIcon?: React.ReactNode;
   rightIcon?: React.ReactNode;
@@ -108,7 +47,7 @@ export function Button({
   variant,
   size,
   fullWidth,
-  iconOnly = false,
+  iconOnly,
   asChild = false,
   leftIcon,
   rightIcon,
@@ -119,31 +58,22 @@ export function Button({
   ...props
 }: ButtonProps) {
   const Component = asChild ? Slot : "button";
-
   return (
     <Component
-      className={cn(
-        buttonVariants({
-          variant,
-          size,
-          fullWidth,
-          iconOnly,
-        }),
-        className,
-      )}
+      className={cn(buttonVariants({ variant, size, fullWidth, iconOnly }), className)}
       type={asChild ? undefined : (type ?? "button")}
       disabled={disabled || loading}
       aria-disabled={disabled || loading}
-      aria-busy={loading}
+      aria-busy={loading || undefined}
       {...props}
     >
-      {loading ? <Loader2 className="size-5 animate-spin" aria-hidden="true" /> : leftIcon}
-
-      {!iconOnly && <Slottable>{children}</Slottable>}
-
+      {loading ? (
+        <Loader2 className="size-5 motion-safe:animate-spin" aria-hidden="true" />
+      ) : (
+        leftIcon
+      )}
+      <Slottable>{children}</Slottable>
       {!loading && !iconOnly && rightIcon}
     </Component>
   );
 }
-
-export { buttonVariants };

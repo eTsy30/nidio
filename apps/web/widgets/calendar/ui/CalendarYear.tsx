@@ -14,6 +14,8 @@ import {
 import { ru } from "date-fns/locale";
 
 import { cn } from "@/shared/lib/cn";
+import { Button } from "@/shared/ui/button/Button";
+import { Card } from "@/shared/ui/card/Card";
 
 import { CalendarEvent } from "../model/types";
 
@@ -51,16 +53,19 @@ export function CalendarYear({ year, events, onMonthClick, onDayClick }: Calenda
           const days = getMonthDays(month);
 
           return (
-            <button
+            <Card
+              padding="sm"
               key={month.getMonth()}
-              type="button"
-              onClick={() => onMonthClick?.(month)}
               className={cn(
                 "group rounded-2xl border bg-background p-3 text-left",
                 "transition-all hover:border-primary/30 hover:shadow-sm",
               )}
             >
-              <div className="mb-3 flex items-center justify-between">
+              <Button
+                variant="ghost"
+                className="mb-3 w-full justify-between capitalize"
+                onClick={() => onMonthClick?.(month)}
+              >
                 <span className="text-sm font-semibold capitalize">
                   {format(month, "LLLL", {
                     locale: ru,
@@ -68,7 +73,7 @@ export function CalendarYear({ year, events, onMonthClick, onDayClick }: Calenda
                 </span>
 
                 <span className="text-xs text-muted-foreground">{format(month, "yyyy")}</span>
-              </div>
+              </Button>
 
               <div className="mb-1 grid grid-cols-7">
                 {["пн", "вт", "ср", "чт", "пт", "сб", "вс"].map((day) => (
@@ -87,9 +92,12 @@ export function CalendarYear({ year, events, onMonthClick, onDayClick }: Calenda
                   const currentMonth = isSameMonth(day, month);
 
                   return (
-                    <div
+                    <Button
+                      variant="plain"
+                      size="none"
                       key={day.toISOString()}
-                      role="button"
+                      aria-label={format(day, "d MMMM yyyy", { locale: ru })}
+                      disabled={!currentMonth}
                       tabIndex={currentMonth ? 0 : -1}
                       onClick={(event) => {
                         event.stopPropagation();
@@ -98,14 +106,8 @@ export function CalendarYear({ year, events, onMonthClick, onDayClick }: Calenda
                           onDayClick?.(day);
                         }
                       }}
-                      onKeyDown={(event) => {
-                        if (currentMonth && (event.key === "Enter" || event.key === " ")) {
-                          event.preventDefault();
-                          onDayClick?.(day);
-                        }
-                      }}
                       className={cn(
-                        "relative flex h-7 items-center justify-center rounded-lg",
+                        "relative flex min-h-11 items-center justify-center rounded-lg",
                         "text-[11px] transition-colors",
                         currentMonth
                           ? "text-foreground hover:bg-muted"
@@ -130,11 +132,11 @@ export function CalendarYear({ year, events, onMonthClick, onDayClick }: Calenda
                           aria-hidden="true"
                         />
                       )}
-                    </div>
+                    </Button>
                   );
                 })}
               </div>
-            </button>
+            </Card>
           );
         })}
       </div>

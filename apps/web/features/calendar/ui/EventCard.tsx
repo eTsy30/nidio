@@ -1,6 +1,7 @@
 "use client";
 
 import { cn } from "@/shared/lib/cn";
+import { Button } from "@/shared/ui/button/Button";
 
 import { typeIcon, typeMeta } from "../model/constants";
 import { formatEventTime } from "../model/utils";
@@ -18,7 +19,9 @@ export function EventCard({ event, compact = false, onClick }: EventCardProps) {
   const time = formatEventTime(event.startAt, event.endAt);
 
   return (
-    <button
+    <Button
+      variant="plain"
+      size="none"
       type="button"
       onClick={() => onClick?.(event)}
       className={cn(
@@ -49,6 +52,6 @@ export function EventCard({ event, compact = false, onClick }: EventCardProps) {
         </span>
         {!compact && <span className="mt-1 block text-xs text-muted-foreground">{time}</span>}
       </span>
-    </button>
+    </Button>
   );
 }

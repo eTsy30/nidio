@@ -21,7 +21,8 @@
     "db:studio": "prisma studio",
     "test:release": "pnpm db:generate && node scripts/test-release.mjs",
     "start:render": "pnpm db:deploy && pnpm start",
-    "test:runtime": "node scripts/test-runtime.mjs"
+    "test:runtime": "node scripts/test-runtime.mjs",
+    "test:finance:integration": "tsx test/finance.integration.ts"
   },
   "dependencies": {
     "@apollo/server": "^4.13.0",

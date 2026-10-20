@@ -2,6 +2,7 @@ import { ChevronRight } from "lucide-react";
 import type { ReactNode } from "react";
 
 import { cn } from "@/shared/lib/cn";
+import { Button } from "@/shared/ui/button/Button";
 
 interface ProfileRowProps {
   label: string;
@@ -25,7 +26,9 @@ export function ProfileRow({
   const interactive = Boolean(onClick) && !disabled;
 
   return (
-    <button
+    <Button
+      variant="plain"
+      size="none"
       type="button"
       disabled={!interactive}
       onClick={onClick}
@@ -52,6 +55,6 @@ export function ProfileRow({
       ) : null}
 
       {interactive ? <ChevronRight className="size-4 shrink-0 text-muted-foreground" /> : null}
-    </button>
+    </Button>
   );
 }

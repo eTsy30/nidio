@@ -14,10 +14,10 @@ import { syncOutbox } from "./outbox-sync";
 import { isLogoutPending, saveOfflineSnapshot } from "./snapshot";
 
 export function OutboxSync() {
-  const { user, isOfflineSession } = useAuth();
+  const { user, isAuthenticated } = useAuth();
   const client = useQueryClient();
   useEffect(() => {
-    if (!user || isOfflineSession) return;
+    if (!user || !isAuthenticated) return;
     const userId = user.id;
     let disposed = false;
     let debounce: ReturnType<typeof setTimeout> | undefined;
@@ -77,6 +77,6 @@ export function OutboxSync() {
       window.removeEventListener("online", schedule);
       window.removeEventListener("focus", schedule);
     };
-  }, [client, user, isOfflineSession]);
+  }, [client, user, isAuthenticated]);
   return null;
 }
