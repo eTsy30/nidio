@@ -1,5 +1,6 @@
 # dependencies
 node_modules
+.pnpm-store/
 
 # build
 .next
@@ -29,6 +30,14 @@ coverage
 
 # misc
 .vercel
+
+# Locally installed agent skills (keep skills-lock.json for reproducibility)
+/.agents/skills/
+/.claude/skills/
+
+# Generated images and local lockfile backups
+/output/imagegen/
+/pnpm-lock.backup.yaml
 
 #PWA
 public/sw.js

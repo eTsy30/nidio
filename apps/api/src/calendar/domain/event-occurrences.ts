@@ -27,17 +27,20 @@ export function expandRecurringEvent(
       break;
     }
 
+    const occurrenceEnd = event.endAt
+      ? new Date(occurrenceStart.getTime() + duration)
+      : null;
+    // Include events that began earlier but are still running in this range.
+    // An end exactly at rangeStart does not overlap the requested range.
     const insideRange =
-      occurrenceStart >= rangeStart && occurrenceStart <= rangeEnd;
+      occurrenceStart <= rangeEnd &&
+      (occurrenceStart >= rangeStart ||
+        (occurrenceEnd !== null && occurrenceEnd > rangeStart));
     const isExcluded = event.excludedDates.some(
       (excludedDate) => excludedDate.getTime() === occurrenceStart.getTime(),
     );
 
     if (insideRange && !isExcluded) {
-      const occurrenceEnd = event.endAt
-        ? new Date(occurrenceStart.getTime() + duration)
-        : null;
-
       const occurrenceId = `${event.id}-${occurrenceStart.toISOString()}`;
 
       occurrences.push({

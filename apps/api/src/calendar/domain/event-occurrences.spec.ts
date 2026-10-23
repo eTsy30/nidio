@@ -46,4 +46,18 @@ describe('calendar overlap', () => {
       ),
     ).toHaveLength(0);
   });
+  it('does not include an earlier event without an end time', () => {
+    expect(
+      expandRecurringEvent({ ...event, endAt: null }, start, end),
+    ).toHaveLength(0);
+  });
+  it('includes an occurrence starting exactly at the range start', () => {
+    const result = expandRecurringEvent(
+      { ...event, startAt: start, repeatUntil: start },
+      start,
+      end,
+    );
+    expect(result).toHaveLength(1);
+    expect(result[0]?.startAt).toEqual(start);
+  });
 });
