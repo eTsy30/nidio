@@ -5,6 +5,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { ru } from "date-fns/locale";
+import { LayoutTemplate, Plus } from "lucide-react";
 
 import { useCurrentCouple } from "@/features/relationship/hook/use-relationship";
 import { boardApi } from "@/features/together/api/board.api";
@@ -16,7 +17,7 @@ import { EditTaskSheet } from "@/features/together/ui/EditTaskSheet";
 import { TaskFilters } from "@/features/together/ui/TaskFilters";
 import { TemplatePicker } from "@/features/together/ui/TemplatePicker";
 import { useAuth } from "@/shared/api/provider/auth-provider";
-import { Button } from "@/shared/ui/button/Button";
+import { Button, Card } from "@/shared/ui";
 
 const TASK_FILTERS = new Set<TaskFilter>(["all", "me", "partner", "together", "rotate"]);
 
@@ -60,39 +61,41 @@ export function TogetherPage() {
   };
 
   return (
-    <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-background">
-      <header className="sticky top-0 z-10 bg-card/80 backdrop-blur-md border-b border-border/60 px-4 pt-safe-top">
-        <div className="flex items-center justify-between py-4">
+    <div className="min-h-0 min-w-0 flex-1 overflow-y-auto">
+      <main className="mx-auto w-full max-w-[1096px] space-y-4 px-4 py-6 sm:px-8 sm:py-10">
+        <header className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h1 className="text-xl font-bold tracking-tight">Совместные задачи</h1>
-            <p className="text-xs text-muted-foreground capitalize mt-0.5">
+            <h1 className="text-3xl font-semibold tracking-tight">Задачи</h1>
+            <p className="mt-2 text-sm text-muted-foreground capitalize">
               {format(new Date(), "EEEE, d MMMM", { locale: ru })}
             </p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <Button
-              variant="primary"
-              size="sm"
-              className="rounded-full"
+              variant="secondary"
+              leftIcon={<LayoutTemplate />}
               onClick={() => setIsTemplateOpen(true)}
             >
               Шаблоны
             </Button>
+            <Button leftIcon={<Plus />} onClick={() => setIsCreateOpen(true)} disabled={!board}>
+              Добавить задачу
+            </Button>
           </div>
-        </div>
-      </header>
-
-      <main className="flex min-h-0 min-w-0 flex-1 flex-col px-3 pt-3 sm:px-6 lg:px-8">
-        <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-3">
-          <TaskFilters active={filter} onChange={handleFilterChange} />
+        </header>
+        <div className="space-y-4">
           {boardLoading ? (
             <div className="flex gap-4 overflow-x-auto pb-4">
               {Array.from({ length: 3 }).map((_, i) => (
-                <div key={i} className="w-72 shrink-0 h-96 rounded-3xl bg-muted animate-pulse" />
+                <div
+                  key={i}
+                  className="h-96 w-72 shrink-0 rounded-md bg-muted motion-safe:animate-pulse"
+                />
               ))}
             </div>
           ) : board ? (
             <BoardView
+              filterControl={<TaskFilters active={filter} onChange={handleFilterChange} />}
               board={board}
               filter={filter}
               currentUserId={user?.id ?? ""}
@@ -109,10 +112,10 @@ export function TogetherPage() {
               }}
             />
           ) : (
-            <div className="text-center py-16 text-muted-foreground">
+            <Card className="rounded-md py-10 text-center text-muted-foreground" variant="outline">
               <p className="text-lg font-medium mb-1">Нет доски</p>
               <p className="text-sm">Создайте первую колонку, чтобы начать</p>
-            </div>
+            </Card>
           )}
         </div>
       </main>

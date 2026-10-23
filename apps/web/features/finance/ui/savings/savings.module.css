@@ -1,0 +1,42 @@
+.group {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 16px;
+}
+.tile {
+  aspect-ratio: 1;
+  min-width: 0;
+  min-height: 44px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--card);
+  color: var(--foreground);
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+.tile[data-complete="true"] {
+  background: var(--primary);
+  color: var(--primary-foreground);
+  border-color: var(--primary);
+  opacity: 1;
+}
+.tile[data-pending="true"] {
+  opacity: 0.65;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .tile:active {
+    transform: scale(0.94);
+  }
+  .tile[data-recent="true"] {
+    animation: saved 180ms ease-out;
+  }
+}
+@keyframes saved {
+  from {
+    transform: scale(0.92);
+  }
+  to {
+    transform: scale(1);
+  }
+}

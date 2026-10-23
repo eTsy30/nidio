@@ -1,120 +1,124 @@
 "use client";
 import { useState } from "react";
 
-import { Checkbox, Input, InputControl, Select, Textarea } from "@/shared/ui";
+import { Button, Input } from "@/shared/ui";
 
 import { useFinance } from "../api/FinanceProvider";
-import { ean13Bits } from "../model/barcode";
-import { cardCategories } from "../model/constants";
-import type { CardInput, LoyaltyCard } from "../model/types";
+import { cardCodeError, inferCardCode } from "../model/card-code";
+import { cardTones } from "../model/constants";
+import type { CardInput, CardTone, LoyaltyCard } from "../model/types";
 
+import { CardCategorySelect } from "./cards/CardCategorySelect";
+import { CardScanner } from "./cards/CardScanner";
 import { FinanceDialog } from "./FinanceDialog";
-import { ToneField } from "./FinanceFields";
-export function CardForm({ card, onClose }: { card?: LoyaltyCard; onClose: () => void }) {
-  const { write } = useFinance();
-  const [savedId, setSavedId] = useState(card?.id);
+export function CardForm({
+  card,
+  onClose,
+  onDelete,
+}: {
+  card?: LoyaltyCard;
+  onClose: () => void;
+  onDelete?: () => void;
+}) {
+  const { write, data } = useFinance();
+  const [manual, setManual] = useState(Boolean(card));
   const [form, setForm] = useState<CardInput>({
     storeName: card?.storeName ?? "",
     cardNumber: card?.cardNumber ?? "",
     barcodeFormat: card?.barcodeFormat ?? "NONE",
-    category: card?.category ?? "groceries",
+    category: card?.category ?? "other",
     comment: card?.comment ?? "",
-    color: card?.color ?? "primary",
+    color: card?.color ?? "blue",
     isFavorite: card?.isFavorite ?? false,
   });
-  const [file, setFile] = useState<File | null>(null);
-  const change = <K extends keyof CardInput>(key: K, value: CardInput[K]) =>
-    setForm((old) => ({ ...old, [key]: value }));
   return (
-    <FinanceDialog
-      title={card ? "Изменить карту" : "Добавить карту"}
-      onClose={onClose}
-      onSubmit={async () => {
-        if (form.barcodeFormat === "EAN13" && !ean13Bits(form.cardNumber))
-          throw new Error("Проверьте 13 цифр и контрольную сумму EAN-13");
-        if (
-          file &&
-          (file.size > 5 * 1024 * 1024 ||
-            !["image/jpeg", "image/png", "image/webp"].includes(file.type))
-        )
-          throw new Error("Выберите JPG, PNG или WebP до 5 МБ");
-        const result = (await write(
-          `/cards${savedId ? `/${savedId}` : ""}`,
-          savedId ? "patch" : "post",
-          { ...form, storeName: form.storeName.trim() },
-        )) as LoyaltyCard;
-        setSavedId(result.id);
-        if (file) {
-          const body = new FormData();
-          body.set("file", file);
-          await write(`/cards/${result.id}/image`, "post", body);
-        }
-      }}
-    >
-      <Input
-        label="Магазин"
-        required
-        maxLength={100}
-        value={form.storeName}
-        onChange={(e) => change("storeName", e.target.value)}
-      />
-      <Input
-        label="Номер карты или содержимое кода"
-        required
-        maxLength={256}
-        value={form.cardNumber}
-        onChange={(e) => change("cardNumber", e.target.value)}
-      />
-      <Select
-        label="Формат оригинального кода"
-        value={form.barcodeFormat}
-        onChange={(e) => change("barcodeFormat", e.target.value as CardInput["barcodeFormat"])}
+    <>
+      <FinanceDialog
+        title={card ? "Изменить карту" : "Новая карта"}
+        description="Название, цвет и код — карта готова."
+        onClose={onClose}
+        submitLabel={card ? "Сохранить" : "Добавить карту"}
+        submitDisabled={!form.storeName.trim() || !form.cardNumber.trim()}
+        onSubmit={async () => {
+          const error = cardCodeError(form.cardNumber, form.barcodeFormat);
+          if (error) throw new Error(error);
+          await write(`/cards${card ? `/${card.id}` : ""}`, card ? "patch" : "post", {
+            ...form,
+            storeName: form.storeName.trim(),
+          });
+        }}
       >
-        <option value="NONE">Не знаю — только номер</option>
-        <option value="EAN13">EAN-13 · 13 цифр</option>
-        <option value="QR">QR-код</option>
-      </Select>
-      <p className="text-xs text-muted-foreground">
-        Выберите формат, указанный на вашей карте. Неизвестный код не преобразуется автоматически.
-      </p>
-      <div className="grid grid-cols-2 gap-3">
-        <Select
-          label="Категория"
+        <Input
+          label="Название карты"
+          placeholder="Например, Евроопт"
+          required
+          maxLength={100}
+          value={form.storeName}
+          onChange={(e) => setForm({ ...form, storeName: e.target.value })}
+        />
+        <CardCategorySelect
           value={form.category}
-          onChange={(e) => change("category", e.target.value)}
-        >
-          {Object.entries(cardCategories).map(([key, label]) => (
-            <option key={key} value={key}>
-              {label}
-            </option>
-          ))}
-        </Select>
-        <ToneField value={form.color} onChange={(value) => change("color", value)} />
-      </div>
-      <label className="block space-y-2 text-sm font-semibold">
-        Фото карты · до 5 МБ
-        <InputControl
-          type="file"
-          accept="image/jpeg,image/png,image/webp"
-          onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+          onChange={(category) => setForm({ ...form, category })}
         />
-      </label>
-      {savedId && !card && (
-        <p role="status" className="text-sm text-muted-foreground">
-          Карта сохранена. Если фото не загрузилось, повторите сохранение или закройте окно.
-        </p>
-      )}
-      <label className="block space-y-2 text-sm font-semibold">
-        Комментарий
-        <Textarea
-          value={form.comment}
-          maxLength={1000}
-          onChange={(e) => change("comment", e.target.value)}
+        <fieldset className="space-y-2">
+          <legend className="text-sm font-medium">Цвет карты</legend>
+          <div className="flex flex-wrap gap-2">
+            {(Object.keys(cardTones) as CardTone[]).map((key) => {
+              const tone = cardTones[key];
+
+              return (
+                <Button
+                  key={key}
+                  variant="secondary"
+                  aria-pressed={form.color === key}
+                  aria-label={tone.label}
+                  className={`size-12 rounded-full border-2 bg-transparent p-2 shadow-none hover:bg-transparent ${
+                    form.color === key ? "border-foreground" : "border-transparent"
+                  }`}
+                  onClick={() => setForm((old) => ({ ...old, color: key }))}
+                >
+                  <span className={`block size-6 rounded-full ${tone.bar}`} aria-hidden="true" />
+                </Button>
+              );
+            })}
+          </div>
+        </fieldset>
+        <CardScanner
+          onManual={() => setManual(true)}
+          onScan={(value) => {
+            setForm((old) => ({ ...old, ...value }));
+            setManual(false);
+          }}
         />
-      </label>
-      <Checkbox checked={form.isFavorite} onCheckedChange={(value) => change("isFavorite", value)}>
-        В избранное
-      </Checkbox>
-    </FinanceDialog>
+        {(manual || form.cardNumber) && (
+          <Input
+            autoFocus
+            label="Номер или содержимое кода"
+            placeholder="Введите или вставьте код"
+            autoComplete="off"
+            maxLength={256}
+            value={form.cardNumber}
+            onChange={(e) => setForm({ ...form, ...inferCardCode(e.target.value) })}
+          />
+        )}
+        {!manual && form.cardNumber && (
+          <p role="status" className="text-sm text-muted-foreground">
+            Код распознан. Можно сохранять карту.
+          </p>
+        )}
+        {data.cards.some(
+          (c) => c.id !== card?.id && c.cardNumber === form.cardNumber && form.cardNumber,
+        ) && (
+          <p className="text-sm text-warning">
+            Карта с таким номером уже есть. Проверьте название магазина.
+          </p>
+        )}
+        {onDelete && (
+          <Button variant="ghost" className="text-destructive" onClick={onDelete}>
+            Удалить карту
+          </Button>
+        )}
+      </FinanceDialog>
+    </>
   );
 }

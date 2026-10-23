@@ -1,115 +1,126 @@
 "use client";
 import { useState } from "react";
-import { Plus } from "lucide-react";
+import NextLink from "next/link";
+import { useRouter } from "next/navigation";
+import { ChevronRight, PiggyBank, Plus } from "lucide-react";
 
-import { Button, Card } from "@/shared/ui";
+import { Button, ChoiceButton } from "@/shared/ui";
 
 import { useFinance } from "../api/FinanceProvider";
-import { tones } from "../model/constants";
 import { money, progress } from "../model/money";
+import { strategyLabels, strategyOf } from "../model/savings-strategy";
 import type { Currency } from "../model/types";
 
-import { ConfirmDelete } from "./FinanceDialog";
-import { FinanceEmpty } from "./FinanceEmpty";
-import { GoalDetails } from "./GoalDetails";
+import { PiggyBankScopeSelect } from "./cards/PiggyBankScopeSelect";
+import { CurrencyField } from "./FinanceFields";
 import { GoalForm } from "./GoalForm";
-import { SavingsEntryForm } from "./SavingsEntryForm";
-export function SavingsTab({ currency }: { currency: Currency }) {
-  const { data, write } = useFinance();
-  const [modal, setModal] = useState<{ kind: string; id?: string } | null>(null);
-  const goals = data.goals.filter((goal) => goal.currency === currency);
-  const goal = data.goals.find((g) => g.id === modal?.id);
-  const total = goals.reduce((sum, g) => sum + g.currentMinor, 0);
-  const active = goals.filter((g) => g.currentMinor < g.targetMinor).length;
-  const close = () => setModal(null);
+
+export function SavingsTab({
+  currency,
+  onCurrency,
+}: {
+  currency: Currency;
+  onCurrency?: (currency: Currency) => void;
+}) {
+  const router = useRouter();
+  const { data } = useFinance();
+  const [scope, setScope] = useState("all");
+  const [creating, setCreating] = useState(false);
+  const goals = data.goals.filter(
+    (goal) => goal.currency === currency && (scope === "all" || (goal.scope ?? "COUPLE") === scope),
+  );
   return (
-    <div className="space-y-5">
-      <Card className="flex flex-wrap items-center justify-between gap-4 bg-primary/5">
+    <div className="space-y-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <p className="text-sm text-muted-foreground">Накоплено вместе</p>
-          <p className="mt-1 text-3xl font-semibold tabular-nums">{money(total, currency)}</p>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Активных целей: {active} · Всего: {goals.length}
-          </p>
+          <h1 className="text-3xl font-semibold tracking-tight">Копилки</h1>
+          <p className="mt-2 text-sm text-muted-foreground">Маленькие шаги к большим планам</p>
         </div>
-        <Button onClick={() => setModal({ kind: "create" })} leftIcon={<Plus />}>
-          Новая копилка
+        <Button leftIcon={<Plus />} onClick={() => setCreating(true)} className="shadow-none">
+          Создать копилку
         </Button>
-      </Card>
+      </div>
+      <div className="flex w-full items-center justify-between gap-2">
+        <div className="w-[200px] shrink-0">
+          <CurrencyField value={currency} {...(onCurrency ? { onChange: onCurrency } : {})} />
+        </div>
+
+        <div className="w-[200px] shrink-0">
+          <PiggyBankScopeSelect value={scope} onChange={setScope} />
+        </div>
+      </div>
       {!goals.length ? (
-        <FinanceEmpty title="С чего начнём мечтать?">
-          Создайте первую общую цель — на отпуск, дом или маленькую радость для двоих.
-        </FinanceEmpty>
+        <div className="flex flex-col items-center gap-4 py-10 text-center">
+          <PiggyBank className="size-12 text-primary" />
+          <h2 className="text-xl font-semibold">На что будем копить?</h2>
+          <p className="max-w-xs text-sm text-muted-foreground">
+            Назовите цель, укажите сумму и выберите удобный способ накопления.
+          </p>
+          <Button variant="secondary" onClick={() => setCreating(true)}>
+            Создать первую копилку
+          </Button>
+        </div>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {goals.map((g) => (
-            <Card key={g.id} padding="sm" className="flex min-w-0 flex-col gap-4">
-              <Button
-                variant="plain"
-                size="none"
-                className="w-full text-left"
-                onClick={() => setModal({ kind: "detail", id: g.id })}
-              >
+        <div className="grid gap-3 sm:grid-cols-2">
+          {goals.map((goal) => (
+            <NextLink
+              key={goal.id}
+              href={`/savings/${goal.id}`}
+              className="block min-w-0 rounded-[var(--radius-md)] border border-border bg-card p-5 text-foreground transition-colors hover:border-primary/40 hover:no-underline"
+            >
+              <div className="flex items-start gap-3">
                 <span
-                  className={`mb-3 inline-flex size-12 items-center justify-center rounded-2xl text-2xl ${tones[g.color].surface}`}
+                  className="flex size-10 shrink-0 items-center justify-center rounded-[var(--radius-sm)] bg-muted text-xl"
+                  aria-hidden="true"
                 >
-                  {g.icon}
+                  {goal.icon}
                 </span>
-                <h3 className="break-words text-lg font-semibold">{g.title}</h3>
-                <p className="mt-2 text-sm">
-                  {money(g.currentMinor, currency)}{" "}
-                  <span className="text-muted-foreground">из {money(g.targetMinor, currency)}</span>
-                </p>
-                <div
-                  role="progressbar"
-                  aria-label={g.title}
-                  aria-valuenow={Math.round(progress(g.currentMinor, g.targetMinor))}
-                  aria-valuemin={0}
-                  aria-valuemax={100}
-                  className="mt-3 h-2 overflow-hidden rounded-full bg-muted"
-                >
-                  <div
-                    className={`h-full rounded-full motion-safe:transition-[width] motion-safe:duration-500 ${tones[g.color].bar}`}
-                    style={{ width: `${progress(g.currentMinor, g.targetMinor)}%` }}
-                  />
+                <div className="min-w-0 flex-1">
+                  <h2 className="break-words text-base font-semibold">{goal.title}</h2>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    {goal.archived
+                      ? "В архиве"
+                      : goal.currentMinor >= goal.targetMinor
+                        ? "Цель достигнута"
+                        : strategyLabels[strategyOf(goal)]}
+                  </p>
                 </div>
-                <p className="mt-2 text-xs text-muted-foreground">
-                  {g.currentMinor >= g.targetMinor
-                    ? "✓ Цель достигнута"
-                    : `Осталось ${money(g.targetMinor - g.currentMinor, currency)}`}{" "}
-                  · {Math.round(progress(g.currentMinor, g.targetMinor))}%
-                </p>
-              </Button>
-              <Button
-                variant="secondary"
-                fullWidth
-                onClick={() => setModal({ kind: "deposit", id: g.id })}
+                <ChevronRight className="mt-2 size-4 shrink-0 text-muted-foreground" />
+              </div>
+              <p className="mt-5 flex flex-wrap items-baseline gap-x-2">
+                <strong className="text-lg tabular-nums">
+                  {money(goal.currentMinor, currency)}
+                </strong>
+                <span className="text-xs text-muted-foreground">
+                  из {money(goal.targetMinor, currency)}
+                </span>
+              </p>
+              <div
+                role="progressbar"
+                aria-label={goal.title}
+                aria-valuenow={Math.round(progress(goal.currentMinor, goal.targetMinor))}
+                aria-valuemin={0}
+                aria-valuemax={100}
+                className="mt-3 h-1.5 overflow-hidden rounded-full bg-muted"
               >
-                Пополнить
-              </Button>
-            </Card>
+                <div
+                  className="h-full rounded-full bg-primary"
+                  style={{ width: `${progress(goal.currentMinor, goal.targetMinor)}%` }}
+                />
+              </div>
+              <p className="mt-3 text-xs text-muted-foreground">
+                {goal.scope === "PERSONAL" ? "Личная" : "Общая"} ·{" "}
+                {Math.round(progress(goal.currentMinor, goal.targetMinor))}%
+              </p>
+            </NextLink>
           ))}
         </div>
       )}
-      {modal?.kind === "create" && <GoalForm currency={currency} onClose={close} />}
-      {goal && modal?.kind === "detail" && (
-        <GoalDetails
-          goal={goal}
-          onClose={close}
-          action={(kind) => setModal({ kind, id: goal.id })}
-        />
-      )}
-      {goal && modal?.kind === "edit" && (
-        <GoalForm goal={goal} currency={currency} onClose={close} />
-      )}
-      {goal && ["deposit", "withdrawal"].includes(modal?.kind ?? "") && (
-        <SavingsEntryForm goal={goal} withdrawal={modal?.kind === "withdrawal"} onClose={close} />
-      )}
-      {goal && modal?.kind === "delete" && (
-        <ConfirmDelete
-          title={`Копилка «${goal.title}» и вся её история будут удалены.`}
-          onClose={close}
-          onDelete={() => write(`/goals/${goal.id}`, "delete")}
+      {creating && (
+        <GoalForm
+          currency={currency}
+          onClose={() => setCreating(false)}
+          onCreated={(id) => router.push(`/savings/${id}`)}
         />
       )}
     </div>

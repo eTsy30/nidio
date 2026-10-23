@@ -47,8 +47,8 @@ export function CalendarYear({ year, events, onMonthClick, onDayClick }: Calenda
   };
 
   return (
-    <div className="p-1 sm:p-3 lg:p-5">
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+    <div className="min-w-0">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {months.map((month) => {
           const days = getMonthDays(month);
 
@@ -57,7 +57,7 @@ export function CalendarYear({ year, events, onMonthClick, onDayClick }: Calenda
               padding="sm"
               key={month.getMonth()}
               className={cn(
-                "group rounded-2xl border bg-background p-3 text-left",
+                "group rounded-md bg-card text-left",
                 "transition-all hover:border-primary/30 hover:shadow-sm",
               )}
             >

@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ConflictException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
@@ -7,8 +8,8 @@ import {
 import { StorageService } from '../storage/storage.service';
 
 import { CardDto } from './dto/finance.dto';
+import { cardNumber, validCardCode } from './card-rules';
 import { FinanceAccess } from './finance-access.service';
-import { validEan13 } from './finance-rules';
 @Injectable()
 export class CardsService {
   constructor(
@@ -16,17 +17,37 @@ export class CardsService {
     private readonly storage: StorageService,
   ) {}
   save(userId: string, dto: CardDto, id?: string) {
-    if (dto.barcodeFormat === 'EAN13' && !validEan13(dto.cardNumber))
+    const data = {
+      ...dto,
+      storeName: dto.storeName.trim().replace(/\s+/g, ' '),
+      cardNumber: cardNumber(dto.cardNumber, dto.barcodeFormat),
+    };
+    if (!data.storeName || !validCardCode(data.cardNumber, data.barcodeFormat))
       throw new BadRequestException(
-        'EAN-13: нужны 13 цифр с корректной контрольной суммой',
+        'Проверьте название, номер и формат кода карты',
       );
     return this.access.write(userId, async (db, coupleId) => {
-      if (!id) return db.loyaltyCard.create({ data: { ...dto, coupleId } });
-      if (!(await db.loyaltyCard.findFirst({ where: { id, coupleId } })))
+      if (id && !(await db.loyaltyCard.findFirst({ where: { id, coupleId } })))
         throw new NotFoundException('Карта не найдена');
-      return db.loyaltyCard.update({ where: { id }, data: dto });
+      const duplicate = await db.loyaltyCard.findFirst({
+        where: {
+          coupleId,
+          cardNumber: data.cardNumber,
+          barcodeFormat: data.barcodeFormat,
+          storeName: { equals: data.storeName, mode: 'insensitive' },
+          ...(id ? { id: { not: id } } : {}),
+        },
+      });
+      if (duplicate)
+        throw new ConflictException(
+          'Такая карта магазина уже есть в вашей коллекции',
+        );
+      return id
+        ? db.loyaltyCard.update({ where: { id }, data })
+        : db.loyaltyCard.create({ data: { ...data, coupleId } });
     });
   }
+
   used(userId: string, id: string) {
     return this.access.write(userId, async (db, coupleId) => {
       const result = await db.loyaltyCard.updateMany({

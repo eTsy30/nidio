@@ -3,11 +3,29 @@
 import { useState } from "react";
 import { format } from "date-fns";
 import { ru } from "date-fns/locale";
-import { ChevronDown, ChevronLeft, ChevronRight, ListFilter } from "lucide-react";
+import {
+  CalendarDays,
+  CalendarRange,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  Grid2X2,
+  Layers,
+  Plus,
+  User,
+  Users,
+} from "lucide-react";
 
-import { EventFilter } from "@/features/calendar/event-filter/ui/EventFilter";
-import { cn } from "@/shared/lib/cn";
-import { Button } from "@/shared/ui";
+import { typeIcon, typeMeta } from "@/features/calendar/model/constants";
+import { Button, ChoiceButton } from "@/shared/ui";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/shared/ui/dialog/dialog";
+import { IconSelect } from "@/shared/ui/select/IconSelect";
 
 import { EventScope, EventType, ViewMode } from "../model/types";
 
@@ -16,14 +34,12 @@ interface CalendarHeaderProps {
   scope: EventScope;
   viewMode: ViewMode;
   filter: EventType | "ALL";
-
   onScopeChange: (scope: EventScope) => void;
   onViewModeChange: (view: ViewMode) => void;
-
   onPrev: () => void;
   onNext: () => void;
   onToday: () => void;
-
+  onCreate: () => void;
   onMonthChange: (month: Date) => void;
   onFilterChange: (value: EventType | "ALL") => void;
 }
@@ -38,267 +54,123 @@ export function CalendarHeader({
   onPrev,
   onNext,
   onToday,
+  onCreate,
   onMonthChange,
   onFilterChange,
 }: CalendarHeaderProps) {
   const [monthPickerOpen, setMonthPickerOpen] = useState(false);
-  const [filterOpen, setFilterOpen] = useState(false);
-
   const currentYear = month.getFullYear();
-  const currentMonth = month.getMonth();
-
-  const months = Array.from({ length: 12 }, (_, index) => new Date(currentYear, index, 1));
-
-  const handleMonthChange = (date: Date) => {
-    onMonthChange(date);
-  };
-
   return (
-    <header className="border-b bg-card/80 px-3 py-3 backdrop-blur-xl sm:px-5">
-      <p className="mb-3 text-xs font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-        Ваш календарь
-      </p>
-      <div className="grid min-h-10 grid-cols-[1fr_auto] items-center gap-2 xl:grid-cols-[auto_1fr_auto]">
-        <div className="flex shrink-0 items-center rounded-xl bg-muted p-1">
-          <Button
-            variant="ghost"
-            size="sm"
-            leftIcon={<ChevronLeft className="h-4 w-4" />}
-            onClick={onPrev}
-            className="h-8 w-8 rounded-lg"
-            aria-label="Предыдущий период"
-          ></Button>
-
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onToday}
-            className="h-8 rounded-lg px-2.5 text-sm font-medium sm:px-3"
-          >
+    <header className="space-y-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h1 className="text-3xl font-semibold tracking-tight">Календарь</h1>
+          <p className="mt-2 text-sm text-muted-foreground">Ваши планы и общие моменты</p>
+        </div>
+        <Button leftIcon={<Plus />} onClick={onCreate}>
+          Добавить событие
+        </Button>
+      </div>
+      <div className="grid gap-3 sm:grid-cols-3">
+        <IconSelect
+          label="Календарь"
+          value={scope}
+          onChange={(value) => onScopeChange(value as EventScope)}
+          options={[
+            { value: EventScope.PERSONAL, label: "Мой", icon: <User className="size-4" /> },
+            { value: EventScope.COUPLE, label: "Наш", icon: <Users className="size-4" /> },
+          ]}
+        />
+        <IconSelect
+          label="Вид"
+          value={viewMode}
+          onChange={(value) => onViewModeChange(value as ViewMode)}
+          options={[
+            { value: "month", label: "Месяц", icon: <CalendarDays className="size-4" /> },
+            { value: "week", label: "Неделя", icon: <CalendarRange className="size-4" /> },
+            { value: "year", label: "Год", icon: <Grid2X2 className="size-4" /> },
+          ]}
+        />
+        <IconSelect
+          label="События"
+          value={filter}
+          onChange={(value) => onFilterChange(value as EventType | "ALL")}
+          options={[
+            { value: "ALL", label: "Все события", icon: <Layers className="size-4" /> },
+            ...Object.values(EventType).map((type) => {
+              const Icon = typeIcon[type];
+              return {
+                value: type,
+                label: typeMeta[type].label,
+                icon: <Icon className="size-4" />,
+              };
+            }),
+          ]}
+        />
+      </div>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <Button
+          variant="secondary"
+          onClick={() => setMonthPickerOpen(true)}
+          rightIcon={<ChevronDown />}
+          className="capitalize"
+        >
+          {format(month, "LLLL yyyy", { locale: ru })}
+        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="secondary" iconOnly aria-label="Предыдущий период" onClick={onPrev}>
+            <ChevronLeft />
+          </Button>
+          <Button variant="secondary" onClick={onToday}>
             Сегодня
           </Button>
-
-          <Button
-            variant="ghost"
-            size="sm"
-            rightIcon={<ChevronRight className="h-4 w-4" />}
-            onClick={onNext}
-            className="h-8 w-8 rounded-lg"
-            aria-label="Следующий период"
-          ></Button>
-        </div>
-
-        <div className="order-3 col-span-2 flex min-w-0 flex-wrap items-center justify-between gap-2 xl:order-none xl:col-span-1 xl:justify-center">
-          <div className="relative">
-            <Button
-              variant="plain"
-              size="none"
-              type="button"
-              onClick={() => {
-                setMonthPickerOpen((open) => !open);
-                setFilterOpen(false);
-              }}
-              className={cn(
-                "flex h-10 items-center gap-1.5 rounded-xl px-2.5 sm:px-3",
-                "text-sm font-semibold capitalize sm:text-base",
-                "transition-colors hover:bg-muted",
-                monthPickerOpen && "bg-muted",
-              )}
-              aria-expanded={monthPickerOpen}
-              aria-haspopup="dialog"
-            >
-              <span>
-                {format(month, "LLLL yyyy", {
-                  locale: ru,
-                })}
-              </span>
-
-              <ChevronDown
-                className={cn(
-                  "h-4 w-4 text-muted-foreground transition-transform",
-                  monthPickerOpen && "rotate-180",
-                )}
-              />
-            </Button>
-
-            {monthPickerOpen && (
-              <>
-                <Button
-                  variant="plain"
-                  size="none"
-                  type="button"
-                  aria-label="Закрыть выбор месяца"
-                  className="fixed inset-0 z-40 cursor-default"
-                  onClick={() => setMonthPickerOpen(false)}
-                />
-
-                <div
-                  className="absolute left-0 top-full z-50 mt-2 w-72 max-w-[calc(100vw-24px)] rounded-2xl border bg-background p-3 shadow-xl"
-                  onClick={(event) => event.stopPropagation()}
-                >
-                  <div className="mb-3 flex items-center justify-between">
-                    <Button
-                      variant="plain"
-                      size="none"
-                      type="button"
-                      onClick={() => handleMonthChange(new Date(currentYear - 1, currentMonth, 1))}
-                      className="flex h-9 w-9 items-center justify-center rounded-xl transition-colors hover:bg-muted"
-                      aria-label="Предыдущий год"
-                    >
-                      <ChevronLeft className="h-4 w-4" />
-                    </Button>
-
-                    <span className="text-sm font-semibold">{currentYear}</span>
-
-                    <Button
-                      variant="plain"
-                      size="none"
-                      type="button"
-                      onClick={() => handleMonthChange(new Date(currentYear + 1, currentMonth, 1))}
-                      className="flex h-9 w-9 items-center justify-center rounded-xl transition-colors hover:bg-muted"
-                      aria-label="Следующий год"
-                    >
-                      <ChevronRight className="h-4 w-4" />
-                    </Button>
-                  </div>
-
-                  <div className="grid grid-cols-3 gap-1">
-                    {months.map((date) => {
-                      const selected = date.getMonth() === currentMonth;
-
-                      return (
-                        <Button
-                          variant="plain"
-                          size="none"
-                          key={date.getMonth()}
-                          type="button"
-                          onClick={() => {
-                            handleMonthChange(date);
-                            setMonthPickerOpen(false);
-                          }}
-                          className={cn(
-                            "rounded-xl px-2 py-2.5 text-sm capitalize transition-colors",
-                            selected ? "bg-primary text-primary-foreground" : "hover:bg-muted",
-                          )}
-                        >
-                          {format(date, "LLL", {
-                            locale: ru,
-                          })}
-                        </Button>
-                      );
-                    })}
-                  </div>
-                </div>
-              </>
-            )}
-          </div>
-
-          <div className="flex shrink-0 items-center rounded-xl bg-muted p-1">
-            {(["week", "month", "year"] as ViewMode[]).map((view) => (
-              <Button
-                variant="plain"
-                size="none"
-                key={view}
-                type="button"
-                onClick={() => {
-                  onViewModeChange(view);
-                  setMonthPickerOpen(false);
-                }}
-                className={cn(
-                  "rounded-lg px-3 py-1.5 text-xs font-medium transition-all",
-                  "sm:px-4 sm:text-sm",
-                  viewMode === view
-                    ? "bg-background text-primary shadow-sm"
-                    : "text-muted-foreground hover:text-foreground",
-                )}
-              >
-                {view === "month" ? "Месяц" : view === "week" ? "Неделя" : "Год"}
-              </Button>
-            ))}
-          </div>
-        </div>
-
-        <div className="flex shrink-0 items-center gap-2">
-          <div className="flex items-center rounded-xl bg-muted p-1">
-            <Button
-              variant="plain"
-              size="none"
-              type="button"
-              onClick={() => onScopeChange(EventScope.PERSONAL)}
-              className={cn(
-                "rounded-lg px-2.5 py-1.5 text-xs font-medium transition-all",
-                "sm:px-3 sm:text-sm",
-                scope === EventScope.PERSONAL
-                  ? "bg-background text-primary shadow-sm"
-                  : "text-muted-foreground hover:text-foreground",
-              )}
-            >
-              Мой
-            </Button>
-
-            <Button
-              variant="plain"
-              size="none"
-              type="button"
-              onClick={() => onScopeChange(EventScope.COUPLE)}
-              className={cn(
-                "rounded-lg px-2.5 py-1.5 text-xs font-medium transition-all",
-                "sm:px-3 sm:text-sm",
-                scope === EventScope.COUPLE
-                  ? "bg-primary text-primary-foreground shadow-sm"
-                  : "text-muted-foreground hover:text-foreground",
-              )}
-            >
-              Наш
-            </Button>
-          </div>
-
-          <div className="relative">
-            <Button
-              variant="ghost"
-              size="sm"
-              leftIcon={<ListFilter className="h-4 w-4" />}
-              onClick={() => {
-                setFilterOpen((open) => !open);
-                setMonthPickerOpen(false);
-              }}
-              className={cn(
-                "h-10 w-10 rounded-xl",
-                filter !== "ALL" && "bg-primary/10 text-primary",
-              )}
-              aria-label="Фильтр событий"
-              aria-expanded={filterOpen}
-              aria-haspopup="dialog"
-            ></Button>
-
-            {filterOpen && (
-              <>
-                <Button
-                  variant="plain"
-                  size="none"
-                  type="button"
-                  aria-label="Закрыть фильтр"
-                  className="fixed inset-0 z-40 cursor-default"
-                  onClick={() => setFilterOpen(false)}
-                />
-
-                <div
-                  className="absolute right-0 top-full z-50 mt-2"
-                  onClick={(event) => event.stopPropagation()}
-                >
-                  <EventFilter
-                    value={filter}
-                    onChange={(value) => {
-                      onFilterChange(value);
-                      setFilterOpen(false);
-                    }}
-                  />
-                </div>
-              </>
-            )}
-          </div>
+          <Button variant="secondary" iconOnly aria-label="Следующий период" onClick={onNext}>
+            <ChevronRight />
+          </Button>
         </div>
       </div>
+      <Dialog open={monthPickerOpen} onOpenChange={setMonthPickerOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Выбрать месяц</DialogTitle>
+            <DialogDescription>Перейдите к нужному месяцу и году.</DialogDescription>
+          </DialogHeader>
+          <div className="flex items-center justify-between">
+            <Button
+              variant="secondary"
+              iconOnly
+              aria-label="Предыдущий год"
+              onClick={() => onMonthChange(new Date(currentYear - 1, month.getMonth(), 1))}
+            >
+              <ChevronLeft />
+            </Button>
+            <span className="text-lg font-semibold">{currentYear}</span>
+            <Button
+              variant="secondary"
+              iconOnly
+              aria-label="Следующий год"
+              onClick={() => onMonthChange(new Date(currentYear + 1, month.getMonth(), 1))}
+            >
+              <ChevronRight />
+            </Button>
+          </div>
+          <div className="grid grid-cols-3 gap-2">
+            {Array.from({ length: 12 }, (_, index) => (
+              <ChoiceButton
+                key={index}
+                selected={index === month.getMonth()}
+                className="capitalize"
+                onClick={() => {
+                  onMonthChange(new Date(currentYear, index, 1));
+                  setMonthPickerOpen(false);
+                }}
+              >
+                {format(new Date(currentYear, index, 1), "LLL", { locale: ru })}
+              </ChoiceButton>
+            ))}
+          </div>
+        </DialogContent>
+      </Dialog>
     </header>
   );
 }

@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 
-import { ChoiceButton, Input, Select, Textarea } from "@/shared/ui";
+import { ChoiceButton, Input, Textarea } from "@/shared/ui";
 
 import { useFinance } from "../api/FinanceProvider";
 import { expenseCategories, incomeCategories } from "../model/constants";
@@ -9,6 +9,7 @@ import { moneyInput, parseMoney } from "../model/money";
 import { dateKey } from "../model/period";
 import type { Currency, FinancialEntry } from "../model/types";
 
+import { CategorySelect } from "./savings/CategorySelect";
 import { FinanceDialog } from "./FinanceDialog";
 import { AmountField, CurrencyField } from "./FinanceFields";
 export function EntryForm({
@@ -62,15 +63,13 @@ export function EntryForm({
         <AmountField value={amount} onChange={setAmount} />
         <CurrencyField value={currency} disabled />
       </div>
-      <Select label="Категория" value={category} onChange={(e) => setCategory(e.target.value)}>
-        {Object.entries(type === "INCOME" ? incomeCategories : expenseCategories).map(
-          ([key, label]) => (
-            <option key={key} value={key}>
-              {label}
-            </option>
-          ),
-        )}
-      </Select>
+      <CategorySelect
+        value={category}
+        onChange={setCategory}
+        type={type}
+        incomeCategories={incomeCategories}
+        expenseCategories={expenseCategories}
+      />
       <Input
         label="Дата"
         type="date"

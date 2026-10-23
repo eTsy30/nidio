@@ -10,11 +10,20 @@ export function validDate(value?: string | null) {
     throw new BadRequestException('Укажите существующую дату');
 }
 export function savingsBalance(
-  entries: { amountMinor: number; type: string }[],
+  entries: {
+    amountMinor: number;
+    type: string;
+    cancelledAt?: Date | string | null;
+  }[],
 ) {
   return entries.reduce(
     (sum, item) =>
-      sum + (item.type === 'DEPOSIT' ? item.amountMinor : -item.amountMinor),
+      sum +
+      (item.cancelledAt
+        ? 0
+        : item.type === 'DEPOSIT'
+          ? item.amountMinor
+          : -item.amountMinor),
     0,
   );
 }

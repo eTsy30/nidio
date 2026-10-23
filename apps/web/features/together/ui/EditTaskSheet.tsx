@@ -11,7 +11,14 @@ import { z } from "zod";
 import { useAuth } from "@/shared/api/provider/auth-provider";
 import { cn } from "@/shared/lib/cn";
 import { Button } from "@/shared/ui";
-import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/shared/ui/dialog/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/shared/ui/dialog/dialog";
 import { InputControl } from "@/shared/ui/input/InputControl";
 import { Textarea } from "@/shared/ui/input/Textarea";
 import { Select } from "@/shared/ui/select/Select";
@@ -141,11 +148,11 @@ export function EditTaskSheet({ task, open, onClose, columns, partnerId }: EditT
 
   return (
     <Dialog open={open} onOpenChange={(next) => !next && !updateMutation.isPending && onClose()}>
-      <DialogContent className="max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] overflow-y-auto rounded-2xl p-5 sm:max-w-md">
-        <div className="pr-8">
+      <DialogContent>
+        <DialogHeader>
           <DialogTitle>Редактировать задачу</DialogTitle>
           <DialogDescription>{task.title}</DialogDescription>
-        </div>
+        </DialogHeader>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
           <div>
@@ -249,7 +256,7 @@ export function EditTaskSheet({ task, open, onClose, columns, partnerId }: EditT
             </p>
           )}
 
-          <div className="flex flex-col-reverse sm:flex-row gap-2 sm:justify-end pt-2">
+          <DialogFooter>
             <Button
               type="button"
               variant="ghost"
@@ -267,7 +274,7 @@ export function EditTaskSheet({ task, open, onClose, columns, partnerId }: EditT
             >
               Сохранить
             </Button>
-          </div>
+          </DialogFooter>
         </form>
       </DialogContent>
     </Dialog>

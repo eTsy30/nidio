@@ -6,6 +6,7 @@ import { BellRing, CheckCircle2, CircleCheck, Flag, Pencil, Repeat, Trash2 } fro
 
 import { cn } from "@/shared/lib/cn";
 import { Button } from "@/shared/ui/button/Button";
+import { Card } from "@/shared/ui/card/Card";
 import { Checkbox } from "@/shared/ui/checkbox/Checkbox";
 
 import { formatFutureDate, formatOverdueStatus } from "../lib/task-utils";
@@ -57,15 +58,17 @@ export function TaskCard({ task, currentUserId, partnerId, onEdit }: TaskCardPro
   } = useTaskCard({ task, currentUserId, partnerId, onEdit });
 
   return (
-    <div
+    <Card
+      padding="sm"
+      variant="outline"
       aria-disabled={isCompleted || !canCompleteMyPart}
       onClick={handleComplete}
       className={cn(
-        "group relative rounded-2xl border p-3 shadow-sm",
-        "transition-all duration-150",
+        "group relative rounded-md",
+        "transition-colors duration-150",
         "pr-10",
 
-        canCompleteMyPart && !isCompleted && "cursor-pointer hover:shadow-md",
+        canCompleteMyPart && !isCompleted && "cursor-pointer hover:border-primary/40",
 
         !canCompleteMyPart && !isCompleted && "cursor-default",
 
@@ -180,7 +183,7 @@ export function TaskCard({ task, currentUserId, partnerId, onEdit }: TaskCardPro
           <div className="flex items-start justify-between gap-1">
             <p
               className={cn(
-                "text-sm font-medium leading-snug",
+                "text-sm font-medium leading-snug break-words",
                 task.completed && "line-through text-muted-foreground",
               )}
             >
@@ -269,6 +272,6 @@ export function TaskCard({ task, currentUserId, partnerId, onEdit }: TaskCardPro
           )}
         </div>
       </div>
-    </div>
+    </Card>
   );
 }

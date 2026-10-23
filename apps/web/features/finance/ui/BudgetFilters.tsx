@@ -1,7 +1,21 @@
-import { Input, Select } from "@/shared/ui";
+import {
+  CalendarClock,
+  CalendarDays,
+  CalendarRange,
+  ChartNoAxesCombined,
+  CircleUserRound,
+  Grid2X2,
+} from "lucide-react";
+
+import { Input } from "@/shared/ui";
+import { IconSelect } from "@/shared/ui/select/IconSelect";
 
 import { useFinance } from "../api/FinanceProvider";
 import { expenseCategories, incomeCategories } from "../model/constants";
+import type { Currency } from "../model/types";
+
+import { CurrencyField } from "./FinanceFields";
+
 export interface BudgetFilterState {
   period: string;
   start: string;
@@ -10,56 +24,96 @@ export interface BudgetFilterState {
   author: string;
   search: string;
 }
+
 export function BudgetFilters({
   value,
   change,
+  currency,
+  onCurrency,
 }: {
   value: BudgetFilterState;
   change: (next: Partial<BudgetFilterState>) => void;
+  currency: Currency;
+  onCurrency?: (currency: Currency) => void;
 }) {
   const { data } = useFinance();
+
+  const periodOptions = [
+    {
+      value: "week",
+      label: "Эта неделя",
+      icon: <CalendarDays className="size-4" />,
+    },
+    {
+      value: "month",
+      label: "Этот месяц",
+      icon: <CalendarRange className="size-4" />,
+    },
+    {
+      value: "year",
+      label: "Этот год",
+      icon: <ChartNoAxesCombined className="size-4" />,
+    },
+    {
+      value: "custom",
+      label: "Выбрать даты",
+      icon: <CalendarClock className="size-4" />,
+    },
+  ];
+
+  const categoryOptions = [
+    {
+      value: "ALL",
+      label: "Все категории",
+      icon: <Grid2X2 className="size-4" />,
+    },
+    ...Object.entries({
+      ...expenseCategories,
+      ...incomeCategories,
+    }).map(([key, label]) => ({
+      value: key,
+      label,
+      icon: <Grid2X2 className="size-4" />,
+    })),
+  ];
+
+  const authorOptions = [
+    {
+      value: "ALL",
+      label: "Оба участника",
+      icon: <CircleUserRound className="size-4" />,
+    },
+    ...data.members.map((member) => ({
+      value: member.id,
+      label: member.firstName,
+      icon: <CircleUserRound className="size-4" />,
+    })),
+  ];
+
   return (
     <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-      <Select
+      <IconSelect
         label="Период"
         value={value.period}
-        onChange={(e) => change({ period: e.target.value })}
-      >
-        <option value="week">Эта неделя</option>
-        <option value="month">Этот месяц</option>
-        <option value="year">Этот год</option>
-        <option value="custom">Выбрать даты</option>
-      </Select>
-      <Select
+        onChange={(period) => change({ period })}
+        options={periodOptions}
+      />
+
+      <IconSelect
         label="Категория"
         value={value.category}
-        onChange={(e) => change({ category: e.target.value })}
-      >
-        <option value="ALL">Все категории</option>
-        {Object.entries({ ...expenseCategories, ...incomeCategories }).map(([key, label]) => (
-          <option key={key} value={key}>
-            {label}
-          </option>
-        ))}
-      </Select>
-      <Select
+        onChange={(category) => change({ category })}
+        options={categoryOptions}
+      />
+
+      <IconSelect
         label="Кто добавил"
         value={value.author}
-        onChange={(e) => change({ author: e.target.value })}
-      >
-        <option value="ALL">Оба участника</option>
-        {data.members.map((m) => (
-          <option key={m.id} value={m.id}>
-            {m.firstName}
-          </option>
-        ))}
-      </Select>
-      <Input
-        label="Поиск по описанию"
-        value={value.search}
-        onChange={(e) => change({ search: e.target.value })}
-        placeholder="Например, ужин"
+        onChange={(author) => change({ author })}
+        options={authorOptions}
       />
+      <CurrencyField value={currency} {...(onCurrency ? { onChange: onCurrency } : {})} />
+
       {value.period === "custom" && (
         <>
           <Input
@@ -69,6 +123,7 @@ export function BudgetFilters({
             value={value.start}
             onChange={(e) => change({ start: e.target.value })}
           />
+
           <Input
             label="По дату включительно"
             type="date"

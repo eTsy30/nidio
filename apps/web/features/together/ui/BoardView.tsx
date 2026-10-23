@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { type ReactNode, useState } from "react";
 import {
   DndContext,
   DragEndEvent,
@@ -19,7 +19,7 @@ import {
   sortableKeyboardCoordinates,
 } from "@dnd-kit/sortable";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus } from "lucide-react";
+import { CheckCircle2, Circle, Plus } from "lucide-react";
 
 import { boardApi } from "@/features/together/api/board.api";
 import { togetherKeys } from "@/features/together/api/query-keys";
@@ -27,6 +27,7 @@ import { cn } from "@/shared/lib/cn";
 import { Button } from "@/shared/ui";
 import { Card } from "@/shared/ui/card/Card";
 import { InputControl } from "@/shared/ui/input/InputControl";
+import { IconSelect } from "@/shared/ui/select/IconSelect";
 
 import type { Board } from "../api/board.api";
 import { isTaskOverdue } from "../lib/task-utils";
@@ -38,6 +39,7 @@ import { ColumnCard } from "./ColumnCard";
 import { TaskCard } from "./TaskCard";
 
 interface BoardViewProps {
+  filterControl?: ReactNode;
   board: Board;
   filter: TaskFilter;
   currentUserId: string;
@@ -51,6 +53,7 @@ interface BoardViewProps {
 type TaskViewMode = "active" | "completed";
 
 export function BoardView({
+  filterControl,
   board,
   filter,
   currentUserId,
@@ -207,40 +210,17 @@ export function BoardView({
 
   return (
     <>
-      <div className="shrink-0 flex items-center gap-1 rounded-xl border bg-muted/40 p-1 w-fit">
-        <Button
-          variant="plain"
-          size="none"
-          type="button"
-          onClick={() => setTaskViewMode("active")}
-          className={cn(
-            "rounded-lg px-3 py-1.5",
-            "text-sm font-medium",
-            "transition-colors",
-            taskViewMode === "active"
-              ? "bg-background text-foreground shadow-sm"
-              : "text-muted-foreground hover:text-foreground",
-          )}
-        >
-          Активные
-        </Button>
-
-        <Button
-          variant="plain"
-          size="none"
-          type="button"
-          onClick={() => setTaskViewMode("completed")}
-          className={cn(
-            "rounded-lg px-3 py-1.5",
-            "text-sm font-medium",
-            "transition-colors",
-            taskViewMode === "completed"
-              ? "bg-background text-foreground shadow-sm"
-              : "text-muted-foreground hover:text-foreground",
-          )}
-        >
-          Выполненные
-        </Button>
+      <div className="grid gap-3 sm:grid-cols-2">
+        {filterControl}
+        <IconSelect
+          label="Статус"
+          value={taskViewMode}
+          onChange={(value) => setTaskViewMode(value as TaskViewMode)}
+          options={[
+            { value: "active", label: "Активные", icon: <Circle className="size-4" /> },
+            { value: "completed", label: "Выполненные", icon: <CheckCircle2 className="size-4" /> },
+          ]}
+        />
       </div>
 
       <DndContext
@@ -253,7 +233,7 @@ export function BoardView({
           items={board.columns.map((column) => column.id)}
           strategy={horizontalListSortingStrategy}
         >
-          <div className="flex min-h-0 flex-1 items-start gap-3 overflow-auto overscroll-contain pb-4 sm:gap-4">
+          <div className="flex min-w-0 items-start gap-3 overflow-x-auto overscroll-x-contain pb-4 sm:gap-4">
             {board.columns.map((column) => (
               <ColumnCard
                 key={column.id}
@@ -270,16 +250,13 @@ export function BoardView({
 
             <div className="w-[min(82vw,320px)] shrink-0">
               {isAdding ? (
-                <Card padding="sm" className="space-y-3">
+                <Card padding="sm" variant="outline" className="space-y-3 rounded-md">
                   <InputControl
                     type="text"
                     value={newColumnTitle}
                     onChange={(event) => setNewColumnTitle(event.target.value)}
                     placeholder="Название колонки"
-                    className={cn(
-                      "w-full h-10 rounded-xl border bg-background px-3",
-                      "text-sm outline-none focus:border-primary",
-                    )}
+                    aria-label="Название колонки"
                     autoFocus
                     onKeyDown={(event) => {
                       if (
@@ -340,11 +317,10 @@ export function BoardView({
                   type="button"
                   onClick={() => setIsAdding(true)}
                   className={cn(
-                    "w-full h-14 rounded-3xl border-2 border-dashed",
+                    "w-[320px] min-h-12 px-4 rounded-md border border-dashed",
                     "border-border flex items-center justify-center",
                     "gap-2 text-sm font-medium text-muted-foreground",
-                    "hover:border-primary hover:text-primary",
-                    "transition-colors",
+                    "hover:border-primary hover:text-primary transition-colors",
                   )}
                 >
                   <Plus className="w-4 h-4" />

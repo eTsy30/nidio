@@ -1,6 +1,11 @@
 export type Currency = "BYN" | "EUR" | "USD" | "RUB";
 export type Tone = "primary" | "success" | "warning" | "accent";
+export type CardTone = "blue" | "sky" | "teal" | "violet" | "pink" | "red" | "orange" | "slate";
+export type SavingsStrategy = "FREE" | "GRID" | "SCHEDULE";
+export type SavingsPeriod = "WEEK" | "MONTH";
 export interface SavingsEntry {
+  stepId?: string | null;
+  cancelledAt?: string | null;
   id: string;
   amountMinor: number;
   type: "DEPOSIT" | "WITHDRAWAL";
@@ -9,6 +14,14 @@ export interface SavingsEntry {
   createdAt: string;
 }
 export interface GoalInput {
+  strategy?: SavingsStrategy;
+  gridOrder?: "ASC" | "SHUFFLE";
+  scheduleEvery?: SavingsPeriod | null;
+  scheduleAmountMinor?: number | null;
+  scheduleStartDate?: string | null;
+  planAmounts?: number[];
+  scope?: "COUPLE" | "PERSONAL";
+  archived?: boolean;
   title: string;
   description: string;
   targetMinor: number;
@@ -18,6 +31,17 @@ export interface GoalInput {
   targetDate: string | null;
 }
 export interface Goal extends GoalInput {
+  ownerId?: string | null;
+  createdAt?: string;
+  plan?: { id: string; amountMinor: number }[];
+  achievements?: {
+    percent: number;
+    date: string;
+    amountMinor: number;
+    title?: string;
+    currency?: string;
+    contributions?: { userId: string; amountMinor: number }[];
+  }[];
   id: string;
   currentMinor: number;
   transactions: SavingsEntry[];
@@ -25,10 +49,10 @@ export interface Goal extends GoalInput {
 export interface CardInput {
   storeName: string;
   cardNumber: string;
-  barcodeFormat: "NONE" | "QR" | "EAN13";
+  barcodeFormat: "NONE" | "QR" | "EAN13" | "EAN8" | "CODE128";
   category: string;
   comment: string;
-  color: Tone;
+  color: CardTone;
   isFavorite: boolean;
 }
 export interface LoyaltyCard extends CardInput {
@@ -63,5 +87,5 @@ export interface FinanceData {
   cards: LoyaltyCard[];
   transactions: FinancialEntry[];
   limits: BudgetLimit[];
-  members: { id: string; firstName: string }[];
+  members: { id: string; firstName: string; savingsColor?: Tone }[];
 }

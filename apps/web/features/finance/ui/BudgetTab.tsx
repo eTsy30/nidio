@@ -1,8 +1,8 @@
 "use client";
 import { useState } from "react";
-import { Download, Pencil, Plus, Trash2 } from "lucide-react";
+import { Download, Pencil, Plus, Search, Trash2 } from "lucide-react";
 
-import { Button, Card } from "@/shared/ui";
+import { Button, Card, Input } from "@/shared/ui";
 
 import { useFinance } from "../api/FinanceProvider";
 import { categoryName } from "../model/constants";
@@ -17,7 +17,13 @@ import { EntryForm } from "./EntryForm";
 import { ExpenseChart } from "./ExpenseChart";
 import { ConfirmDelete } from "./FinanceDialog";
 import { FinanceEmpty } from "./FinanceEmpty";
-export function BudgetTab({ currency }: { currency: Currency }) {
+export function BudgetTab({
+  currency,
+  onCurrency,
+}: {
+  currency: Currency;
+  onCurrency?: (currency: Currency) => void;
+}) {
   const { data, write, name } = useFinance();
   const [filter, setFilter] = useState<BudgetFilterState>({
     period: "month",
@@ -54,7 +60,10 @@ export function BudgetTab({ currency }: { currency: Currency }) {
   return (
     <div className="space-y-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="text-sm text-muted-foreground">Ручной учёт общих денег · {currency}</p>
+        <div>
+          <h1 className="text-3xl font-semibold tracking-tight">Бюджет</h1>
+          <p className="text-sm text-muted-foreground">Ручной учёт общих денег · {currency}</p>
+        </div>
         <Button leftIcon={<Plus />} onClick={() => setModal({ kind: "create" })}>
           Добавить операцию
         </Button>
@@ -73,7 +82,25 @@ export function BudgetTab({ currency }: { currency: Currency }) {
           </Card>
         ))}
       </div>
-      <BudgetFilters value={filter} change={(next) => setFilter((old) => ({ ...old, ...next }))} />
+      <div className="flex items-end gap-3">
+        <div className="min-w-0 flex-1">
+          <BudgetFilters
+            value={filter}
+            change={(next) => setFilter((old) => ({ ...old, ...next }))}
+            currency={currency}
+            {...(onCurrency ? { onCurrency } : {})}
+          />
+        </div>
+      </div>
+      <div className="grid gap-3">
+        <Input
+          leftIcon={<Search />}
+          label="Поиск по описанию"
+          value={filter.search}
+          onChange={(e) => setFilter((old) => ({ ...old, search: e.target.value }))}
+          placeholder="Например, ужин"
+        />
+      </div>
       {!validRange && (
         <p role="alert" className="text-sm text-destructive">
           Выберите обе даты. Конец периода должен быть не раньше начала.

@@ -1,94 +1,71 @@
 import { useState } from "react";
-import { Copy, Pencil, Trash2 } from "lucide-react";
-import { toast } from "sonner";
+import { Barcode, QrCode, X } from "lucide-react";
 
 import { Button } from "@/shared/ui";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/shared/ui/dialog/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/shared/ui/dialog/dialog";
 
-import { useFinance } from "../api/FinanceProvider";
+import { barcodeBits, inferCardCode } from "../model/card-code";
+import { cardTones } from "../model/constants";
 import type { LoyaltyCard } from "../model/types";
+import { useCardWakeLock } from "../model/use-card-wake-lock";
 
 import { CardCode } from "./CardCode";
-import { CardPhoto } from "./CardPhoto";
+
+import styles from "./cards/cards.module.css";
+
 export function CardDetails({
   card,
   onClose,
-  action,
+  animate = true,
 }: {
   card: LoyaltyCard;
   onClose: () => void;
-  action: (kind: "edit" | "delete") => void;
+  animate?: boolean;
 }) {
-  const [fullscreen, setFullscreen] = useState(false);
-  const { write, busy } = useFinance();
+  const inferred = inferCardCode(card.cardNumber);
+  const linear = barcodeBits(card.cardNumber, card.barcodeFormat)
+    ? card.barcodeFormat
+    : barcodeBits(card.cardNumber, inferred.barcodeFormat)
+      ? inferred.barcodeFormat
+      : null;
+  const [qr, setQr] = useState(!linear);
+  useCardWakeLock();
   return (
     <Dialog open onOpenChange={(open) => !open && onClose()}>
       <DialogContent
-        className={
-          fullscreen ? "h-dvh max-h-dvh max-w-full rounded-none sm:max-w-full" : "sm:max-w-lg"
-        }
+        layout="custom"
+        showCloseButton={false}
+        className={`translate-x-0 translate-y-0 sm:max-w-160 data-open:animate-none data-closed:animate-none ${styles.presentation}`}
       >
-        <DialogHeader>
-          <DialogTitle>{card.storeName}</DialogTitle>
-          <DialogDescription>Покажите код кассиру или скопируйте номер.</DialogDescription>
-        </DialogHeader>
-        <CardCode value={card.cardNumber} format={card.barcodeFormat} />
-        <Button variant="secondary" onClick={() => setFullscreen(!fullscreen)}>
-          {fullscreen ? "Обычный размер" : "На весь экран"}
-        </Button>
-        {card.hasImage && <CardPhoto id={card.id} version={card.updatedAt} />}
-        {card.comment && <p className="whitespace-pre-wrap break-words text-sm">{card.comment}</p>}
-        <div className="flex flex-wrap gap-2">
-          <Button
-            variant="secondary"
-            leftIcon={<Copy />}
-            onClick={async () => {
-              try {
-                await navigator.clipboard.writeText(card.cardNumber);
-                toast.success("Номер скопирован");
-              } catch {
-                toast.error("Не удалось скопировать. Выделите номер вручную.");
-              }
-            }}
+        <DialogTitle className="sr-only">{card.storeName}</DialogTitle>
+        <DialogDescription className="sr-only">Код для предъявления на кассе</DialogDescription>
+        <div className={`${styles.flip} ${animate ? "" : styles.instant}`}>
+          <div
+            aria-hidden="true"
+            className={`${styles.front} ${cardTones[card.color]?.surface ?? cardTones.blue.surface}`}
           >
-            Копировать
-          </Button>
-          <Button
-            variant="icon"
-            iconOnly
-            aria-label="Изменить карту"
-            onClick={() => action("edit")}
-          >
-            <Pencil />
-          </Button>
-          <Button
-            variant="icon"
-            iconOnly
-            aria-label="Удалить карту"
-            onClick={() => action("delete")}
-          >
-            <Trash2 />
-          </Button>
+            <span className="text-3xl font-semibold break-words">{card.storeName}</span>
+          </div>
+          <div className={styles.back}>
+            <div className="flex justify-between gap-2 pb-6">
+              <Button variant="ghost" iconOnly aria-label="Закрыть карту" onClick={onClose}>
+                <X />
+              </Button>
+              {linear && (
+                <Button
+                  variant="ghost"
+                  iconOnly
+                  aria-label={qr ? "Показать штрихкод" : "Показать QR-код"}
+                  aria-pressed={qr}
+                  onClick={() => setQr(!qr)}
+                >
+                  {qr ? <Barcode /> : <QrCode />}
+                </Button>
+              )}
+            </div>
+            <CardCode value={card.cardNumber} format={qr ? "QR" : linear!} />
+          </div>
         </div>
-        {card.hasImage && (
-          <Button
-            variant="ghost"
-            disabled={busy}
-            onClick={() =>
-              void write(`/cards/${card.id}/image`, "delete").catch(() =>
-                toast.error("Не удалось удалить фото"),
-              )
-            }
-          >
-            Удалить только фото
-          </Button>
-        )}
       </DialogContent>
     </Dialog>
   );

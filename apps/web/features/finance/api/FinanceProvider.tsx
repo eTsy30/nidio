@@ -12,6 +12,7 @@ export type Write = (
   path: string,
   method: "post" | "patch" | "put" | "delete",
   body?: unknown,
+  options?: { silent?: boolean },
 ) => Promise<unknown>;
 const Context = createContext<{
   data: FinanceData;
@@ -65,9 +66,13 @@ export function FinanceProvider({ data, children }: { data: FinanceData; childre
       await client.invalidateQueries({ queryKey: ["finance", data.coupleId] });
     },
   });
-  const write: Write = async (path, method, body) => {
+  const write: Write = async (path, method, body, options) => {
     const result = await mutation.mutateAsync({ path, method, body });
-    if (!path.endsWith("/used")) toast.success("Сохранено");
+    const awarded =
+      result && typeof result === "object" && "awarded" in result ? result.awarded : null;
+    if (Array.isArray(awarded) && awarded.includes(100)) {
+      toast.success("Цель достигнута! Вы накопили нужную сумму.");
+    } else if (!options?.silent && !path.endsWith("/used")) toast.success("Сохранено");
     return result;
   };
   const name = (id: string) =>

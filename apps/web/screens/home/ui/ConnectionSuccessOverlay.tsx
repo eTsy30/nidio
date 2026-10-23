@@ -40,8 +40,8 @@ export function ConnectionSuccessOverlay() {
 
   return (
     <Dialog open={Boolean(visible)} onOpenChange={(open) => !open && handleClose()}>
-      <DialogContent className="text-center sm:max-w-md p-6 sm:p-10">
-        <div className="mx-auto mb-8 flex justify-center">
+      <DialogContent className="text-center">
+        <div className="mx-auto flex justify-center">
           <AvatarPair
             leftAvatar={user?.avatarUrl ?? null}
             rightAvatar={partner?.avatarUrl ?? null}
@@ -53,15 +53,15 @@ export function ConnectionSuccessOverlay() {
           />
         </div>
 
-        <DialogTitle className="text-3xl">Теперь вы вместе</DialogTitle>
+        <DialogTitle>Теперь вы вместе</DialogTitle>
 
-        <DialogDescription className="mt-4">
+        <DialogDescription>
           {partner
             ? `${user?.firstName} и ${partner.firstName}, добро пожаловать в ваше общее пространство.`
             : "Ваше общее пространство создано."}
         </DialogDescription>
 
-        <Button variant="primary" fullWidth type="button" onClick={handleClose} className="mt-8">
+        <Button variant="primary" fullWidth type="button" onClick={handleClose}>
           Перейти домой
         </Button>
       </DialogContent>

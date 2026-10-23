@@ -207,7 +207,7 @@ export function EditProfileDialog({ user, open, onOpenChange }: EditProfileDialo
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>Редактирование профиля</DialogTitle>
 

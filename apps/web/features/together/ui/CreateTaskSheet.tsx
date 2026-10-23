@@ -11,7 +11,14 @@ import { type SubmitHandler, useForm, useWatch } from "react-hook-form";
 import { useAuth } from "@/shared/api/provider/auth-provider";
 import { cn } from "@/shared/lib/cn";
 import { Button } from "@/shared/ui";
-import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/shared/ui/dialog/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/shared/ui/dialog/dialog";
 import { InputControl } from "@/shared/ui/input/InputControl";
 import { Select } from "@/shared/ui/select/Select";
 
@@ -151,13 +158,13 @@ export function CreateTaskSheet({
         if (!next) close();
       }}
     >
-      <DialogContent className="z-[60] flex max-h-[calc(100dvh-32px-env(safe-area-inset-bottom))] flex-col gap-3 overflow-hidden rounded-2xl sm:max-w-lg">
-        <div className="shrink-0 pr-8">
+      <DialogContent className="z-[60]">
+        <DialogHeader>
           <DialogTitle>Новая задача</DialogTitle>
           <DialogDescription>
             Шаг {step + 1} из 2 · {step === 0 ? "Задача и участники" : "Срок и повторение"}
           </DialogDescription>
-        </div>
+        </DialogHeader>
         <form
           onSubmit={async (event) => {
             if (step === 0) {
@@ -167,9 +174,9 @@ export function CreateTaskSheet({
               await handleSubmit(onSubmit)(event);
             }
           }}
-          className="flex min-h-0 flex-col gap-3 px-1 pb-1"
+          className="space-y-5"
         >
-          <div className="min-h-0 space-y-3 overflow-y-auto overscroll-contain px-1">
+          <div className="space-y-5">
             {step === 0 && (
               <>
                 <div>
@@ -357,7 +364,7 @@ export function CreateTaskSheet({
               </p>
             )}
           </div>
-          <div className="flex shrink-0 gap-2 border-t pt-3">
+          <DialogFooter>
             <Button
               type="button"
               variant="ghost"
@@ -378,7 +385,7 @@ export function CreateTaskSheet({
             >
               {step === 0 ? "Далее" : "Создать"}
             </Button>
-          </div>
+          </DialogFooter>
         </form>
       </DialogContent>
     </Dialog>

@@ -25,9 +25,14 @@ import {
 } from "@/features/calendar/types";
 import { SelectedDayDrawer } from "@/features/calendar/ui/SelectedDayDrawer";
 import { useAuth } from "@/shared/api/provider/auth-provider";
-import { cn } from "@/shared/lib/cn";
-import { Button } from "@/shared/ui/button/Button";
-import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/shared/ui/dialog/dialog";
+import { Button, Card } from "@/shared/ui";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/shared/ui/dialog/dialog";
 
 import { useCalendarEvents } from "../model/useCalendarEvents";
 import { useCalendarModal } from "../model/useCalendarModal";
@@ -288,13 +293,7 @@ export default function CalendarWidget() {
 
           <p className="mt-1 text-xs text-muted-foreground">{error.message}</p>
 
-          <Button
-            variant="plain"
-            size="none"
-            type="button"
-            className="mt-4 rounded-xl border px-4 py-2 text-sm"
-            onClick={() => void refetch()}
-          >
+          <Button variant="secondary" className="mt-4" onClick={() => void refetch()}>
             Повторить
           </Button>
         </div>
@@ -304,63 +303,72 @@ export default function CalendarWidget() {
 
   return (
     <main className="relative flex h-full min-h-0 overflow-hidden bg-background">
-      <div
-        className={cn(
-          "flex min-w-0 flex-1 flex-col",
-          selectedDate && "lg:w-[calc(100%-380px)] lg:flex-none",
-        )}
-      >
-        <CalendarHeader
-          month={month}
-          scope={scope}
-          viewMode={viewMode}
-          filter={filter}
-          onScopeChange={handleScopeChange}
-          onViewModeChange={handleViewChange}
-          onPrev={goPrev}
-          onNext={goNext}
-          onToday={goToday}
-          onMonthChange={setMonth}
-          onFilterChange={setFilter}
-        />
+      <div className="min-w-0 flex-1 overflow-y-auto">
+        <div className="mx-auto w-full max-w-5xl space-y-4 px-4 py-6 sm:px-8 sm:py-10">
+          <CalendarHeader
+            month={currentDate}
+            scope={scope}
+            viewMode={viewMode}
+            filter={filter}
+            onScopeChange={handleScopeChange}
+            onViewModeChange={handleViewChange}
+            onPrev={goPrev}
+            onNext={goNext}
+            onToday={goToday}
+            onMonthChange={(date) => {
+              setMonth(date);
+              setWeekStart(startOfWeek(date, { weekStartsOn: 1 }));
+              updateCalendarParams({ date });
+            }}
+            onCreate={() => {
+              setSelectedDate(selectedDate ?? new Date());
+              openCreate();
+            }}
+            onFilterChange={setFilter}
+          />
 
-        <div className="relative min-h-0 flex-1 overflow-auto p-2 sm:p-4">
-          {loading && (
-            <div className="pointer-events-none absolute right-4 top-4 z-10 rounded-full bg-background/90 px-3 py-1.5 text-xs text-muted-foreground shadow-sm">
-              Обновление…
-            </div>
-          )}
+          <Card
+            padding="sm"
+            variant="outline"
+            className="relative min-w-0 overflow-x-auto rounded-md p-2 sm:p-4"
+          >
+            {loading && (
+              <div className="pointer-events-none absolute right-4 top-4 z-10 rounded-full bg-background/90 px-3 py-1.5 text-xs text-muted-foreground shadow-sm">
+                Обновление…
+              </div>
+            )}
 
-          {viewMode === "month" && (
-            <MonthView
-              month={month}
-              eventsByDate={eventsByDate}
-              selectedDate={selectedDate}
-              onSelectDate={handleSelectDate}
-              onMonthChange={setMonth}
-            />
-          )}
+            {viewMode === "month" && (
+              <MonthView
+                month={month}
+                eventsByDate={eventsByDate}
+                selectedDate={selectedDate}
+                onSelectDate={handleSelectDate}
+                onMonthChange={setMonth}
+              />
+            )}
 
-          {viewMode === "week" && (
-            <WeekView
-              weekStart={weekStart}
-              eventsByDate={eventsByDate}
-              selectedDate={selectedDate}
-              onSelectDate={handleSelectDate}
-              onEventClick={(event) => {
-                handleSelectDate(new Date(event.startAt));
-              }}
-            />
-          )}
+            {viewMode === "week" && (
+              <WeekView
+                weekStart={weekStart}
+                eventsByDate={eventsByDate}
+                selectedDate={selectedDate}
+                onSelectDate={handleSelectDate}
+                onEventClick={(event) => {
+                  handleSelectDate(new Date(event.startAt));
+                }}
+              />
+            )}
 
-          {viewMode === "year" && (
-            <CalendarYear
-              year={month}
-              events={filteredEvents}
-              onMonthClick={handleYearMonthClick}
-              onDayClick={handleYearDayClick}
-            />
-          )}
+            {viewMode === "year" && (
+              <CalendarYear
+                year={month}
+                events={filteredEvents}
+                onMonthClick={handleYearMonthClick}
+                onDayClick={handleYearDayClick}
+              />
+            )}
+          </Card>
         </div>
       </div>
 
@@ -398,11 +406,11 @@ export default function CalendarWidget() {
 
       {modal.kind === "create" && selectedDate && (
         <Dialog open onOpenChange={(open) => !open && closeModal()}>
-          <DialogContent className="z-[60] flex max-h-[calc(100dvh-32px-env(safe-area-inset-bottom))] flex-col gap-5 overflow-hidden rounded-2xl p-5 sm:max-w-lg">
-            <div className="shrink-0 space-y-2 pr-12">
+          <DialogContent className="z-[60]">
+            <DialogHeader>
               <DialogTitle>Новое событие</DialogTitle>
               <DialogDescription>Добавьте момент в календарь</DialogDescription>
-            </div>
+            </DialogHeader>
             <CreateEventForm
               scope={scope}
               date={selectedDate}
@@ -415,11 +423,11 @@ export default function CalendarWidget() {
 
       {modal.kind === "edit" && (
         <Dialog open onOpenChange={(open) => !open && closeModal()}>
-          <DialogContent className="z-[60] max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] max-w-lg overflow-y-auto rounded-2xl p-5">
-            <div className="pr-8">
+          <DialogContent className="z-[60]">
+            <DialogHeader>
               <DialogTitle>Редактировать событие</DialogTitle>
               <DialogDescription>Измените детали события</DialogDescription>
-            </div>
+            </DialogHeader>
 
             <EditEventForm
               event={modal.event}

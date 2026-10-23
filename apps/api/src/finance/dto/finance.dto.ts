@@ -1,4 +1,6 @@
 import {
+  ArrayMaxSize,
+  IsArray,
   IsBoolean,
   IsIn,
   IsInt,
@@ -29,6 +31,22 @@ export class MoneyDto {
   @IsInt() @Min(1) @Max(2000000000) amountMinor: number;
 }
 export class GoalDto {
+  @IsOptional() @IsIn(['FREE', 'GRID', 'SCHEDULE']) strategy?: string;
+  @IsOptional() @IsIn(['ASC', 'SHUFFLE']) gridOrder?: string;
+  @IsOptional() @IsIn(['WEEK', 'MONTH']) scheduleEvery?: string | null;
+  @IsOptional() @IsInt() @Min(1) @Max(2000000000) scheduleAmountMinor?:
+    number | null;
+  @IsOptional() @Matches(/^\d{4}-\d{2}-\d{2}$/) scheduleStartDate?:
+    string | null;
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(120)
+  @IsInt({ each: true })
+  @Min(1, { each: true })
+  @Max(2000000000, { each: true })
+  planAmounts?: number[];
+  @IsOptional() @IsIn(['PERSONAL', 'COUPLE']) scope?: string;
+  @IsOptional() @IsBoolean() archived?: boolean;
   @IsString() @MaxLength(100) @Matches(/\S/) title: string;
   @IsString() @MaxLength(2000) description: string;
   @IsInt() @Min(1) @Max(2000000000) targetMinor: number;
@@ -38,6 +56,7 @@ export class GoalDto {
   @IsOptional() @Matches(/^\d{4}-\d{2}-\d{2}$/) targetDate?: string | null;
 }
 export class SavingsEntryDto extends MoneyDto {
+  @IsOptional() @IsString() @MaxLength(100) stepId?: string;
   @IsUUID() requestId: string;
   @IsIn(['DEPOSIT', 'WITHDRAWAL']) type: string;
   @IsString() @MaxLength(1000) description: string;
@@ -45,11 +64,31 @@ export class SavingsEntryDto extends MoneyDto {
 export class CardDto {
   @IsString() @MaxLength(100) @Matches(/\S/) storeName: string;
   @IsString() @MaxLength(256) @Matches(/\S/) cardNumber: string;
-  @IsIn(['NONE', 'QR', 'EAN13']) barcodeFormat: string;
-  @IsIn(['groceries', 'clothes', 'home', 'entertainment', 'pharmacy', 'other'])
+  @IsIn(['NONE', 'QR', 'EAN13', 'EAN8', 'CODE128']) barcodeFormat: string;
+  @IsIn([
+    'groceries',
+    'clothes',
+    'home',
+    'entertainment',
+    'pharmacy',
+    'cafes',
+    'fuel',
+    'other',
+  ])
   category: string;
   @IsString() @MaxLength(1000) comment: string;
-  @IsIn(colors) color: string;
+  @IsIn([
+    ...colors,
+    'blue',
+    'sky',
+    'teal',
+    'violet',
+    'pink',
+    'red',
+    'orange',
+    'slate',
+  ])
+  color: string;
   @IsBoolean() isFavorite: boolean;
 }
 export class FinancialEntryDto extends MoneyDto {
@@ -68,4 +107,21 @@ export class BudgetDto extends MoneyDto {
 
 export class FavoriteDto {
   @IsBoolean() isFavorite: boolean;
+}
+
+export class SavingsPlanDto {
+  @IsOptional() @IsInt() @Min(1) @Max(2000000000) targetMinor?: number;
+  @IsInt() @Min(1) @Max(120) count: number;
+  @IsBoolean() varied: boolean;
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(120)
+  @IsInt({ each: true })
+  @Min(1, { each: true })
+  @Max(2000000000, { each: true })
+  amounts?: number[];
+}
+
+export class SavingsColorDto {
+  @IsIn(['primary', 'success', 'warning', 'accent']) color: string;
 }

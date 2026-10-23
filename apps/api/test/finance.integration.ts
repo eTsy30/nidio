@@ -136,6 +136,36 @@ async function main() {
     const card = await cards.save(alex.id, cardInput);
     await cards.save(sam.id, { ...cardInput, isFavorite: true }, card.id);
     await cards.used(sam.id, card.id);
+    await assert.rejects(
+      () =>
+        cards.save(sam.id, {
+          ...cardInput,
+          storeName: `  ${cardInput.storeName}  `,
+        }),
+      /уже есть/,
+    );
+    const ean8 = await cards.save(alex.id, {
+      ...cardInput,
+      storeName: 'EAN8 test',
+      barcodeFormat: 'EAN8',
+      cardNumber: '9638 5074',
+    });
+    assert.equal(ean8.cardNumber, '96385074');
+    const edited = await cards.save(
+      sam.id,
+      {
+        ...cardInput,
+        storeName: 'Edited code',
+        barcodeFormat: 'CODE128',
+        cardNumber: 'ABC-001',
+      },
+      ean8.id,
+    );
+    assert.equal(edited.cardNumber, 'ABC-001');
+    await assert.rejects(() => cards.favorite(other.id, ean8.id, true));
+    await cards.remove(sam.id, ean8.id);
+    await assert.rejects(() => cards.used(alex.id, ean8.id));
+
     await assert.rejects(async () => cards.remove(other.id, card.id));
     await assert.rejects(async () => cards.save(other.id, cardInput, card.id));
     await assert.rejects(async () => cards.used(other.id, card.id));
@@ -207,11 +237,260 @@ async function main() {
     assert.ok(
       notifications.includes(alex.id) && notifications.includes(sam.id),
     );
+    const personal = await savings.save(alex.id, {
+      ...goalInput,
+      scope: 'PERSONAL',
+    });
+    assert(
+      !(await controller.state(sam.id)).goals.some(
+        (item) => item.id === personal.id,
+      ),
+    );
+    await assert.rejects(() => savings.entry(sam.id, personal.id, deposit));
+    await assert.rejects(() =>
+      savings.plan(sam.id, personal.id, { count: 4, varied: false }),
+    );
+    const planned = await savings.save(alex.id, goalInput);
+    const plannedGoal = await savings.plan(alex.id, planned.id, {
+      count: 4,
+      varied: false,
+    });
+    const steps = plannedGoal.plan as { id: string; amountMinor: number }[];
+    assert.equal(
+      steps.reduce((sum, step) => sum + step.amountMinor, 0),
+      10000,
+    );
+    const step = steps[0]!;
+    const requests = await Promise.allSettled(
+      [alex.id, sam.id].map((user) =>
+        savings.entry(user, planned.id, {
+          ...deposit,
+          requestId: randomUUID(),
+          stepId: step.id,
+          amountMinor: step.amountMinor,
+        }),
+      ),
+    );
+    assert.equal(
+      requests.filter((item) => item.status === 'fulfilled').length,
+      1,
+    );
+    const saved = await prisma.savingsTransaction.findFirstOrThrow({
+      where: { goalId: planned.id },
+    });
+    await savings.cancel(saved.createdBy, planned.id, saved.id);
+    const cancelled = await controller.state(alex.id);
+    assert.equal(
+      cancelled.goals.find((item) => item.id === planned.id)?.currentMinor,
+      0,
+    );
+    await savings.entry(sam.id, planned.id, {
+      ...deposit,
+      requestId: randomUUID(),
+      stepId: step.id,
+      amountMinor: step.amountMinor,
+    });
+    const earned = await prisma.savingsGoal.findUniqueOrThrow({
+      where: { id: planned.id },
+    });
+    assert.equal(
+      (earned.achievements as unknown[]).length,
+      1,
+      'milestone must not repeat after reversal',
+    );
+    await assert.rejects(() =>
+      savings.cancel(
+        alex.id === saved.createdBy ? sam.id : alex.id,
+        planned.id,
+        saved.id,
+      ),
+    );
+    const revised = await savings.plan(alex.id, planned.id, {
+      count: 3,
+      varied: false,
+      targetMinor: 17500,
+      amounts: [5000, 5000, 5000],
+    });
+    const revisedSteps = revised.plan as { id: string; amountMinor: number }[];
+    assert.equal(
+      revisedSteps[0]?.id,
+      step.id,
+      'completed step survives plan replacement',
+    );
+    assert.equal(
+      revisedSteps.reduce((sum, item) => sum + item.amountMinor, 0),
+      17500,
+    );
+    await assert.rejects(() =>
+      savings.entry(alex.id, planned.id, {
+        ...deposit,
+        requestId: randomUUID(),
+        stepId: steps[1]!.id,
+        amountMinor: steps[1]!.amountMinor,
+      }),
+    );
+    await savings.entry(alex.id, planned.id, {
+      ...deposit,
+      requestId: randomUUID(),
+      amountMinor: 20000,
+    });
+    const finished = (await controller.state(sam.id)).goals.find(
+      (item) => item.id === planned.id,
+    )!;
+    assert.equal(
+      finished.currentMinor,
+      22500,
+      'extra deposit may exceed target',
+    );
+    assert.equal(
+      finished.transactions.filter(
+        (entry) => entry.stepId && !entry.cancelledAt,
+      ).length,
+      1,
+      'extra deposit does not complete plan steps',
+    );
+    assert.equal(
+      (finished.achievements as { percent: number }[]).filter(
+        (item) => item.percent === 100,
+      ).length,
+      1,
+    );
+    await savings.save(
+      alex.id,
+      { ...goalInput, targetMinor: 17500, archived: true },
+      planned.id,
+    );
+    await assert.rejects(() =>
+      savings.entry(alex.id, planned.id, {
+        ...deposit,
+        requestId: randomUUID(),
+      }),
+    );
+    await assert.rejects(() =>
+      savings.plan(alex.id, planned.id, { count: 3, varied: false }),
+    );
+    // A new goal and its strategy are atomic; partners see the same persisted plan.
+    const beforeInvalid = await prisma.savingsGoal.count();
+    await assert.rejects(() =>
+      savings.save(alex.id, {
+        ...goalInput,
+        strategy: 'GRID',
+        planAmounts: [1, 2],
+      }),
+    );
+    assert.equal(await prisma.savingsGoal.count(), beforeInvalid);
+    const gridGoal = await savings.save(alex.id, {
+      ...goalInput,
+      strategy: 'GRID',
+      gridOrder: 'SHUFFLE',
+      planAmounts: [2000, 3000, 5000],
+    });
+    const gridSteps = gridGoal.plan as { id: string; amountMinor: number }[];
+    assert.equal(
+      (await controller.state(sam.id)).goals.find(
+        (item) => item.id === gridGoal.id,
+      )?.strategy,
+      'GRID',
+    );
+    const gridEntry = await savings.entry(alex.id, gridGoal.id, {
+      ...deposit,
+      requestId: randomUUID(),
+      stepId: gridSteps[0]!.id,
+      amountMinor: 2000,
+    });
+    const sameEntry = await savings.entry(alex.id, gridGoal.id, {
+      ...deposit,
+      requestId: gridEntry.requestId,
+      stepId: gridSteps[0]!.id,
+      amountMinor: 2000,
+    });
+    assert.equal(sameEntry.id, gridEntry.id);
+    await savings.save(
+      alex.id,
+      { ...goalInput, strategy: 'FREE' },
+      gridGoal.id,
+    );
+    await assert.rejects(() =>
+      savings.entry(sam.id, gridGoal.id, {
+        ...deposit,
+        requestId: randomUUID(),
+        stepId: gridSteps[1]!.id,
+        amountMinor: 3000,
+      }),
+    );
+    await savings.entry(sam.id, gridGoal.id, {
+      ...deposit,
+      requestId: randomUUID(),
+      amountMinor: 1000,
+    });
+    const regenerated = await savings.save(
+      alex.id,
+      { ...goalInput, strategy: 'GRID', planAmounts: [3000, 4000] },
+      gridGoal.id,
+    );
+    const regeneratedSteps = regenerated.plan as {
+      id: string;
+      amountMinor: number;
+    }[];
+    assert.equal(regeneratedSteps[0]!.id, gridSteps[0]!.id);
+    assert.equal(
+      regeneratedSteps
+        .slice(1)
+        .reduce((sum, step) => sum + step.amountMinor, 0),
+      7000,
+    );
+    assert.equal(
+      (await controller.state(sam.id)).goals.find(
+        (item) => item.id === gridGoal.id,
+      )?.currentMinor,
+      3000,
+    );
+    const weekly = await savings.save(alex.id, {
+      ...goalInput,
+      targetDate: null,
+      strategy: 'SCHEDULE',
+      scheduleEvery: 'WEEK',
+      scheduleAmountMinor: 1000,
+      scheduleStartDate: '2026-10-22',
+    });
+    assert.equal(weekly.scheduleAmountMinor, 1000);
+    const deadline = await savings.save(
+      sam.id,
+      {
+        ...goalInput,
+        strategy: 'SCHEDULE',
+        scheduleEvery: 'MONTH',
+        scheduleStartDate: '2026-10-22',
+        scheduleAmountMinor: 1234,
+      },
+      weekly.id,
+    );
+    assert.equal(
+      deadline.scheduleAmountMinor,
+      null,
+      'deadline strategy calculates rather than storing a stale suggestion',
+    );
+    await assert.rejects(() =>
+      savings.save(alex.id, {
+        ...goalInput,
+        targetDate: null,
+        strategy: 'SCHEDULE',
+      }),
+    );
+    await assert.rejects(() =>
+      savings.save(alex.id, {
+        ...goalInput,
+        targetDate: '2026-09-01',
+        strategy: 'SCHEDULE',
+        scheduleEvery: 'WEEK',
+        scheduleStartDate: '2026-10-22',
+      }),
+    );
     await cards.remove(sam.id, card.id);
     await budget.remove(sam.id, first.id);
     await savings.remove(sam.id, goal.id);
     assert.equal(
-      await prisma.savingsTransaction.count(),
+      await prisma.savingsTransaction.count({ where: { goalId: goal.id } }),
       0,
       'goal removal cascades to history',
     );

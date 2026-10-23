@@ -17,8 +17,8 @@ export function EventEditor({
   recurring?: boolean;
 }) {
   return (
-    <form onSubmit={form.handleSubmit} className="min-w-0 space-y-3">
-      <fieldset disabled={form.saving} className="min-w-0 space-y-3">
+    <form onSubmit={form.handleSubmit} className="min-w-0 space-y-5">
+      <fieldset disabled={form.saving} className="min-w-0 space-y-5">
         <EventFormFields mode={mode} form={form} recurring={recurring ?? false} />
       </fieldset>
       {form.error && (
@@ -26,7 +26,7 @@ export function EventEditor({
           {form.error}
         </p>
       )}
-      <DialogFooter className="flex-row justify-end">
+      <DialogFooter>
         <Button type="button" variant="secondary" disabled={form.saving} onClick={onCancel}>
           Отмена
         </Button>

@@ -1,15 +1,16 @@
 "use client";
 
-import { ChoiceButton } from "@/shared/ui/button/ChoiceButton";
+import { Layers, Repeat, User, UserRound, Users } from "lucide-react";
+
+import { IconSelect } from "@/shared/ui/select/IconSelect";
 
 import { TaskFilter } from "../model/task.types";
-
-const filters: { key: TaskFilter; label: string }[] = [
-  { key: "all", label: "Все" },
-  { key: "me", label: "Мои" },
-  { key: "partner", label: "Партнёра" },
-  { key: "together", label: "Вместе" },
-  { key: "rotate", label: "По очереди" },
+const filters = [
+  { value: "all", label: "Все задачи", icon: <Layers className="size-4" /> },
+  { value: "me", label: "Мои", icon: <User className="size-4" /> },
+  { value: "partner", label: "Партнёра", icon: <UserRound className="size-4" /> },
+  { value: "together", label: "Вместе", icon: <Users className="size-4" /> },
+  { value: "rotate", label: "По очереди", icon: <Repeat className="size-4" /> },
 ];
 
 interface TaskFiltersProps {
@@ -19,18 +20,11 @@ interface TaskFiltersProps {
 
 export function TaskFilters({ active, onChange }: TaskFiltersProps) {
   return (
-    <div className="flex shrink-0 gap-2 overflow-x-auto pb-2">
-      {filters.map((f) => (
-        <ChoiceButton
-          selected={active === f.key}
-          key={f.key}
-          type="button"
-          onClick={() => onChange(f.key)}
-          className="shrink-0 rounded-full"
-        >
-          {f.label}
-        </ChoiceButton>
-      ))}
-    </div>
+    <IconSelect
+      label="Показать задачи"
+      value={active}
+      onChange={(value) => onChange(value as TaskFilter)}
+      options={filters}
+    />
   );
 }

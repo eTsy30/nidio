@@ -1,8 +1,16 @@
-import { Controller, Get, Header, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Header,
+  Patch,
+  UseGuards,
+} from '@nestjs/common';
 
 import { Authorized as CurrentUser } from '../auth/decorators/authorized.decorator';
 import { JwtGuards } from '../auth/guards/auth.guard';
 
+import { SavingsColorDto } from './dto/finance.dto';
 import { FinanceAccess } from './finance-access.service';
 import { savingsBalance } from './finance-rules';
 @Controller('finance')
@@ -15,7 +23,7 @@ export class FinanceController {
     return this.access.read(userId, async (db, coupleId) => {
       const [goals, cards, transactions, limits, members] = await Promise.all([
         db.savingsGoal.findMany({
-          where: { coupleId },
+          where: { coupleId, OR: [{ scope: 'COUPLE' }, { ownerId: userId }] },
           include: { transactions: { orderBy: { createdAt: 'desc' } } },
           orderBy: { createdAt: 'desc' },
         }),
@@ -30,7 +38,10 @@ export class FinanceController {
         db.budgetLimit.findMany({ where: { coupleId } }),
         db.coupleMember.findMany({
           where: { coupleId },
-          select: { user: { select: { id: true, firstName: true } } },
+          select: {
+            savingsColor: true,
+            user: { select: { id: true, firstName: true } },
+          },
         }),
       ]);
       return {
@@ -45,8 +56,25 @@ export class FinanceController {
         })),
         transactions,
         limits,
-        members: members.map((member) => member.user),
+        members: members
+          .sort((a, b) => a.user.id.localeCompare(b.user.id))
+          .map((member, i) => ({
+            ...member.user,
+            savingsColor:
+              member.savingsColor ?? (i === 0 ? 'primary' : 'success'),
+          })),
       };
     });
+  }
+  @Patch('savings-color') color(
+    @CurrentUser('id') userId: string,
+    @Body() dto: SavingsColorDto,
+  ) {
+    return this.access.write(userId, (db, coupleId) =>
+      db.coupleMember.update({
+        where: { coupleId_userId: { coupleId, userId } },
+        data: { savingsColor: dto.color },
+      }),
+    );
   }
 }

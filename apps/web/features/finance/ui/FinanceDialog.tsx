@@ -13,12 +13,13 @@ import {
 } from "@/shared/ui/dialog/dialog";
 export function FinanceDialog({
   title,
-  description = "Изменения будут видны вам и партнёру.",
+  description = "Изменения сохраняются в вашем финансовом разделе.",
   onClose,
   onSubmit,
   children,
   submitLabel = "Сохранить",
   destructive = false,
+  submitDisabled = false,
 }: {
   title: string;
   description?: string;
@@ -27,6 +28,7 @@ export function FinanceDialog({
   children: ReactNode;
   submitLabel?: string;
   destructive?: boolean;
+  submitDisabled?: boolean;
 }) {
   const inFlight = useRef(false);
   const [busy, setBusy] = useState(false);
@@ -58,13 +60,13 @@ export function FinanceDialog({
   }
   return (
     <Dialog open onOpenChange={(open) => !open && !busy && onClose()}>
-      <DialogContent className="sm:max-w-lg" showCloseButton={!busy}>
+      <DialogContent showCloseButton={!busy}>
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
           <DialogDescription>{description}</DialogDescription>
         </DialogHeader>
-        <form onSubmit={submit} className="space-y-4">
-          <fieldset disabled={busy} className="min-w-0 space-y-4">
+        <form onSubmit={submit} className="space-y-5">
+          <fieldset disabled={busy} className="min-w-0 space-y-5">
             {children}
           </fieldset>
           {error && (
@@ -76,7 +78,12 @@ export function FinanceDialog({
             <Button variant="secondary" disabled={busy} onClick={onClose}>
               Отмена
             </Button>
-            <Button type="submit" loading={busy} variant={destructive ? "destructive" : "primary"}>
+            <Button
+              type="submit"
+              disabled={submitDisabled}
+              loading={busy}
+              variant={destructive ? "destructive" : "primary"}
+            >
               {submitLabel}
             </Button>
           </DialogFooter>

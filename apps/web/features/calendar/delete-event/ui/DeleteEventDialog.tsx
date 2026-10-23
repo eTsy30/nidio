@@ -77,7 +77,7 @@ export function DeleteEventDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="w-[calc(100%-2rem)] max-w-md rounded-2xl">
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>Удалить событие?</DialogTitle>
 
@@ -136,7 +136,7 @@ export function DeleteEventDialog({
           </div>
         )}
 
-        <DialogFooter className="mt-2 gap-2 sm:gap-2">
+        <DialogFooter>
           <Button
             variant="secondary"
             type="button"

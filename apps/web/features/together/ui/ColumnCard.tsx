@@ -11,7 +11,7 @@ import { boardApi } from "@/features/together/api/board.api";
 import { togetherKeys } from "@/features/together/api/query-keys";
 import { templatesApi } from "@/features/together/api/templates.api";
 import { cn } from "@/shared/lib/cn";
-import { Button } from "@/shared/ui";
+import { Button, Card } from "@/shared/ui";
 import { InputControl } from "@/shared/ui/input/InputControl";
 
 import { Column } from "../api/board.api";
@@ -138,13 +138,12 @@ export function ColumnCard({
 
   return (
     <div ref={setSortableRef} style={style} className="w-[min(82vw,320px)] shrink-0 flex flex-col">
-      <div
-        className={cn(
-          "rounded-3xl border p-3 flex flex-col gap-3 transition-colors",
-          isOver && "ring-2 ring-primary/30",
-        )}
+      <Card
+        padding="sm"
+        variant="outline"
+        className={cn("rounded-md flex flex-col gap-3", isOver && "ring-2 ring-primary/30")}
         style={{
-          backgroundColor: column.color ?? "#F5F5F5",
+          borderTopColor: column.color ?? undefined,
         }}
       >
         <div className="flex items-center justify-between px-1">
@@ -173,13 +172,13 @@ export function ColumnCard({
                 event.stopPropagation();
               }}
               onClick={handleToggleMenu}
-              className="p-1.5 rounded-full hover:bg-black/5 transition-colors"
+              className="flex size-11 items-center justify-center rounded-md hover:bg-muted transition-colors"
             >
               <MoreVertical className="w-4 h-4 text-muted-foreground" />
             </Button>
 
             {showMenu && (
-              <div className="absolute right-0 top-8 z-20 w-48 bg-card border rounded-md shadow-lg p-1">
+              <div className="absolute right-0 top-full z-20 w-48 bg-card border rounded-md shadow-lg p-1">
                 <Button
                   variant="plain"
                   size="none"
@@ -214,13 +213,13 @@ export function ColumnCard({
         </div>
 
         {showSaveTemplate && (
-          <div className="bg-white/80 rounded-xl p-2 space-y-2">
+          <div className="bg-muted rounded-md p-3 space-y-3">
             <InputControl
               type="text"
               value={templateName}
               onChange={(event) => setTemplateName(event.target.value)}
               placeholder="Название шаблона"
-              className="w-full h-8 rounded-lg border bg-background px-2 text-xs outline-none focus:border-primary"
+              aria-label="Название шаблона"
               autoFocus
             />
 
@@ -278,15 +277,15 @@ export function ColumnCard({
           type="button"
           onClick={onCreateTask}
           className={cn(
-            "w-full h-9 rounded-xl border border-dashed border-border/60",
+            "w-full min-h-11 rounded-md border border-dashed border-border",
             "flex items-center justify-center gap-1.5 text-xs font-medium text-muted-foreground",
-            "hover:border-primary hover:text-primary transition-colors bg-white/50",
+            "hover:border-primary hover:text-primary transition-colors bg-background",
           )}
         >
           <Plus className="w-3.5 h-3.5" />
           Добавить задачу
         </Button>
-      </div>
+      </Card>
     </div>
   );
 }

@@ -8,7 +8,13 @@ import { templatesApi } from "@/features/together/api/templates.api";
 import { Template } from "@/features/together/model/templates";
 import { cn } from "@/shared/lib/cn";
 import { Button } from "@/shared/ui";
-import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/shared/ui/dialog/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/shared/ui/dialog/dialog";
 
 interface TemplatePickerProps {
   open: boolean;
@@ -80,11 +86,11 @@ export function TemplatePicker({ open, onClose }: TemplatePickerProps) {
 
   return (
     <Dialog open={open} onOpenChange={(next) => !next && !applyMutation.isPending && onClose()}>
-      <DialogContent className="z-[60] max-h-[calc(100dvh-92px-env(safe-area-inset-bottom))] w-[calc(100%-2rem)] overflow-y-auto rounded-2xl p-5 sm:max-h-[calc(100dvh-2rem)] sm:max-w-md">
-        <div className="pr-8">
+      <DialogContent className="z-[60]">
+        <DialogHeader>
           <DialogTitle>Шаблоны</DialogTitle>
           <DialogDescription>Добавьте готовую колонку с задачами</DialogDescription>
-        </div>
+        </DialogHeader>
 
         {isLoading ? (
           <div className="grid grid-cols-2 gap-3">

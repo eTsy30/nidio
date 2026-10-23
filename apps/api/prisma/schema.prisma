@@ -54,6 +54,7 @@ model Couple {
 }
 
 model CoupleMember {
+  savingsColor String?
   id       String   @id @default(cuid())
   coupleId String
   userId   String   @unique
@@ -418,6 +419,16 @@ enum EventScope {
 }
 
 model SavingsGoal {
+  strategy     String @default("FREE")
+  gridOrder    String @default("ASC")
+  scheduleEvery String?
+  scheduleAmountMinor Int?
+  scheduleStartDate String?
+  ownerId      String?
+  scope        String @default("COUPLE")
+  plan         Json @default("[]")
+  achievements Json @default("[]")
+  archived     Boolean @default(false)
   id           String               @id @default(cuid())
   coupleId     String
   title        String               @db.VarChar(100)
@@ -436,6 +447,8 @@ model SavingsGoal {
 }
 
 model SavingsTransaction {
+  stepId      String?
+  cancelledAt DateTime?
   id          String      @id @default(cuid())
   goalId      String
   requestId   String

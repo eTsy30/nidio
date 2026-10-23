@@ -6,14 +6,17 @@ export function AmountField({
   value,
   onChange,
   label = "Сумма",
+  disabled = false,
 }: {
   value: string;
   onChange: (value: string) => void;
   label?: string;
+  disabled?: boolean;
 }) {
   return (
     <Input
       label={label}
+      disabled={disabled}
       inputMode="decimal"
       required
       value={value}
@@ -23,28 +26,46 @@ export function AmountField({
     />
   );
 }
+
+import { IconSelect } from "@/shared/ui/select/IconSelect";
+
+const currencyOptions = [
+  { value: "BYN", label: "Бел. рубль", symbol: "Br" },
+  { value: "EUR", label: "Евро", symbol: "€" },
+  { value: "USD", label: "Доллар США", symbol: "$" },
+  { value: "RUB", label: "Рос. рубль", symbol: "₽" },
+] satisfies {
+  value: Currency;
+  label: string;
+  symbol: string;
+}[];
+
 export function CurrencyField({
   value,
   onChange,
-  disabled,
 }: {
   value: Currency;
   onChange?: (value: Currency) => void;
   disabled?: boolean;
 }) {
   return (
-    <Select
+    <IconSelect
       label="Валюта"
       value={value}
-      disabled={disabled}
-      onChange={(e) => onChange?.(e.target.value as Currency)}
-    >
-      {currencies.map((c) => (
-        <option key={c}>{c}</option>
-      ))}
-    </Select>
+      onChange={(nextValue) => onChange?.(nextValue as Currency)}
+      options={currencyOptions.map(({ value, label, symbol }) => ({
+        value,
+        label: `${label}`,
+        icon: (
+          <span className="flex size-4 items-center justify-center text-sm font-semibold">
+            {symbol}
+          </span>
+        ),
+      }))}
+    />
   );
 }
+
 export function ToneField({ value, onChange }: { value: Tone; onChange: (value: Tone) => void }) {
   return (
     <Select label="Цвет" value={value} onChange={(e) => onChange(e.target.value as Tone)}>

@@ -50,7 +50,7 @@ export function CalendarDialogs({
 
       {modal.kind === "create" && selectedDate && (
         <Dialog open onOpenChange={(open) => !open && closeModal()}>
-          <DialogContent className="gap-4 p-4 sm:max-w-lg sm:p-5">
+          <DialogContent>
             <DialogHeader>
               <DialogTitle>Новое событие</DialogTitle>
               <DialogDescription>Добавьте момент в календарь</DialogDescription>
@@ -67,7 +67,7 @@ export function CalendarDialogs({
 
       {modal.kind === "edit" && (
         <Dialog open onOpenChange={(open) => !open && closeModal()}>
-          <DialogContent className="gap-4 p-4 sm:max-w-lg sm:p-5">
+          <DialogContent>
             <DialogHeader>
               <DialogTitle>Редактировать событие</DialogTitle>
               <DialogDescription>Измените детали события</DialogDescription>

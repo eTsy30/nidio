@@ -45,7 +45,7 @@ export function InteractiveExamples() {
         <div className="flex flex-col items-start gap-4">
           <Dialog>
             <DialogTrigger render={<Button />}>Открыть диалог</DialogTrigger>
-            <DialogContent className="sm:max-w-md">
+            <DialogContent>
               <DialogHeader>
                 <DialogTitle>Пример диалога</DialogTitle>
                 <DialogDescription>Можно ввести текст. Ничего не сохраняется.</DialogDescription>
