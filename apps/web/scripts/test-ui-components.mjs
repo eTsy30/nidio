@@ -103,3 +103,18 @@ for (const tag of year.matchAll(/<button\b[^>]*>|<\/button>/g)) {
 }
 assert.equal(openButtons, 0);
 console.log("PASS: year calendar uses independent month and day buttons.");
+
+const { newRun, jump, advance } = load(resolve(root, "shared/ui/recovery/runner"));
+let runner = jump(newRun());
+runner = advance(runner, 1 / 60);
+assert.ok(runner.y > 0, "jump lifts the runner");
+assert.equal(jump(runner).velocity, runner.velocity, "no second jump in mid-air");
+assert.equal(advance({ ...newRun(), x: 95 }, 0).crashed, true, "ground obstacle collides");
+assert.equal(advance({ ...newRun(), x: 95, y: 60 }, 0).crashed, false, "jump clears obstacle");
+assert.equal(advance({ ...newRun(), x: -23 }, 0).score, 1, "passing obstacle earns one point");
+for (let i = 0; i < 50; i++) runner = advance(runner, 1 / 60);
+assert.equal(runner.y, 0, "runner lands on the ground");
+const stopped = { ...newRun(), crashed: true };
+assert.equal(advance(stopped, 1), stopped, "game stops on collision");
+assert.ok(advance(newRun(), 60).x > 530, "long frame does not teleport obstacles");
+console.log("PASS: recovery runner jump, landing, collisions, score and frame-time guard.");

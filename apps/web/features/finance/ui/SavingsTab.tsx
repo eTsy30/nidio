@@ -4,7 +4,7 @@ import NextLink from "next/link";
 import { useRouter } from "next/navigation";
 import { ChevronRight, PiggyBank, Plus } from "lucide-react";
 
-import { Button, ChoiceButton } from "@/shared/ui";
+import { Button } from "@/shared/ui";
 
 import { useFinance } from "../api/FinanceProvider";
 import { money, progress } from "../model/money";

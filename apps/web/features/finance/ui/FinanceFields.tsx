@@ -1,6 +1,6 @@
 import { Input, Select } from "@/shared/ui";
 
-import { currencies, tones } from "../model/constants";
+import { tones } from "../model/constants";
 import type { Currency, Tone } from "../model/types";
 export function AmountField({
   value,

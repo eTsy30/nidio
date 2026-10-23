@@ -5,7 +5,6 @@ import { FinanceProvider, useFinanceData } from "@/features/finance/api/FinanceP
 import type { Currency } from "@/features/finance/model/types";
 import { BudgetTab } from "@/features/finance/ui/BudgetTab";
 import { CardsTab } from "@/features/finance/ui/CardsTab";
-import { CurrencyField } from "@/features/finance/ui/FinanceFields";
 import { SavingsGoalPage } from "@/features/finance/ui/SavingsGoalPage";
 import { SavingsTab } from "@/features/finance/ui/SavingsTab";
 import { useCurrentCouple } from "@/features/relationship/hook/use-relationship";
