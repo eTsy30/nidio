@@ -7,7 +7,7 @@ import { InputControl } from "./InputControl";
 
 const inputVariants = cva(
   [
-    "inline-flex w-full items-center",
+    "inline-flex min-w-0 max-w-full w-full items-center",
     "rounded-[var(--radius-md)]",
     "transition-[background-color,border-color,color,box-shadow,transform]",
     "duration-150 ease-out",
@@ -92,7 +92,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
     const rightPad = rightIcon ? "pr-11" : "";
 
     return (
-      <div className={cn("flex flex-col gap-2", fullWidth && "w-full")}>
+      <div className={cn("flex min-w-0 max-w-full flex-col gap-2", fullWidth && "w-full")}>
         {label && (
           <label
             htmlFor={inputId}
@@ -113,7 +113,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
           </label>
         )}
 
-        <div className="relative flex items-center">
+        <div className="relative flex min-w-0 w-full max-w-full items-center">
           {leftIcon && (
             <span className="absolute left-4 flex items-center pointer-events-none text-muted-foreground">
               {leftIcon}

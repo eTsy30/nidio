@@ -9,6 +9,7 @@ import { SavingsGoalPage } from "@/features/finance/ui/SavingsGoalPage";
 import { SavingsTab } from "@/features/finance/ui/SavingsTab";
 import { useCurrentCouple } from "@/features/relationship/hook/use-relationship";
 import { Button, Card, Link } from "@/shared/ui";
+import { LoadingState } from "@/shared/ui/loading/LoadingState";
 type Section = "savings" | "cards" | "budget";
 
 function FinanceContent({
@@ -22,15 +23,7 @@ function FinanceContent({
 }) {
   const query = useFinanceData(coupleId);
   const [currency, setCurrency] = useState<Currency>("BYN");
-  if (query.isPending)
-    return (
-      <div role="status" className="space-y-4">
-        <p>Загружаем ваши финансы…</p>
-        {[1, 2, 3].map((i) => (
-          <div key={i} className="h-28 rounded-3xl bg-muted motion-safe:animate-pulse" />
-        ))}
-      </div>
-    );
+  if (query.isPending) return <LoadingState label="Загрузка финансов" />;
   if (!query.data || query.isError)
     return (
       <Card className="space-y-3">
@@ -75,7 +68,7 @@ export function FinancePage({
     <div className="min-h-0 flex-1 overflow-y-auto">
       <div className="mx-auto w-full max-w-5xl space-y-6 px-4 py-6 sm:px-8 sm:py-10">
         {couple.isPending ? (
-          <p role="status">Загрузка…</p>
+          <LoadingState label="Загрузка финансов" />
         ) : couple.isError ? (
           <Card>
             <p>Не удалось проверить связь пары.</p>

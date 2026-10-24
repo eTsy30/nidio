@@ -10,6 +10,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/shared/ui/avatar-pair/Ava
 import { Button } from "@/shared/ui/button/Button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/shared/ui/card/Card";
 import { InputControl } from "@/shared/ui/input/InputControl";
+import { LoadingState } from "@/shared/ui/loading/LoadingState";
 
 interface CoupleCardProps {
   couple: CurrentCoupleResponse | null | undefined;
@@ -93,10 +94,7 @@ export function CoupleCard({
 
       <CardContent>
         {isLoading ? (
-          <div className="flex items-center gap-3 py-2 text-sm text-muted-foreground">
-            <Loader2 className="size-4 animate-spin" />
-            <span>Загрузка информации о паре...</span>
-          </div>
+          <LoadingState label="Загрузка информации о паре" compact />
         ) : couple ? (
           <div className="space-y-6">
             <div className="flex items-center gap-4">

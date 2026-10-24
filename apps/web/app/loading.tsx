@@ -12,7 +12,7 @@ export default function Loading() {
         <h1 className={styles.title}>Собираем ваш день.</h1>
         <p className={styles.description}>Планы, маленькие дела и всё, что вас объединяет.</p>
         <div className={styles.track} aria-hidden="true" />
-        <span className={styles.hint}>Загрузка…</span>
+        <span className="sr-only">Загрузка…</span>
       </div>
     </main>
   );

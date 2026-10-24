@@ -120,8 +120,10 @@
 .standard > .actions {
   margin-top: auto;
 }
-.actions > button {
-  flex: 1;
+.actions > button,
+.actions > a {
+  flex: 0 0 auto;
+  min-height: var(--control-md);
 }
 @media (min-width: 640px) {
   .standard {
@@ -135,5 +137,9 @@
   }
   .actions {
     flex-direction: row;
+  }
+  .actions > button,
+  .actions > a {
+    flex: 1 1 0%;
   }
 }

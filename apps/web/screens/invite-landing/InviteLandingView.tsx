@@ -1,11 +1,11 @@
 "use client";
-
 import { useRouter } from "next/navigation";
 
 import { useAcceptInvite, useInvite } from "@/features/relationship/hook/use-relationship";
 import { AcceptInviteCard } from "@/features/relationship/ui/accept-invite-card/AcceptInviteCard";
 import { cn } from "@/shared/lib/cn";
 import { Card } from "@/shared/ui/card/Card";
+import { LoadingState } from "@/shared/ui/loading/LoadingState";
 
 interface InviteLandingViewProps {
   token: string;
@@ -27,7 +27,7 @@ export function InviteLandingView({ token }: InviteLandingViewProps) {
     >
       <div className="w-full max-w-md">
         {isPending ? (
-          <p className="text-center text-muted-foreground">Загрузка приглашения...</p>
+          <LoadingState label="Загрузка приглашения" />
         ) : invite ? (
           <AcceptInviteCard
             invite={invite}

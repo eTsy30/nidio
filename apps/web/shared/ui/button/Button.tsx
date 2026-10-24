@@ -22,9 +22,9 @@ export const buttonVariants = cva(
       },
       size: {
         none: "",
-        sm: "min-h-11 px-3",
-        md: "h-[var(--control-md)] px-4",
-        lg: "h-[var(--control-lg)] px-6",
+        sm: "min-h-11 shrink-0 px-3",
+        md: "h-[var(--control-md)] min-h-[var(--control-md)] shrink-0 px-4",
+        lg: "h-[var(--control-lg)] min-h-[var(--control-lg)] shrink-0 px-6",
       },
       fullWidth: { true: "w-full", false: "" },
       iconOnly: { true: "aspect-square p-0", false: "" },

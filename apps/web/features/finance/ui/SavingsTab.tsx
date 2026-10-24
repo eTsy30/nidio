@@ -40,12 +40,12 @@ export function SavingsTab({
           Создать копилку
         </Button>
       </div>
-      <div className="flex w-full items-center justify-between gap-2">
-        <div className="w-[200px] shrink-0">
+      <div className="grid min-w-0 grid-cols-2 gap-2">
+        <div className="min-w-0">
           <CurrencyField value={currency} {...(onCurrency ? { onChange: onCurrency } : {})} />
         </div>
 
-        <div className="w-[200px] shrink-0">
+        <div className="min-w-0">
           <PiggyBankScopeSelect value={scope} onChange={setScope} />
         </div>
       </div>

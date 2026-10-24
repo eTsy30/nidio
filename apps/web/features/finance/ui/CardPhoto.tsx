@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 
 import { api } from "@/shared/api/client/api";
 import { Button } from "@/shared/ui";
+import { LoadingState } from "@/shared/ui/loading/LoadingState";
 export function CardPhoto({ id, version }: { id: string; version: string }) {
   const [result, setResult] = useState<{ key: string; url: string; error: boolean } | null>(null);
   const [attempt, setAttempt] = useState(0);
@@ -40,6 +41,6 @@ export function CardPhoto({ id, version }: { id: string; version: string }) {
       className="max-h-72 w-full rounded-2xl object-contain"
     />
   ) : (
-    <p role="status">Загрузка фото…</p>
+    <LoadingState label="Загрузка фото" compact />
   );
 }
