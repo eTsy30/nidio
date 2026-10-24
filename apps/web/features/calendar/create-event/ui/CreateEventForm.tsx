@@ -12,6 +12,7 @@ import {
 } from "@/features/calendar/types";
 import { EventFormFields } from "@/features/calendar/ui/EventFormFields";
 import { Button } from "@/shared/ui";
+import { DialogFooter } from "@/shared/ui/dialog/dialog";
 
 interface CreateEventFormProps {
   scope: EventScope;
@@ -37,12 +38,12 @@ export function CreateEventForm({ scope, date, onCancel, onSubmit }: CreateEvent
   );
   const { step, setStep, saving, error, title, handleSubmit } = form;
   return (
-    <form onSubmit={handleSubmit} className="flex min-h-0 flex-col gap-5">
+    <form onSubmit={handleSubmit} className="flex min-h-0 min-w-0 flex-col gap-5">
       <p className="text-sm text-muted-foreground">
         {format(date, "d MMMM yyyy", { locale: ru })} ·{" "}
         {scope === EventScope.PERSONAL ? "Мой" : "Наш"} · Шаг {step + 1} из 2
       </p>
-      <div className="min-h-0 space-y-4 overflow-y-auto overscroll-contain p-1">
+      <div className="flex min-h-0 min-w-0 flex-col gap-4 p-1">
         <EventFormFields form={form} mode="create" />
         {error && (
           <p role="alert" className="text-sm text-destructive">
@@ -50,7 +51,7 @@ export function CreateEventForm({ scope, date, onCancel, onSubmit }: CreateEvent
           </p>
         )}
       </div>
-      <div className="flex shrink-0 gap-2 pt-1">
+      <DialogFooter className="flex-row">
         <Button
           type="button"
           variant="ghost"
@@ -60,10 +61,15 @@ export function CreateEventForm({ scope, date, onCancel, onSubmit }: CreateEvent
         >
           {step === 0 ? "Отмена" : "Назад"}
         </Button>
-        <Button type="submit" disabled={!title.trim() || saving} className="flex-1">
+        <Button
+          type="submit"
+          loading={saving}
+          disabled={!title.trim() || saving}
+          className="flex-1"
+        >
           {saving ? "Сохраняем…" : step === 0 ? "Далее" : "Создать"}
         </Button>
-      </div>
+      </DialogFooter>
     </form>
   );
 }

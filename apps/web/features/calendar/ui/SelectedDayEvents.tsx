@@ -85,27 +85,27 @@ export function SelectedDayEvents({
                       {repeatLabels[event.repeat]}
                     </p>
                   )}
-                  {event.createdById === currentUserId && (
-                    <div className="mt-2 flex gap-1">
-                      <Button
-                        variant="ghost"
-                        iconOnly
-                        aria-label={`Изменить: ${event.title}`}
-                        onClick={() => onEditEvent(event)}
-                      >
-                        <Pencil />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        iconOnly
-                        aria-label={`Удалить: ${event.title}`}
-                        onClick={() => onDeleteEvent(event)}
-                      >
-                        <Trash2 />
-                      </Button>
-                    </div>
-                  )}
                 </div>
+                {event.createdById === currentUserId && (
+                  <div className="flex shrink-0 flex-col gap-1 min-[375px]:flex-row">
+                    <Button
+                      variant="ghost"
+                      iconOnly
+                      aria-label={`Изменить: ${event.title}`}
+                      onClick={() => onEditEvent(event)}
+                    >
+                      <Pencil />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      iconOnly
+                      aria-label={`Удалить: ${event.title}`}
+                      onClick={() => onDeleteEvent(event)}
+                    >
+                      <Trash2 />
+                    </Button>
+                  </div>
+                )}
               </Card>
             </li>
           ))}

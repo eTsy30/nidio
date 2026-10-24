@@ -179,9 +179,11 @@ body:has(.app-frame) {
       background-color 180ms,
       color 180ms;
   }
-  .nav-item:hover {
-    text-decoration: none;
-    background: var(--muted);
+  @media (hover: hover) and (pointer: fine) {
+    .nav-item:hover {
+      text-decoration: none;
+      background: var(--muted);
+    }
   }
   .nav-item-active {
     color: var(--primary);
@@ -197,7 +199,7 @@ body:has(.app-frame) {
       transform 180ms;
   }
   .nav-item-active .nav-icon {
-    background: color-mix(in srgb, var(--primary) 10%, transparent);
+    background: transparent;
   }
   .nav-item:active .nav-icon {
     transform: scale(0.93);
@@ -302,4 +304,22 @@ body:has(.app-frame) {
   .nav-item:active .nav-icon {
     transform: none;
   }
+}
+
+/* Safari's native date/time editor otherwise retains its intrinsic width. */
+.temporal-input {
+  display: block;
+  appearance: none;
+  -webkit-appearance: none;
+  min-width: 0;
+  max-width: 100%;
+  width: 100%;
+}
+.temporal-input::-webkit-date-and-time-value {
+  min-width: 0;
+  text-align: left;
+}
+.temporal-input::-webkit-datetime-edit {
+  min-width: 0;
+  padding: 0;
 }

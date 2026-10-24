@@ -11,6 +11,7 @@ import {
 } from "@/features/calendar/types";
 import { EventFormFields } from "@/features/calendar/ui/EventFormFields";
 import { Button } from "@/shared/ui";
+import { DialogFooter } from "@/shared/ui/dialog/dialog";
 
 interface EditEventFormProps {
   event: CalendarEvent;
@@ -38,10 +39,10 @@ export function EditEventForm({ event, onCancel, onSubmit }: EditEventFormProps)
   );
   const { step, setStep, saving, error, title, handleSubmit } = form;
   return (
-    <form onSubmit={handleSubmit} className="flex min-h-0 flex-col gap-3 px-1 pb-1">
+    <form onSubmit={handleSubmit} className="flex min-h-0 min-w-0 flex-col gap-5">
       <p className="text-sm text-muted-foreground">Шаг {step + 1} из 2</p>
 
-      <div className="min-h-0 space-y-3 overflow-y-auto overscroll-contain px-1">
+      <div className="flex min-h-0 min-w-0 flex-col gap-4 p-1">
         <EventFormFields
           form={form}
           mode="edit"
@@ -51,7 +52,7 @@ export function EditEventForm({ event, onCancel, onSubmit }: EditEventFormProps)
         {error && <p className="text-sm text-destructive">{error}</p>}
       </div>
 
-      <div className="flex shrink-0 gap-2 border-t pt-3">
+      <DialogFooter className="flex-row">
         <Button
           type="button"
           variant="ghost"
@@ -61,10 +62,15 @@ export function EditEventForm({ event, onCancel, onSubmit }: EditEventFormProps)
         >
           {step === 0 ? "Отмена" : "Назад"}
         </Button>
-        <Button type="submit" disabled={!title.trim() || saving} className="flex-1">
+        <Button
+          type="submit"
+          loading={saving}
+          disabled={!title.trim() || saving}
+          className="flex-1"
+        >
           {saving ? "Сохраняем…" : step === 0 ? "Далее" : "Сохранить"}
         </Button>
-      </div>
+      </DialogFooter>
     </form>
   );
 }

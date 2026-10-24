@@ -38,6 +38,7 @@ import { useCalendarEvents } from "../model/useCalendarEvents";
 import { useCalendarModal } from "../model/useCalendarModal";
 
 import { CalendarHeader } from "./CalendarHeader";
+import { CalendarLoading } from "./CalendarLoading";
 import { CalendarYear } from "./CalendarYear";
 import { MonthView } from "./MonthView";
 import { WeekView } from "./WeekView";
@@ -279,13 +280,7 @@ export default function CalendarWidget() {
     closeModal();
   };
 
-  if (loading && !data) {
-    return (
-      <main className="flex h-full items-center justify-center">
-        <p className="text-sm text-muted-foreground">Загрузка календаря…</p>
-      </main>
-    );
-  }
+  if (loading && !data) return <CalendarLoading />;
 
   if (error && !data) {
     return (
