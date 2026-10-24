@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "node scripts/check-architecture.mjs && eslint",
     "typecheck": "tsc --noEmit",
-    "test:ui": "node scripts/test-ui-components.mjs",
+    "test:ui": "node scripts/test-ui-components.mjs && node scripts/test-session.mjs",
     "test:finance": "node scripts/test-finance.mjs"
   },
   "dependencies": {

@@ -8,6 +8,7 @@ import { ArrowUpRight, Heart, ListTodo } from "lucide-react";
 import { useMe } from "@/features/auth";
 import { useCurrentCouple } from "@/features/relationship/hook/use-relationship";
 import { Button } from "@/shared/ui/button/Button";
+import { Card } from "@/shared/ui/card/Card";
 
 export function HomeHero({ now }: { now: Date }) {
   const { data: user } = useMe();
@@ -22,18 +23,18 @@ export function HomeHero({ now }: { now: Date }) {
     now.getHours() < 12 ? "Доброе утро" : now.getHours() < 18 ? "Добрый день" : "Добрый вечер";
 
   return (
-    <section className="home-hero relative isolate overflow-hidden rounded-[2rem] border border-primary/10 px-6 py-8 sm:px-9 sm:py-10">
+    <Card variant="outline" className="min-w-0 rounded-[var(--radius-md)] border-border p-5">
       <div className="relative z-10 max-w-xl">
         <p className="eyebrow text-primary" suppressHydrationWarning>
           {format(now, "EEEE, d MMMM", { locale: ru })}
         </p>
-        <h1
-          className="mt-4 max-w-lg text-3xl font-semibold leading-tight tracking-tight sm:text-4xl"
+        <h2
+          className="mt-3 text-2xl font-semibold leading-tight tracking-tight break-words"
           suppressHydrationWarning
         >
           {greeting}
           {user?.firstName ? `, ${user.firstName}` : ""}.
-        </h1>
+        </h2>
         <p className="mt-3 max-w-sm text-sm leading-relaxed text-muted-foreground sm:text-base">
           Пусть сегодня найдётся время для важного.
           <br className="hidden sm:block" /> И друг для друга.
@@ -71,19 +72,6 @@ export function HomeHero({ now }: { now: Date }) {
           )}
         </Link>
       </div>
-      <div
-        className="home-orbits pointer-events-none absolute hidden sm:block -right-24 -top-10 size-80 opacity-40 sm:right-0 sm:top-0 sm:opacity-80"
-        aria-hidden="true"
-      >
-        <div className="absolute inset-5 rounded-full border border-primary/15" />
-        <div className="absolute inset-14 rounded-full border border-primary/20" />
-        <div className="absolute right-14 top-20 flex size-24 rotate-12 items-center justify-center rounded-[2rem] border border-white/60 bg-card/80 text-primary shadow-soft">
-          <Heart className="size-12 fill-primary/10" strokeWidth={1} />
-        </div>
-        <div className="absolute bottom-12 left-12 flex size-20 -rotate-12 items-center justify-center rounded-[1.75rem] bg-primary text-primary-foreground shadow-floating">
-          <Heart className="size-10" strokeWidth={1} />
-        </div>
-      </div>
-    </section>
+    </Card>
   );
 }

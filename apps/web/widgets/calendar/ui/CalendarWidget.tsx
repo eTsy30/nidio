@@ -23,7 +23,7 @@ import {
   EventType,
   type ViewMode,
 } from "@/features/calendar/types";
-import { SelectedDayDrawer } from "@/features/calendar/ui/SelectedDayDrawer";
+import { SelectedDayEvents } from "@/features/calendar/ui/SelectedDayEvents";
 import { useAuth } from "@/shared/api/provider/auth-provider";
 import { Button, Card } from "@/shared/ui";
 import {
@@ -61,7 +61,7 @@ export default function CalendarWidget() {
   const calendarDateValue = searchParams.get("date");
   const initialDate = parseCalendarDate(calendarDateValue) ?? new Date();
 
-  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [selectedDate, setSelectedDate] = useState<Date | null>(initialDate);
 
   const { closeModal, modal, openCreate, openDelete, openEdit } = useCalendarModal();
 
@@ -160,6 +160,7 @@ export default function CalendarWidget() {
     if (viewMode === "month") {
       const next = subMonths(month, 1);
       setMonth(next);
+      setSelectedDate(next);
       updateCalendarParams({ date: next });
       return;
     }
@@ -167,6 +168,7 @@ export default function CalendarWidget() {
     if (viewMode === "week") {
       const next = subWeeks(weekStart, 1);
       setWeekStart(next);
+      setSelectedDate(next);
       updateCalendarParams({ date: next });
       return;
     }
@@ -180,6 +182,7 @@ export default function CalendarWidget() {
     if (viewMode === "month") {
       const next = addMonths(month, 1);
       setMonth(next);
+      setSelectedDate(next);
       updateCalendarParams({ date: next });
       return;
     }
@@ -187,6 +190,7 @@ export default function CalendarWidget() {
     if (viewMode === "week") {
       const next = addWeeks(weekStart, 1);
       setWeekStart(next);
+      setSelectedDate(next);
       updateCalendarParams({ date: next });
       return;
     }
@@ -229,8 +233,8 @@ export default function CalendarWidget() {
   const handleYearMonthClick = (date: Date) => {
     setMonth(new Date(date.getFullYear(), date.getMonth(), 1));
 
-    setSelectedDate(null);
-    updateCalendarParams({ view: "month" });
+    setSelectedDate(date);
+    updateCalendarParams({ view: "month", date });
   };
 
   const handleYearDayClick = (date: Date) => {
@@ -241,7 +245,6 @@ export default function CalendarWidget() {
 
   const handleScopeChange = (nextScope: EventScope) => {
     updateCalendarParams({ scope: nextScope });
-    setSelectedDate(null);
     closeModal();
   };
 
@@ -251,7 +254,6 @@ export default function CalendarWidget() {
 
   const handleEventDeleted = async () => {
     closeModal();
-    setSelectedDate(null);
     await refetch();
   };
 
@@ -317,12 +319,9 @@ export default function CalendarWidget() {
             onToday={goToday}
             onMonthChange={(date) => {
               setMonth(date);
+              setSelectedDate(date);
               setWeekStart(startOfWeek(date, { weekStartsOn: 1 }));
               updateCalendarParams({ date });
-            }}
-            onCreate={() => {
-              setSelectedDate(selectedDate ?? new Date());
-              openCreate();
             }}
             onFilterChange={setFilter}
           />
@@ -369,26 +368,18 @@ export default function CalendarWidget() {
               />
             )}
           </Card>
+          {selectedDate && (
+            <SelectedDayEvents
+              currentUserId={user?.id}
+              date={selectedDate}
+              events={selectedEvents}
+              onAddEvent={openCreate}
+              onDeleteEvent={handleDeleteEvent}
+              onEditEvent={handleEditEvent}
+            />
+          )}
         </div>
       </div>
-
-      {selectedDate && (
-        <SelectedDayDrawer
-          currentUserId={user?.id}
-          date={selectedDate}
-          events={selectedEvents}
-          scope={scope}
-          onClose={() => {
-            setSelectedDate(null);
-            closeModal();
-          }}
-          onAddEvent={() => {
-            openCreate();
-          }}
-          onDeleteEvent={handleDeleteEvent}
-          onEditEvent={handleEditEvent}
-        />
-      )}
 
       {modal.kind === "delete" && (
         <DeleteEventDialog

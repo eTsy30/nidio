@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ArrowRight, Shuffle, Sparkles } from "lucide-react";
 
 import { Button } from "@/shared/ui/button/Button";
+import { Card } from "@/shared/ui/card/Card";
 
 const ideas = [
   {
@@ -29,7 +30,7 @@ export function HomeIdea() {
   const [index, setIndex] = useState(0);
   const idea = ideas[index] ?? ideas[0];
   return (
-    <section className="rounded-3xl border border-success/15 bg-success/5 p-6 sm:p-7">
+    <Card variant="outline" className="min-w-0 rounded-[var(--radius-md)] border-border p-5">
       <div className="flex items-center justify-between gap-3">
         <p className="eyebrow flex items-center gap-2 text-success">
           <Sparkles className="size-4" aria-hidden="true" />
@@ -58,6 +59,6 @@ export function HomeIdea() {
         Выбрать день в календаре
         <ArrowRight className="size-4" aria-hidden="true" />
       </Link>
-    </section>
+    </Card>
   );
 }

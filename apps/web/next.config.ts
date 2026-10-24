@@ -30,6 +30,11 @@ if (process.env.VERCEL === "1" && process.env.NODE_ENV === "production") {
 
 const nextConfig: NextConfig = {
   turbopack: {},
+  async rewrites() {
+    // Keep refresh cookies first-party, including in installed iOS PWAs.
+    const api = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000").replace(/\/$/, "");
+    return [{ source: "/auth/:path*", destination: `${api}/auth/:path*` }];
+  },
 };
 
 export default withSerwist({

@@ -77,7 +77,7 @@ export function PushSettings() {
   };
 
   return (
-    <div className="space-y-3 p-4">
+    <div className="space-y-3 p-5">
       <p className="text-sm font-medium">Уведомления</p>
       <p className="text-sm text-muted-foreground" role="status">
         {descriptions[status]}

@@ -86,7 +86,7 @@ export function CoupleCard({
   };
 
   return (
-    <Card>
+    <Card variant="outline" className="rounded-[var(--radius-md)] border-border p-5">
       <CardHeader>
         <CardTitle>Ваша пара</CardTitle>
       </CardHeader>

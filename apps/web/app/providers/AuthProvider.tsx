@@ -16,6 +16,7 @@ import {
 import { apolloClient } from "@/shared/lib/apollo-client";
 import { getAccessToken, subscribeAuth } from "@/shared/lib/token";
 import { routes } from "@/shared/router/paths";
+import { Button } from "@/shared/ui/button/Button";
 
 type SessionState = "bootstrapping" | "authenticated" | "anonymous";
 
@@ -23,6 +24,8 @@ const REFRESH_INTERVAL_MS = 1000 * 60 * 10;
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [sessionState, setSessionState] = useState<SessionState>("bootstrapping");
+  const [bootstrapError, setBootstrapError] = useState(false);
+  const [bootstrapAttempt, setBootstrapAttempt] = useState(0);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const bootstrapRef = useRef(true);
   const profileRequestRef = useRef<Promise<void> | null>(null);
@@ -104,6 +107,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const bootstrap = async (): Promise<void> => {
+      setBootstrapError(false);
       if (getAccessToken()) {
         setSessionState("authenticated");
         await refreshUser();
@@ -113,14 +117,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           await refreshUser();
         } catch (error) {
           if (isSessionRefreshError(error, "expired")) clearUser();
-          else setSessionState("anonymous");
+          else {
+            setBootstrapError(true);
+            return;
+          }
         }
       }
       bootstrapRef.current = false;
       setSessionState((state) => (state === "bootstrapping" ? "anonymous" : state));
     };
     void bootstrap();
-  }, [clearUser, refreshUser]);
+  }, [clearUser, refreshUser, bootstrapAttempt]);
 
   useEffect(() => {
     if (sessionState !== "authenticated") {
@@ -148,6 +155,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     window.addEventListener("focus", syncTimeZone);
     return () => window.removeEventListener("focus", syncTimeZone);
   }, [user?.id]);
+
+  if (bootstrapError) {
+    return (
+      <main className="flex min-h-dvh items-center justify-center p-6">
+        <div className="max-w-sm space-y-4 text-center" role="status">
+          <h1 className="text-xl font-semibold">Не удалось подключиться</h1>
+          <p className="text-sm text-muted-foreground">
+            Проверьте интернет или подождите, пока сервер запустится. Повторный вход пока не
+            требуется.
+          </p>
+          <Button onClick={() => setBootstrapAttempt((value) => value + 1)}>Повторить</Button>
+        </div>
+      </main>
+    );
+  }
 
   return (
     <AuthContext.Provider

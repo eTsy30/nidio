@@ -4,6 +4,7 @@ import { Pencil } from "lucide-react";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/shared/ui/avatar-pair/Avatar";
 import { Button } from "@/shared/ui/button/Button";
+import { Card } from "@/shared/ui/card/Card";
 
 interface ProfileHeaderProps {
   firstName: string | null;
@@ -17,7 +18,10 @@ export function ProfileHeader({ firstName, email, avatarUrl, onEdit }: ProfileHe
   const fallback = displayName.charAt(0).toUpperCase();
 
   return (
-    <section className="flex items-center gap-4 rounded-3xl border border-primary/10 bg-primary/5 p-5">
+    <Card
+      variant="outline"
+      className="flex items-center gap-4 rounded-[var(--radius-md)] border-border p-5"
+    >
       <Avatar size="lg" className="size-16 shrink-0">
         <AvatarImage src={avatarUrl ?? undefined} alt={displayName} />
         <AvatarFallback>{fallback}</AvatarFallback>
@@ -41,6 +45,6 @@ export function ProfileHeader({ firstName, email, avatarUrl, onEdit }: ProfileHe
         <Pencil className="size-4" />
         <span className="hidden sm:inline">Редактировать</span>
       </Button>
-    </section>
+    </Card>
   );
 }

@@ -11,7 +11,6 @@ import {
   ChevronRight,
   Grid2X2,
   Layers,
-  Plus,
   User,
   Users,
 } from "lucide-react";
@@ -39,7 +38,6 @@ interface CalendarHeaderProps {
   onPrev: () => void;
   onNext: () => void;
   onToday: () => void;
-  onCreate: () => void;
   onMonthChange: (month: Date) => void;
   onFilterChange: (value: EventType | "ALL") => void;
 }
@@ -54,7 +52,6 @@ export function CalendarHeader({
   onPrev,
   onNext,
   onToday,
-  onCreate,
   onMonthChange,
   onFilterChange,
 }: CalendarHeaderProps) {
@@ -67,11 +64,8 @@ export function CalendarHeader({
           <h1 className="text-3xl font-semibold tracking-tight">Календарь</h1>
           <p className="mt-2 text-sm text-muted-foreground">Ваши планы и общие моменты</p>
         </div>
-        <Button leftIcon={<Plus />} onClick={onCreate}>
-          Добавить событие
-        </Button>
       </div>
-      <div className="grid gap-3 sm:grid-cols-3">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
         <IconSelect
           label="Календарь"
           value={scope}
@@ -91,40 +85,54 @@ export function CalendarHeader({
             { value: "year", label: "Год", icon: <Grid2X2 className="size-4" /> },
           ]}
         />
-        <IconSelect
-          label="События"
-          value={filter}
-          onChange={(value) => onFilterChange(value as EventType | "ALL")}
-          options={[
-            { value: "ALL", label: "Все события", icon: <Layers className="size-4" /> },
-            ...Object.values(EventType).map((type) => {
-              const Icon = typeIcon[type];
-              return {
-                value: type,
-                label: typeMeta[type].label,
-                icon: <Icon className="size-4" />,
-              };
-            }),
-          ]}
-        />
+        <div className="col-span-2 sm:col-span-1">
+          <IconSelect
+            label="События"
+            value={filter}
+            onChange={(value) => onFilterChange(value as EventType | "ALL")}
+            options={[
+              { value: "ALL", label: "Все события", icon: <Layers className="size-4" /> },
+              ...Object.values(EventType).map((type) => {
+                const Icon = typeIcon[type];
+                return {
+                  value: type,
+                  label: typeMeta[type].label,
+                  icon: <Icon className="size-4" />,
+                };
+              }),
+            ]}
+          />
+        </div>
       </div>
-      <div className="flex flex-wrap items-center justify-between gap-2">
+      <div className="flex items-center justify-between gap-1">
         <Button
           variant="secondary"
           onClick={() => setMonthPickerOpen(true)}
-          rightIcon={<ChevronDown />}
-          className="capitalize"
+          rightIcon={<ChevronDown className="hidden sm:block" />}
+          className="min-w-0 px-2 text-sm capitalize"
         >
           {format(month, "LLLL yyyy", { locale: ru })}
         </Button>
-        <div className="flex items-center gap-2">
-          <Button variant="secondary" iconOnly aria-label="Предыдущий период" onClick={onPrev}>
+        <div className="flex shrink-0 items-center gap-0 sm:gap-2">
+          <Button
+            variant="ghost"
+            iconOnly
+            className="w-9 sm:w-11"
+            aria-label="Предыдущий период"
+            onClick={onPrev}
+          >
             <ChevronLeft />
           </Button>
-          <Button variant="secondary" onClick={onToday}>
+          <Button variant="ghost" className="px-1 text-xs sm:px-3 sm:text-sm" onClick={onToday}>
             Сегодня
           </Button>
-          <Button variant="secondary" iconOnly aria-label="Следующий период" onClick={onNext}>
+          <Button
+            variant="ghost"
+            iconOnly
+            className="w-9 sm:w-11"
+            aria-label="Следующий период"
+            onClick={onNext}
+          >
             <ChevronRight />
           </Button>
         </div>

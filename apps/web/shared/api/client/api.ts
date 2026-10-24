@@ -28,7 +28,7 @@ api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
     config.headers.delete("Content-Type");
   }
 
-  return config;
+  return config.url?.startsWith("/auth/") ? { ...config, baseURL: "", timeout: 60_000 } : config;
 });
 
 api.interceptors.response.use(responseInterceptor, responseErrorInterceptor);

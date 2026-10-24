@@ -10,6 +10,11 @@ const serwist = new Serwist({
   clientsClaim: true,
   navigationPreload: true,
   runtimeCaching: [
+    {
+      matcher: ({ url }) => url.pathname.startsWith("/auth/"),
+      method: "POST",
+      handler: new NetworkOnly(),
+    },
     { matcher: ({ url }) => /^\/finance(?:\/|$)/.test(url.pathname), handler: new NetworkOnly() },
     ...defaultCache,
   ],

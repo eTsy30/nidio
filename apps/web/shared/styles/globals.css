@@ -112,7 +112,10 @@ textarea {
     display: flex;
     flex-direction: column;
     min-height: 0;
-    height: calc(100dvh - 72px - env(safe-area-inset-bottom));
+    height: calc(100dvh - 73px - env(safe-area-inset-bottom, 0px));
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-left: env(safe-area-inset-left, 0px);
+    padding-right: env(safe-area-inset-right, 0px);
     overflow: hidden;
     background: var(--background);
   }
@@ -120,7 +123,8 @@ textarea {
     position: fixed;
     inset: auto 0 0;
     z-index: 50;
-    padding: 4px 8px calc(4px + env(safe-area-inset-bottom));
+    padding: 4px max(8px, env(safe-area-inset-right, 0px))
+      calc(4px + env(safe-area-inset-bottom, 0px)) max(8px, env(safe-area-inset-left, 0px));
     border-top: 1px solid var(--border);
     background: color-mix(in srgb, var(--card) 94%, transparent);
     backdrop-filter: blur(20px);
@@ -170,13 +174,6 @@ textarea {
     text-transform: uppercase;
     color: var(--muted-foreground);
   }
-  .dashboard-panel {
-    border: 1px solid var(--border);
-    border-radius: 24px;
-    padding: 24px;
-    background: var(--card);
-    box-shadow: 0 3px 18px rgb(41 41 35 / 0.025);
-  }
   .icon-link {
     display: inline-flex;
     align-items: center;
@@ -192,13 +189,6 @@ textarea {
     background: var(--muted);
     color: var(--primary);
   }
-  .home-hero {
-    background: linear-gradient(
-      115deg,
-      color-mix(in srgb, var(--card) 95%, var(--primary)),
-      color-mix(in srgb, var(--background) 85%, var(--primary))
-    );
-  }
   .invitation-surface {
     background:
       radial-gradient(
@@ -210,18 +200,6 @@ textarea {
   }
   .animate-fade-up {
     animation: nidio-reveal 350ms ease-out both;
-  }
-  .home-grid > * {
-    animation: nidio-reveal 420ms ease-out both;
-  }
-  .home-grid > :nth-child(2) {
-    animation-delay: 60ms;
-  }
-  .home-grid > :nth-child(3) {
-    animation-delay: 120ms;
-  }
-  .home-orbits {
-    animation: nidio-orbits 900ms ease-out both;
   }
   @media (min-width: 1024px) {
     .app-shell {
@@ -235,7 +213,8 @@ textarea {
       flex-direction: column;
       border-top: 0;
       border-right: 1px solid var(--border);
-      padding: 32px 18px 24px;
+      padding: max(32px, env(safe-area-inset-top, 0px)) 18px
+        max(24px, env(safe-area-inset-bottom, 0px)) max(18px, env(safe-area-inset-left, 0px));
     }
     .nav-item {
       flex-direction: row;
@@ -267,15 +246,6 @@ textarea {
     transform: translateY(0);
   }
 }
-@keyframes nidio-orbits {
-  from {
-    transform: translateY(14px) rotate(-5deg);
-  }
-  to {
-    transform: translateY(0) rotate(0);
-  }
-}
-
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

@@ -36,10 +36,10 @@ export function ProfileView() {
 
   return (
     <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden">
-      <div className="mx-auto w-full max-w-2xl space-y-5 px-4 pb-28 pt-6 sm:px-6 sm:pt-8">
-        <div className="mb-6">
-          <p className="eyebrow">Всё о вас</p>
-          <h1 className="mt-2 text-2xl font-semibold">Профиль и настройки</h1>
+      <div className="mx-auto w-full max-w-5xl space-y-6 px-4 py-6 sm:px-8 sm:py-10">
+        <div>
+          <h1 className="text-3xl font-semibold tracking-tight">Профиль</h1>
+          <p className="mt-2 text-sm text-muted-foreground">Ваша пара, оформление и настройки</p>
         </div>
         <ProfileHeader
           firstName={user.firstName}

@@ -1,7 +1,5 @@
 import { getAccessToken, removeAccessToken, setAccessToken } from "@/shared/lib/token";
 
-import { apiConfig } from "../config/api.config";
-
 export type SessionRefreshFailure = "expired" | "unavailable";
 
 export class SessionRefreshError extends Error {
@@ -87,7 +85,9 @@ async function requestRefresh(): Promise<string> {
   let response: Response;
 
   try {
-    response = await fetch(`${apiConfig.baseURL}/auth/refresh`, {
+    response = await fetch("/auth/refresh", {
+      cache: "no-store",
+      signal: AbortSignal.timeout(60_000),
       method: "POST",
       credentials: "include",
       headers: {
@@ -110,11 +110,11 @@ async function requestRefresh(): Promise<string> {
   try {
     body = (await response.json()) as RefreshResponse;
   } catch {
-    return expireSession();
+    throw new SessionRefreshError("unavailable");
   }
 
   if (typeof body.accessToken !== "string" || body.accessToken.length === 0) {
-    return expireSession();
+    throw new SessionRefreshError("unavailable");
   }
 
   setAccessToken(body.accessToken);

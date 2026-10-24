@@ -9,12 +9,12 @@ interface ProfileSectionProps {
 
 export function ProfileSection({ title, children }: ProfileSectionProps) {
   return (
-    <Card>
+    <Card variant="outline" className="rounded-[var(--radius-md)] border-border p-5">
       <CardHeader>
         <CardTitle>{title}</CardTitle>
       </CardHeader>
 
-      <CardContent className="p-0">
+      <CardContent className="-mx-5 pt-3">
         <div className="divide-y divide-border/60">{children}</div>
       </CardContent>
     </Card>

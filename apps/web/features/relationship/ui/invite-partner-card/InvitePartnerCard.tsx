@@ -25,7 +25,7 @@ export function InvitePartnerCard({
   onRevoke,
 }: InvitePartnerCardProps) {
   return (
-    <Card className="mx-auto w-full max-w-md">
+    <Card className="m-auto w-full max-w-md shrink-0">
       <CardHeader className="items-center text-center">
         <AvatarPair size="lg" />
 
