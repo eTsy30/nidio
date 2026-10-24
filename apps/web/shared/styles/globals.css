@@ -141,11 +141,16 @@ body:has(.app-frame) {
     position: relative;
     min-width: 0;
     z-index: 50;
-    padding: 4px max(8px, env(safe-area-inset-right, 0px))
-      calc(4px + env(safe-area-inset-bottom, 0px)) max(8px, env(safe-area-inset-left, 0px));
+    /* Total height includes the home-indicator inset; keep at least 44px for taps. */
+    height: 81px;
+    padding: 2px max(8px, env(safe-area-inset-right, 0px))
+      clamp(0px, env(safe-area-inset-bottom, 0px), 34px) max(8px, env(safe-area-inset-left, 0px));
     border-top: 1px solid var(--border);
     background: color-mix(in srgb, var(--card) 94%, transparent);
     backdrop-filter: blur(20px);
+  }
+  .app-navigation-items {
+    height: 100%;
   }
   .nav-item {
     display: flex;
@@ -155,7 +160,9 @@ body:has(.app-frame) {
     align-items: center;
     justify-content: center;
     gap: 3px;
-    height: 64px;
+    height: 100%;
+    min-height: 44px;
+    max-height: 64px;
     border-radius: 16px;
     color: var(--muted-foreground);
     transition:
@@ -173,7 +180,7 @@ body:has(.app-frame) {
     display: grid;
     place-items: center;
     width: 42px;
-    height: 30px;
+    height: 24px;
     border-radius: 10px;
     transition:
       background-color 180ms,
@@ -230,6 +237,7 @@ body:has(.app-frame) {
       padding-bottom: env(safe-area-inset-bottom, 0px);
     }
     .app-navigation {
+      height: auto;
       grid-column: 1;
       grid-row: 1;
       display: flex;
@@ -238,6 +246,9 @@ body:has(.app-frame) {
       border-right: 1px solid var(--border);
       padding: max(32px, env(safe-area-inset-top, 0px)) 18px
         max(24px, env(safe-area-inset-bottom, 0px)) max(18px, env(safe-area-inset-left, 0px));
+    }
+    .app-navigation-items {
+      height: auto;
     }
     .nav-item {
       flex-direction: row;
