@@ -27,8 +27,21 @@ const navigation = [
 
 export function BottomNavigation() {
   const pathname = usePathname();
+
   return (
-    <nav aria-label="Основная навигация" className="app-navigation">
+    <nav
+      aria-label="Основная навигация"
+      className="
+        app-navigation
+        fixed inset-x-0 bottom-0 z-50
+        border-t border-border
+        bg-background
+        px-3 pt-2 pb-[calc(8px+env(safe-area-inset-bottom))]
+        lg:sticky lg:top-0 lg:bottom-auto
+        lg:h-dvh lg:w-full lg:border-t-0 lg:border-r
+        lg:px-4 lg:py-6
+      "
+    >
       <Link
         href="/"
         className="mb-12 hidden items-center gap-3 px-3 text-foreground hover:no-underline lg:flex"
@@ -39,6 +52,7 @@ export function BottomNavigation() {
         </span>
         <span className="text-2xl font-semibold tracking-tight">nidio</span>
       </Link>
+
       <div className="mx-auto flex w-full max-w-lg items-center justify-between gap-1 lg:max-w-none lg:flex-col lg:items-stretch lg:gap-2">
         {navigation.map(({ href, label, icon: Icon, desktop, mobile }) => {
           const active =
@@ -50,12 +64,15 @@ export function BottomNavigation() {
                   ["/savings", "/cards", "/budget", "/profile", "/space", "/finances"].includes(
                     pathname,
                   ));
+
           return (
             <Link
               key={href}
               href={href}
               aria-current={active ? "page" : undefined}
-              className={`nav-item group ${desktop ? "!hidden lg:!flex" : ""} ${mobile ? "lg:!hidden" : ""} ${active ? "nav-item-active" : ""}`}
+              className={`nav-item group ${
+                desktop ? "!hidden lg:!flex" : ""
+              } ${mobile ? "lg:!hidden" : ""} ${active ? "nav-item-active" : ""}`}
             >
               <span className="nav-icon">
                 <Icon className="size-5" strokeWidth={active ? 2.2 : 1.7} aria-hidden="true" />
