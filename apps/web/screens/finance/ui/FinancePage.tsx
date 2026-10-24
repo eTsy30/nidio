@@ -1,15 +1,26 @@
 "use client";
-import { useState } from "react";
+import { lazy, Suspense, useState } from "react";
 
 import { FinanceProvider, useFinanceData } from "@/features/finance/api/FinanceProvider";
 import type { Currency } from "@/features/finance/model/types";
-import { BudgetTab } from "@/features/finance/ui/BudgetTab";
-import { CardsTab } from "@/features/finance/ui/CardsTab";
-import { SavingsGoalPage } from "@/features/finance/ui/SavingsGoalPage";
-import { SavingsTab } from "@/features/finance/ui/SavingsTab";
 import { useCurrentCouple } from "@/features/relationship/hook/use-relationship";
 import { Button, Card, Link } from "@/shared/ui";
 import { LoadingState } from "@/shared/ui/loading/LoadingState";
+
+const BudgetTab = lazy(() =>
+  import("@/features/finance/ui/BudgetTab").then((module) => ({ default: module.BudgetTab })),
+);
+const CardsTab = lazy(() =>
+  import("@/features/finance/ui/CardsTab").then((module) => ({ default: module.CardsTab })),
+);
+const SavingsGoalPage = lazy(() =>
+  import("@/features/finance/ui/SavingsGoalPage").then((module) => ({
+    default: module.SavingsGoalPage,
+  })),
+);
+const SavingsTab = lazy(() =>
+  import("@/features/finance/ui/SavingsTab").then((module) => ({ default: module.SavingsTab })),
+);
 type Section = "savings" | "cards" | "budget";
 
 function FinanceContent({
@@ -39,20 +50,22 @@ function FinanceContent({
   if (goalId)
     return (
       <FinanceProvider data={query.data}>
-        <SavingsGoalPage id={goalId} />
+        <Suspense fallback={<LoadingState label="Загрузка копилки" />}>
+          <SavingsGoalPage id={goalId} />
+        </Suspense>
       </FinanceProvider>
     );
   return (
     <FinanceProvider data={query.data}>
-      <section id="finance-savings" aria-label="Копилки" hidden={tab !== "savings"}>
-        <SavingsTab currency={currency} onCurrency={setCurrency} />
-      </section>
-      <section id="finance-cards" aria-label="Карты" hidden={tab !== "cards"}>
-        <CardsTab />
-      </section>
-      <section id="finance-budget" aria-label="Бюджет" hidden={tab !== "budget"}>
-        <BudgetTab currency={currency} onCurrency={setCurrency} />
-      </section>
+      <Suspense fallback={<LoadingState label="Загрузка раздела" />}>
+        {tab === "savings" ? (
+          <SavingsTab currency={currency} onCurrency={setCurrency} />
+        ) : tab === "cards" ? (
+          <CardsTab />
+        ) : (
+          <BudgetTab currency={currency} onCurrency={setCurrency} />
+        )}
+      </Suspense>
     </FinanceProvider>
   );
 }
