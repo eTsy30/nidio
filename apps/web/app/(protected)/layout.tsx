@@ -12,9 +12,10 @@ export default function ProtectedLayout({ children }: Props) {
   return (
     <AuthGuard>
       <ConnectionSuccessOverlay />
-      <main className="app-shell">{children}</main>
-
-      <BottomNavigation />
+      <div className="app-frame">
+        <main className="app-shell">{children}</main>
+        <BottomNavigation />
+      </div>
     </AuthGuard>
   );
 }

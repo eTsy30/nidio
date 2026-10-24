@@ -32,7 +32,7 @@
   body {
     font-family: var(--font-geist-sans);
     @apply bg-background text-foreground;
-    min-height: 100vh;
+    min-height: 100dvh;
     text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -107,12 +107,30 @@ textarea {
   caret-color: var(--primary);
 }
 
+/* The protected app owns scrolling; the document must not add a second viewport. */
+html:has(.app-frame),
+body:has(.app-frame) {
+  height: 100%;
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
 @layer components {
+  .app-frame {
+    position: fixed;
+    inset: 0;
+    display: grid;
+    grid-template-rows: minmax(0, 1fr) auto;
+    width: 100%;
+    height: 100dvh;
+    overflow: hidden;
+    background: var(--background);
+  }
   .app-shell {
     display: flex;
     flex-direction: column;
     min-height: 0;
-    height: calc(100dvh - 73px - env(safe-area-inset-bottom, 0px));
+    min-width: 0;
     padding-top: env(safe-area-inset-top, 0px);
     padding-left: env(safe-area-inset-left, 0px);
     padding-right: env(safe-area-inset-right, 0px);
@@ -120,8 +138,8 @@ textarea {
     background: var(--background);
   }
   .app-navigation {
-    position: fixed;
-    inset: auto 0 0;
+    position: relative;
+    min-width: 0;
     z-index: 50;
     padding: 4px max(8px, env(safe-area-inset-right, 0px))
       calc(4px + env(safe-area-inset-bottom, 0px)) max(8px, env(safe-area-inset-left, 0px));
@@ -202,13 +220,18 @@ textarea {
     animation: nidio-reveal 350ms ease-out both;
   }
   @media (min-width: 1024px) {
+    .app-frame {
+      grid-template-columns: 220px minmax(0, 1fr);
+      grid-template-rows: minmax(0, 1fr);
+    }
     .app-shell {
-      margin-left: 220px;
-      height: 100dvh;
+      grid-column: 2;
+      grid-row: 1;
+      padding-bottom: env(safe-area-inset-bottom, 0px);
     }
     .app-navigation {
-      inset: 0 auto 0 0;
-      width: 220px;
+      grid-column: 1;
+      grid-row: 1;
       display: flex;
       flex-direction: column;
       border-top: 0;
