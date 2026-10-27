@@ -25,7 +25,7 @@ export function SavingsPlan({ goal }: { goal: Goal }) {
   const steps = [...(goal.plan ?? [])];
   if (goal.gridOrder !== "SHUFFLE") steps.sort((a, b) => a.amountMinor - b.amountMinor);
   const entries = new Map(
-    goal.transactions
+    (goal.stepEntries ?? goal.transactions)
       .filter((entry) => entry.stepId && !entry.cancelledAt)
       .map((entry) => [entry.stepId, entry]),
   );

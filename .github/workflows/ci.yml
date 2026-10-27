@@ -68,6 +68,11 @@ jobs:
         env:
           RELEASE_TEST_DATABASE_URL: postgresql://postgres:release-test-only@127.0.0.1:5432/release_test
 
+      - name: Financial pagination and aggregate regression
+        run: pnpm --filter api test:finance:integration
+        env:
+          FINANCE_TEST_DATABASE_URL: postgresql://postgres:release-test-only@127.0.0.1:5432/release_test
+
       - name: Build
         run: pnpm build
 

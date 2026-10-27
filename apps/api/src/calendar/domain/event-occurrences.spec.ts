@@ -2,7 +2,10 @@ import { EventRepeat, EventScope } from '@prisma/client';
 
 import type { CalendarEvent } from '../calendar-event.mapper';
 
-import { expandRecurringEvent } from './event-occurrences';
+import {
+  expandRecurringEvent,
+  isRecurringOccurrence,
+} from './event-occurrences';
 
 const event: CalendarEvent = {
   id: 'night',
@@ -25,6 +28,26 @@ const event: CalendarEvent = {
 };
 
 describe('calendar overlap', () => {
+  it('finds daily occurrences after more than 1000 repetitions', () => {
+    const old = {
+      ...event,
+      startAt: new Date('2023-01-01T10:00:00Z'),
+      endAt: new Date('2023-01-01T11:00:00Z'),
+      repeatUntil: null,
+    };
+    const day = new Date('2026-10-25T10:00:00Z');
+    expect(
+      expandRecurringEvent(
+        old,
+        new Date('2026-10-25T00:00:00Z'),
+        new Date('2026-10-25T23:59:59Z'),
+      ),
+    ).toHaveLength(1);
+    expect(isRecurringOccurrence(old, day)).toBe(true);
+    expect(isRecurringOccurrence(old, new Date('2026-10-25T10:01:00Z'))).toBe(
+      false,
+    );
+  });
   const start = new Date('2026-11-01T00:00:00Z');
   const end = new Date('2026-11-01T23:59:59Z');
   it('includes a previous-day occurrence still running after the range starts', () => {

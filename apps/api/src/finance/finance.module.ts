@@ -11,6 +11,8 @@ import { CardsController } from './cards.controller';
 import { CardsService } from './cards.service';
 import { FinanceController } from './finance.controller';
 import { FinanceAccess } from './finance-access.service';
+import { FinanceReadController } from './finance-read.controller';
+import { FinanceReadService } from './finance-read.service';
 import { LimitsController } from './limits.controller';
 import { SavingsController } from './savings.controller';
 import { SavingsService } from './savings.service';
@@ -19,11 +21,18 @@ import { SavingsService } from './savings.service';
   controllers: [
     CardImageController,
     FinanceController,
+    FinanceReadController,
     SavingsController,
     CardsController,
     BudgetController,
     LimitsController,
   ],
-  providers: [FinanceAccess, SavingsService, CardsService, BudgetService],
+  providers: [
+    FinanceReadService,
+    FinanceAccess,
+    SavingsService,
+    CardsService,
+    BudgetService,
+  ],
 })
 export class FinanceModule {}

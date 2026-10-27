@@ -45,6 +45,7 @@ export interface Goal extends GoalInput {
   id: string;
   currentMinor: number;
   transactions: SavingsEntry[];
+  stepEntries?: SavingsEntry[];
 }
 export interface CardInput {
   storeName: string;
@@ -88,4 +89,20 @@ export interface FinanceData {
   transactions: FinancialEntry[];
   limits: BudgetLimit[];
   members: { id: string; firstName: string; savingsColor?: Tone }[];
+}
+
+export interface FinancePageResult<T> {
+  items: T[];
+  nextCursor: string | null;
+}
+export interface BudgetSummary {
+  filtered: { income: number; expense: number; balance: number };
+  total: { income: number; expense: number; balance: number };
+  categories: { category: string; amountMinor: number }[];
+  thisMonth: number;
+  lastMonth: number;
+  count: number;
+}
+export interface BudgetPageResult extends FinancePageResult<FinancialEntry> {
+  summary: BudgetSummary | null;
 }

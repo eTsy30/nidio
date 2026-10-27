@@ -5,10 +5,13 @@ import { json } from 'express';
 import rateLimit from 'express-rate-limit';
 
 import { originValidator } from './config/origin';
+import { requestMetrics } from './observability/request-metrics';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+
+  app.use(requestMetrics);
 
   app.enableCors({
     origin: originValidator,

@@ -1,5 +1,5 @@
 "use client";
-import { createContext, type ReactNode, useContext, useEffect } from "react";
+import { createContext, type ReactNode, useContext, useEffect, useSyncExternalStore } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
@@ -25,24 +25,31 @@ export function useFinance() {
   if (!value) throw new Error("FinanceProvider missing");
   return value;
 }
-export function useFinanceData(coupleId: string) {
-  const { user } = useAuth();
-  return useQuery({
-    queryKey: ["finance", coupleId, user?.id],
-    queryFn: () => http.get<FinanceData>("/finance"),
-    enabled: Boolean(coupleId && user),
-    staleTime: 0,
-    refetchOnWindowFocus: true,
-    refetchInterval: 30000,
-  });
+export function useFinancePolling() {
+  const { socket } = useRealtimeContext();
+  const connected = useSyncExternalStore(
+    (notify) => {
+      socket?.on("connect", notify);
+      socket?.on("disconnect", notify);
+      return () => {
+        socket?.off("connect", notify);
+        socket?.off("disconnect", notify);
+      };
+    },
+    () => Boolean(socket?.connected),
+    () => false,
+  );
+  return connected ? false : 30000;
 }
-export function FinanceProvider({ data, children }: { data: FinanceData; children: ReactNode }) {
+export function useFinanceData(coupleId: string, section: string, goalId?: string) {
   const { user } = useAuth();
+  const refetchInterval = useFinancePolling();
   const client = useQueryClient();
   const { socket } = useRealtimeContext();
   useEffect(() => {
     const refresh = () => {
-      void client.invalidateQueries({ queryKey: ["finance", data.coupleId] });
+      if (!client.isMutating({ mutationKey: ["finance-write", coupleId] }))
+        void client.invalidateQueries({ queryKey: ["finance", coupleId] });
     };
     socket?.on("finance.updated", refresh);
     socket?.on("connect", refresh);
@@ -50,8 +57,26 @@ export function FinanceProvider({ data, children }: { data: FinanceData; childre
       socket?.off("finance.updated", refresh);
       socket?.off("connect", refresh);
     };
-  }, [socket, client, data.coupleId]);
+  }, [socket, client, coupleId]);
+  return useQuery({
+    queryKey: ["finance", coupleId, user?.id, section, goalId ?? "list"],
+    queryFn: ({ signal }) =>
+      http.get<FinanceData>(
+        goalId ? `/finance/goal/${encodeURIComponent(goalId)}` : `/finance/sections/${section}`,
+        { signal },
+      ),
+    enabled: Boolean(coupleId && user),
+    staleTime: 30_000,
+    refetchOnWindowFocus: true,
+    refetchInterval,
+  });
+}
+export function FinanceProvider({ data, children }: { data: FinanceData; children: ReactNode }) {
+  const { user } = useAuth();
+  const client = useQueryClient();
+  const mutationKey = ["finance-write", data.coupleId];
   const mutation = useMutation({
+    mutationKey,
     mutationFn: ({
       path,
       method,
@@ -62,7 +87,8 @@ export function FinanceProvider({ data, children }: { data: FinanceData; childre
       body?: unknown;
     }) =>
       method === "delete" ? http.delete(`/finance${path}`) : http[method](`/finance${path}`, body),
-    onSuccess: async () => {
+    onSettled: async () => {
+      if (client.isMutating({ mutationKey }) !== 1) return;
       await client.invalidateQueries({ queryKey: ["finance", data.coupleId] });
     },
   });

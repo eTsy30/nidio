@@ -8,8 +8,9 @@
     "start": "next start",
     "lint": "node scripts/check-architecture.mjs && eslint",
     "typecheck": "tsc --noEmit",
-    "test:ui": "node scripts/test-ui-components.mjs && node scripts/test-session.mjs && node scripts/test-task-cache.mjs",
-    "test:finance": "node scripts/test-finance.mjs"
+    "test:ui": "node scripts/test-ui-components.mjs && node scripts/test-session.mjs && node scripts/test-task-cache.mjs && node scripts/test-finance-loading.mjs",
+    "test:finance": "node scripts/test-finance.mjs",
+    "test": "pnpm test:ui && pnpm test:finance && node scripts/test-outbox.mjs"
   },
   "dependencies": {
     "@apollo/client": "^4.2.12",

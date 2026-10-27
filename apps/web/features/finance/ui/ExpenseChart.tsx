@@ -2,18 +2,15 @@ import { Card } from "@/shared/ui";
 
 import { categoryName } from "../model/constants";
 import { money } from "../model/money";
-import type { Currency, FinancialEntry } from "../model/types";
+import type { Currency } from "../model/types";
 export function ExpenseChart({
-  entries,
+  categories: values,
   currency,
 }: {
-  entries: FinancialEntry[];
+  categories: { category: string; amountMinor: number }[];
   currency: Currency;
 }) {
-  const categories = new Map<string, number>();
-  for (const entry of entries)
-    if (entry.type === "EXPENSE")
-      categories.set(entry.category, (categories.get(entry.category) ?? 0) + entry.amountMinor);
+  const categories = new Map(values.map((item) => [item.category, item.amountMinor]));
   const total = [...categories.values()].reduce((a, b) => a + b, 0);
   return (
     <Card padding="sm">

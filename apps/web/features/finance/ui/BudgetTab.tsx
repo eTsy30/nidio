@@ -1,15 +1,19 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Download, Pencil, Plus, Search, Trash2 } from "lucide-react";
+import { toast } from "sonner";
 
+import { http } from "@/shared/api/client/api";
 import { Button, Card, Input } from "@/shared/ui";
+import { LoadingState } from "@/shared/ui/loading/LoadingState";
 
+import { isFinanceAccessError, useFinancePages } from "../api/finance-query";
 import { useFinance } from "../api/FinanceProvider";
 import { categoryName } from "../model/constants";
 import { downloadCsv, entriesCsv } from "../model/csv";
-import { money, totals } from "../model/money";
-import { periodRange, previousMonth } from "../model/period";
-import type { Currency } from "../model/types";
+import { money } from "../model/money";
+import { periodRange } from "../model/period";
+import type { BudgetPageResult, Currency, FinancialEntry } from "../model/types";
 
 import { BudgetFilters, type BudgetFilterState } from "./BudgetFilters";
 import { BudgetLimits } from "./BudgetLimits";
@@ -24,7 +28,7 @@ export function BudgetTab({
   currency: Currency;
   onCurrency?: (currency: Currency) => void;
 }) {
-  const { data, write, name } = useFinance();
+  const { write, name } = useFinance();
   const [filter, setFilter] = useState<BudgetFilterState>({
     period: "month",
     ...periodRange("month"),
@@ -33,30 +37,49 @@ export function BudgetTab({
     search: "",
   });
   const [modal, setModal] = useState<{ kind: string; id?: string } | null>(null);
-  const entry = data.transactions.find((e) => e.id === modal?.id);
-  const close = () => setModal(null);
-  const all = data.transactions.filter((e) => e.currency === currency);
+  const [search, setSearch] = useState("");
+  const [exporting, setExporting] = useState(false);
+  useEffect(() => {
+    const timer = setTimeout(() => setSearch(filter.search), 250);
+    return () => clearTimeout(timer);
+  }, [filter.search]);
   const range = filter.period === "custom" ? filter : periodRange(filter.period);
   const validRange = Boolean(range.start && range.end && range.start <= range.end);
-  const entries = all.filter(
-    (e) =>
-      validRange &&
-      e.date >= range.start &&
-      e.date <= range.end &&
-      (filter.category === "ALL" || e.category === filter.category) &&
-      (filter.author === "ALL" || e.createdBy === filter.author) &&
-      e.description.toLocaleLowerCase().includes(filter.search.toLocaleLowerCase()),
-  );
-  const sum = totals(entries);
-  const total = totals(all);
-  const current = periodRange("month");
-  const previous = previousMonth();
-  const thisMonth = totals(
-    all.filter((e) => e.date >= current.start && e.date <= current.end),
-  ).expense;
-  const lastMonth = totals(
-    all.filter((e) => e.date >= previous.start && e.date <= previous.end),
-  ).expense;
+  const params = {
+    currency,
+    start: range.start,
+    end: range.end,
+    category: filter.category,
+    author: filter.author,
+    search,
+    month: periodRange("month").start.slice(0, 7),
+  };
+  const query = useFinancePages<FinancialEntry, BudgetPageResult>("/budget", params, validRange);
+  const accessible = !isFinanceAccessError(query.error);
+  const entries = accessible ? (query.data?.pages.flatMap((p) => p.items) ?? []) : [];
+  const summary = accessible ? query.data?.pages[0]?.summary : null;
+  const entry = entries.find((e) => e.id === modal?.id);
+  const close = () => setModal(null);
+  const sum = summary?.filtered;
+  async function exportCsv() {
+    setExporting(true);
+    try {
+      const all: FinancialEntry[] = [];
+      let cursor: string | null = null;
+      do {
+        const page: BudgetPageResult = await http.get("/finance/budget", {
+          params: { ...params, ...(cursor ? { cursor } : {}) },
+        });
+        all.push(...page.items);
+        cursor = page.nextCursor;
+      } while (cursor);
+      downloadCsv(entriesCsv(all, name));
+    } catch {
+      toast.error("Не удалось выгрузить операции. Попробуйте ещё раз.");
+    } finally {
+      setExporting(false);
+    }
+  }
   return (
     <div className="space-y-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -68,20 +91,22 @@ export function BudgetTab({
           Добавить операцию
         </Button>
       </div>
-      <div className="grid gap-3 sm:grid-cols-3">
-        {[
-          ["Общий баланс · всё время", total.balance],
-          ["Доходы · по фильтрам", sum.income],
-          ["Расходы · по фильтрам", sum.expense],
-        ].map(([label, value]) => (
-          <Card key={label} padding="sm">
-            <p className="text-xs text-muted-foreground">{label}</p>
-            <p className="mt-2 break-words text-2xl font-semibold tabular-nums">
-              {money(Number(value), currency)}
-            </p>
-          </Card>
-        ))}
-      </div>
+      {summary && sum && (
+        <div className="grid gap-3 sm:grid-cols-3">
+          {[
+            ["Общий баланс · всё время", summary.total.balance],
+            ["Доходы · по фильтрам", sum.income],
+            ["Расходы · по фильтрам", sum.expense],
+          ].map(([label, value]) => (
+            <Card key={label} padding="sm">
+              <p className="text-xs text-muted-foreground">{label}</p>
+              <p className="mt-2 break-words text-2xl font-semibold tabular-nums">
+                {money(Number(value), currency)}
+              </p>
+            </Card>
+          ))}
+        </div>
+      )}
       <div className="flex items-end gap-3">
         <div className="min-w-0 flex-1">
           <BudgetFilters
@@ -106,37 +131,53 @@ export function BudgetTab({
           Выберите обе даты. Конец периода должен быть не раньше начала.
         </p>
       )}
-      <p className="text-sm text-muted-foreground">
-        Баланс выбранного периода с учётом фильтров: {money(sum.balance, currency)}
-      </p>
+      {query.isPending && validRange && <LoadingState label="Загрузка бюджета" />}
+      {query.isError && (
+        <p role="status" className="text-sm text-muted-foreground">
+          Не удалось обновить бюджет.{" "}
+          {summary ? "Показаны сохранённые данные." : "Попробуйте ещё раз."}{" "}
+          <Button variant="link" onClick={() => void query.refetch()}>
+            Повторить
+          </Button>
+        </p>
+      )}
+      {sum && (
+        <p className="text-sm text-muted-foreground">
+          Баланс выбранного периода с учётом фильтров: {money(sum.balance, currency)}
+        </p>
+      )}
       <div className="grid items-start gap-4 lg:grid-cols-2">
-        <ExpenseChart entries={entries} currency={currency} />
+        {summary && <ExpenseChart categories={summary.categories} currency={currency} />}
         <BudgetLimits currency={currency} />
       </div>
-      <Card padding="sm">
-        <h3 className="font-semibold">Этот месяц и предыдущий</h3>
-        <p className="mt-2 text-sm">
-          Расходы: {money(thisMonth, currency)} против {money(lastMonth, currency)}.
-        </p>
-        <p className="mt-1 text-sm text-muted-foreground">
-          {lastMonth
-            ? `${thisMonth > lastMonth ? "Больше" : "Меньше"} на ${money(Math.abs(thisMonth - lastMonth), currency)} (${Math.round((Math.abs(thisMonth - lastMonth) / lastMonth) * 100)}%)`
-            : "В прошлом месяце расходов не было."}{" "}
-          Сравнение всех расходов в {currency}, без фильтров.
-        </p>
-      </Card>
+      {summary && (
+        <Card padding="sm">
+          <h3 className="font-semibold">Этот месяц и предыдущий</h3>
+          <p className="mt-2 text-sm">
+            Расходы: {money(summary.thisMonth, currency)} против{" "}
+            {money(summary.lastMonth, currency)}.
+          </p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {summary.lastMonth
+              ? `${summary.thisMonth > summary.lastMonth ? "Больше" : "Меньше"} на ${money(Math.abs(summary.thisMonth - summary.lastMonth), currency)} (${Math.round((Math.abs(summary.thisMonth - summary.lastMonth) / summary.lastMonth) * 100)}%)`
+              : "В прошлом месяце расходов не было."}{" "}
+            Сравнение всех расходов в {currency}, без фильтров.
+          </p>
+        </Card>
+      )}
       <div className="flex items-center justify-between gap-2">
-        <h3 className="font-semibold">Операции · {entries.length}</h3>
+        <h3 className="font-semibold">Операции · {summary?.count ?? "…"}</h3>
         <Button
           variant="ghost"
           leftIcon={<Download />}
-          disabled={!entries.length}
-          onClick={() => downloadCsv(entriesCsv(entries, name))}
+          disabled={!summary?.count || exporting}
+          loading={exporting}
+          onClick={() => void exportCsv()}
         >
           CSV
         </Button>
       </div>
-      {!entries.length ? (
+      {!entries.length && !query.isPending && !query.isError ? (
         <FinanceEmpty title="Здесь появится история">
           Добавьте доход или расход либо измените фильтры.
         </FinanceEmpty>
@@ -182,6 +223,16 @@ export function BudgetTab({
             </li>
           ))}
         </ul>
+      )}
+      {query.hasNextPage && accessible && (
+        <Button
+          fullWidth
+          variant="secondary"
+          loading={query.isFetchingNextPage}
+          onClick={() => void query.fetchNextPage()}
+        >
+          Показать ещё
+        </Button>
       )}
       {modal?.kind === "create" && <EntryForm currency={currency} onClose={close} />}
       {entry && modal?.kind === "edit" && (

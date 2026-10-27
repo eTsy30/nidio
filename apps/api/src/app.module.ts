@@ -10,6 +10,7 @@ import { CalendarModule } from './calendar/calendar.module';
 import { EmailModule } from './email/email.module';
 import { FinanceModule } from './finance/finance.module';
 import { HealthController } from './health/health.controller';
+import { ReadinessController } from './health/readiness.controller';
 import { PrismaModule } from './prisma/prisma.module';
 import { RealtimeModule } from './realtime/realtime.module';
 import { RelationshipModule } from './relationship/relationship.module';
@@ -19,7 +20,7 @@ import { TemplatesModule } from './templates/templates.module';
 import { UsersModule } from './users/users.module';
 
 @Module({
-  controllers: [HealthController],
+  controllers: [HealthController, ReadinessController],
   imports: [
     ConfigModule.forRoot({
       envFilePath:

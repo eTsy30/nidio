@@ -1,7 +1,10 @@
+import { parseISO } from "date-fns";
 import { CalendarDays } from "lucide-react";
 
 import { Button } from "@/shared/ui";
+import { LoadingState } from "@/shared/ui/loading/LoadingState";
 
+import { isFinanceAccessError, useFinanceResource } from "../../api/finance-query";
 import { money } from "../../model/money";
 import { scheduledContribution } from "../../model/savings-strategy";
 import type { Goal } from "../../model/types";
@@ -15,9 +18,25 @@ export function SavingsScheduled({
   goal: Goal;
   onDeposit: (amount: number) => void;
 }) {
-  const schedule = scheduledContribution(goal);
+  const period = scheduledContribution(goal);
+  const query = useFinanceResource<{ amountMinor: number }>(
+    `/goal/${encodeURIComponent(goal.id)}/contribution`,
+    { from: parseISO(period.from).toISOString(), to: parseISO(period.next).toISOString() },
+  );
+  if (query.isPending) return <LoadingState compact label="Расчёт взноса" />;
+  if (!query.data || isFinanceAccessError(query.error))
+    return (
+      <p>
+        Не удалось рассчитать взнос.{" "}
+        <Button variant="link" onClick={() => void query.refetch()}>
+          Повторить
+        </Button>
+      </p>
+    );
+  const schedule = scheduledContribution(goal, undefined, query.data.amountMinor);
   return (
     <section className={`${styles.group} space-y-4`} aria-label="Взнос по расписанию">
+      {query.isError && <p role="status">Сумма не обновлена. Проверьте подключение.</p>}
       <div className="flex items-center gap-2 text-sm text-muted-foreground">
         <CalendarDays className="size-4" />
         {goal.scheduleEvery === "WEEK" ? "На этой неделе" : "В этом месяце"}

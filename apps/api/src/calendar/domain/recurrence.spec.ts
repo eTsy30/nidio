@@ -1,8 +1,33 @@
 import { EventRepeat } from '@prisma/client';
 
-import { nextOccurrence, previousOccurrence } from './recurrence';
+import {
+  nextOccurrence,
+  occurrenceOnOrAfter,
+  previousOccurrence,
+} from './recurrence';
 
 describe('calendar recurrence', () => {
+  it.each([
+    EventRepeat.DAILY,
+    EventRepeat.WEEKLY,
+    EventRepeat.MONTHLY,
+    EventRepeat.YEARLY,
+  ])(
+    'seeking %s matches sequential recurrence including overflow',
+    (repeat) => {
+      const start = new Date('2024-01-31T10:00:00Z');
+      let expected = start;
+      for (let i = 0; i < 1500; i++)
+        expected = nextOccurrence(expected, repeat)!;
+      expect(occurrenceOnOrAfter(start, repeat, expected)).toEqual(expected);
+      expect(
+        occurrenceOnOrAfter(start, repeat, new Date(expected.getTime() - 1)),
+      ).toEqual(expected);
+      expect(
+        occurrenceOnOrAfter(start, repeat, new Date(expected.getTime() + 1)),
+      ).toEqual(nextOccurrence(expected, repeat));
+    },
+  );
   it.each([
     [EventRepeat.DAILY, '2026-03-08T01:30:00.000Z'],
     [EventRepeat.WEEKLY, '2026-03-14T01:30:00.000Z'],

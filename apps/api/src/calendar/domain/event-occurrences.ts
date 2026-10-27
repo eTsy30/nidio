@@ -2,7 +2,7 @@ import { EventRepeat } from '@prisma/client';
 
 import { CalendarEvent } from '../calendar-event.mapper';
 
-import { nextOccurrence } from './recurrence';
+import { nextOccurrence, occurrenceOnOrAfter } from './recurrence';
 
 export function expandRecurringEvent(
   event: CalendarEvent,
@@ -11,11 +11,17 @@ export function expandRecurringEvent(
 ): CalendarEvent[] {
   const occurrences: CalendarEvent[] = [];
 
-  let occurrenceStart = new Date(event.startAt);
-
   const duration = event.endAt
     ? event.endAt.getTime() - event.startAt.getTime()
     : 0;
+
+  const first = occurrenceOnOrAfter(
+    event.startAt,
+    event.repeat,
+    new Date(rangeStart.getTime() - Math.max(0, duration)),
+  );
+  if (!first) return occurrences;
+  let occurrenceStart = first;
 
   let safetyCounter = 0;
 
@@ -87,25 +93,11 @@ export function isRecurringOccurrence(
     return false;
   }
 
-  let current = new Date(event.startAt);
-
-  for (let i = 0; i < 1000; i++) {
-    if (current.getTime() === occurrenceDate.getTime()) {
-      return true;
-    }
-
-    if (current > occurrenceDate) {
-      return false;
-    }
-
-    const next = nextOccurrence(current, event.repeat);
-
-    if (!next || next.getTime() <= current.getTime()) {
-      return false;
-    }
-
-    current = next;
-  }
-
-  return false;
+  return (
+    occurrenceOnOrAfter(
+      event.startAt,
+      event.repeat,
+      occurrenceDate,
+    )?.getTime() === occurrenceDate.getTime()
+  );
 }

@@ -3,17 +3,22 @@ import { useState } from "react";
 import { ArrowDownLeft, ArrowUpRight } from "lucide-react";
 
 import { Button } from "@/shared/ui";
+import { LoadingState } from "@/shared/ui/loading/LoadingState";
 
+import { isFinanceAccessError, useFinancePages } from "../api/finance-query";
 import { useFinance } from "../api/FinanceProvider";
 import { money } from "../model/money";
-import type { Goal } from "../model/types";
+import type { Goal, SavingsEntry } from "../model/types";
 
 import { CancelSavingsEntry } from "./CancelSavingsEntry";
 
 export function SavingsHistory({ goal }: { goal: Goal }) {
   const { name } = useFinance();
   const [all, setAll] = useState(false);
-  const entries = [...goal.transactions].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  const query = useFinancePages<SavingsEntry>(`/goal/${encodeURIComponent(goal.id)}/history`, {});
+  const entries = isFinanceAccessError(query.error)
+    ? []
+    : (query.data?.pages.flatMap((p) => p.items) ?? []);
   return (
     <section aria-labelledby="savings-history-title" className="space-y-3">
       <div className="flex items-center justify-between gap-3">
@@ -26,6 +31,15 @@ export function SavingsHistory({ goal }: { goal: Goal }) {
           </Button>
         )}
       </div>
+      {query.isPending && <LoadingState compact label="Загрузка истории" />}
+      {query.isError && (
+        <p role="status">
+          История не обновлена.{" "}
+          <Button variant="link" onClick={() => void query.refetch()}>
+            Повторить
+          </Button>
+        </p>
+      )}
       {entries.length ? (
         <ul className="divide-y divide-border">
           {(all ? entries : entries.slice(0, 5)).map((entry) => {
@@ -69,10 +83,20 @@ export function SavingsHistory({ goal }: { goal: Goal }) {
             );
           })}
         </ul>
-      ) : (
+      ) : !query.isPending && !query.isError ? (
         <p className="py-4 text-sm text-muted-foreground">
           Пока нет взносов. Здесь будут видны суммы, даты и участники.
         </p>
+      ) : null}
+      {all && query.hasNextPage && !isFinanceAccessError(query.error) && (
+        <Button
+          fullWidth
+          variant="secondary"
+          loading={query.isFetchingNextPage}
+          onClick={() => void query.fetchNextPage()}
+        >
+          Показать ещё
+        </Button>
       )}
     </section>
   );

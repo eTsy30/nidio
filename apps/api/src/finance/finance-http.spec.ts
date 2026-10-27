@@ -12,6 +12,8 @@ import { StorageService } from '../storage/storage.service';
 
 import { CardImageController } from './card-image.controller';
 import { FinanceAccess } from './finance-access.service';
+import { FinanceReadController } from './finance-read.controller';
+import { FinanceReadService } from './finance-read.service';
 import { SavingsController } from './savings.controller';
 import { SavingsService } from './savings.service';
 
@@ -21,6 +23,10 @@ describe('finance HTTP authentication, validation and image isolation', () => {
   const jwt = new JwtService({ secret });
   const token = (user = 'alice', type = 'access') =>
     jwt.sign({ sub: user, type }, { expiresIn: '5m' });
+  const reads = {
+    section: jest.fn(async () => ({ cards: [] })),
+    budget: jest.fn(async () => ({ items: [] })),
+  };
   const savings = {
     save: jest.fn(async () => ({ id: 'goal-a' })),
     entry: jest.fn(),
@@ -52,9 +58,15 @@ describe('finance HTTP authentication, validation and image isolation', () => {
   };
   beforeAll(async () => {
     const module = await Test.createTestingModule({
-      controllers: [SavingsController, CardImageController, StorageController],
+      controllers: [
+        FinanceReadController,
+        SavingsController,
+        CardImageController,
+        StorageController,
+      ],
       providers: [
         JwtStrategy,
+        { provide: FinanceReadService, useValue: reads },
         {
           provide: AuthService,
           useValue: { validate: async (id: string) => ({ id }) },
@@ -77,6 +89,34 @@ describe('finance HTTP authentication, validation and image isolation', () => {
   });
   afterAll(async () => {
     await app.close();
+  });
+  it('authenticates and validates section/history queries', async () => {
+    await request(app.getHttpServer())
+      .get('/finance/sections/cards')
+      .expect(401);
+    await request(app.getHttpServer())
+      .get('/finance/sections/cards')
+      .set('Authorization', `Bearer ${token()}`)
+      .expect(200)
+      .expect('Cache-Control', 'private, no-store');
+    expect(reads.section).toHaveBeenCalledWith('alice', 'cards');
+    await request(app.getHttpServer())
+      .get('/finance/budget')
+      .set('Authorization', `Bearer ${token()}`)
+      .query({ currency: 'invalid', start: 'oops', end: 'oops', month: 'oops' })
+      .expect(400);
+    await request(app.getHttpServer())
+      .get('/finance/budget')
+      .set('Authorization', `Bearer ${token()}`)
+      .query({
+        currency: 'EUR',
+        start: '2026-10-01',
+        end: '2026-10-31',
+        month: '2026-10',
+        coupleId: 'pair-b',
+      })
+      .expect(400);
+    expect(reads.budget).not.toHaveBeenCalled();
   });
   it('rejects missing authentication and refresh tokens', async () => {
     await request(app.getHttpServer())

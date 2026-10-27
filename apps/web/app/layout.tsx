@@ -4,6 +4,7 @@ import { Toaster } from "sonner";
 import { AuthProvider } from "@/app/providers/AuthProvider";
 import { ApolloProviderWrapper } from "@/shared/api/provider/apollo-provider";
 import { QueryProvider } from "@/shared/api/query/query-provider";
+import { PerformanceReporter } from "@/shared/observability/PerformanceReporter";
 import { RealtimeProvider } from "@/shared/realtime";
 import { ThemeProvider } from "@/shared/theme/ThemeProvider";
 
@@ -43,6 +44,7 @@ export default function RootLayout({
 
       <body className="min-h-full flex flex-col font-sans">
         <Toaster />
+        <PerformanceReporter />
         <QueryProvider>
           <AuthProvider>
             <ThemeProvider>

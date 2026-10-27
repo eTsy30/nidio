@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 
 import { useAuth } from "@/shared/api/provider/auth-provider";
 import { routes } from "@/shared/router/paths";
+import { LoadingState } from "@/shared/ui/loading/LoadingState";
 
 type Props = {
   children: ReactNode;
@@ -22,7 +23,11 @@ export function AuthGuard({ children }: Props) {
   }, [isAuthenticated, isLoading, router]);
 
   if (isLoading) {
-    return null;
+    return (
+      <main className="mx-auto w-full max-w-5xl px-4 py-10">
+        <LoadingState label="Восстанавливаем вход" />
+      </main>
+    );
   }
 
   if (!isAuthenticated) {

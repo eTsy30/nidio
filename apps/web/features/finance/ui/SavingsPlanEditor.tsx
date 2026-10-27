@@ -14,7 +14,9 @@ import { FinanceDialog } from "./FinanceDialog";
 export function SavingsPlanEditor({ goal, onClose }: { goal: Goal; onClose: () => void }) {
   const { write } = useFinance();
   const completed = (goal.plan ?? []).filter((step) =>
-    goal.transactions.some((entry) => entry.stepId === step.id && !entry.cancelledAt),
+    (goal.stepEntries ?? goal.transactions).some(
+      (entry) => entry.stepId === step.id && !entry.cancelledAt,
+    ),
   );
   const fixed = completed.reduce((sum, step) => sum + step.amountMinor, 0);
   const [mode, setMode] = useState<PlanMode>("equal");

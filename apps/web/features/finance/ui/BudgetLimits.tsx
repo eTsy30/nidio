@@ -3,7 +3,9 @@ import { useState } from "react";
 import { Pencil, Trash2 } from "lucide-react";
 
 import { Button, Card, Input, Select } from "@/shared/ui";
+import { LoadingState } from "@/shared/ui/loading/LoadingState";
 
+import { isFinanceAccessError, useFinanceResource } from "../api/finance-query";
 import { useFinance } from "../api/FinanceProvider";
 import { categoryName, expenseCategories } from "../model/constants";
 import { money, moneyInput, parseMoney, progress } from "../model/money";
@@ -55,11 +57,16 @@ function LimitForm({
   );
 }
 export function BudgetLimits({ currency }: { currency: Currency }) {
-  const { data, write } = useFinance();
+  const { write } = useFinance();
   const [month, setMonth] = useState(dateKey().slice(0, 7));
   const [form, setForm] = useState<BudgetLimit | "new" | null>(null);
   const [remove, setRemove] = useState<BudgetLimit | null>(null);
-  const limits = data.limits.filter((l) => l.currency === currency && l.month === month);
+  const query = useFinanceResource<(BudgetLimit & { spentMinor: number })[]>(
+    "/budget-limits",
+    { currency, month },
+    /^\d{4}-(0[1-9]|1[0-2])$/.test(month),
+  );
+  const limits = isFinanceAccessError(query.error) ? [] : (query.data ?? []);
   return (
     <Card padding="sm" className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
@@ -79,22 +86,23 @@ export function BudgetLimits({ currency }: { currency: Currency }) {
         value={month}
         onChange={(e) => setMonth(e.target.value)}
       />
-      {!limits.length && (
+      {query.isPending && <LoadingState compact />}
+      {query.isError && (
+        <p role="status">
+          Лимиты не обновлены.{" "}
+          <Button variant="link" onClick={() => void query.refetch()}>
+            Повторить
+          </Button>
+        </p>
+      )}
+      {!limits.length && !query.isPending && !query.isError && (
         <p className="text-sm text-muted-foreground">
           Задайте общий бюджет или лимит на отдельную категорию.
         </p>
       )}
       <ul className="space-y-4">
         {limits.map((limit) => {
-          const spent = data.transactions
-            .filter(
-              (e) =>
-                e.currency === currency &&
-                e.type === "EXPENSE" &&
-                e.date.startsWith(month) &&
-                (limit.category === "ALL" || e.category === limit.category),
-            )
-            .reduce((sum, e) => sum + e.amountMinor, 0);
+          const spent = limit.spentMinor;
           const remaining = limit.amountMinor - spent;
           const near = spent >= limit.amountMinor * 0.8;
           return (

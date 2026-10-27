@@ -10,6 +10,7 @@ import { BudgetService } from '../src/finance/budget.service';
 import { CardsService } from '../src/finance/cards.service';
 import { FinanceController } from '../src/finance/finance.controller';
 import { FinanceAccess } from '../src/finance/finance-access.service';
+import { FinanceReadService } from '../src/finance/finance-read.service';
 import { SavingsService } from '../src/finance/savings.service';
 import type { PrismaService } from '../src/prisma/prisma.service';
 import type { RealtimeService } from '../src/realtime/realtime.service';
@@ -485,6 +486,171 @@ async function main() {
         scheduleEvery: 'WEEK',
         scheduleStartDate: '2026-10-22',
       }),
+    );
+    // Paginated read API: exact totals must not depend on the loaded page.
+    const reads = new FinanceReadService(access);
+    const fixtureTime = new Date('2026-10-24T10:00:00Z');
+    await prisma.financialTransaction.createMany({
+      data: Array.from({ length: 125 }, (_, i) => ({
+        coupleId: pair.id,
+        requestId: randomUUID(),
+        amountMinor: 100,
+        currency: 'USD',
+        type: i < 90 ? 'EXPENSE' : 'INCOME',
+        category: i < 90 ? 'groceries' : 'salary',
+        date: '2026-10-24',
+        description: i % 2 ? 'Test' : 'Other',
+        createdBy: alex.id,
+        createdAt: fixtureTime,
+      })),
+    });
+    await budget.save(alex.id, {
+      ...income,
+      currency: 'USD',
+      type: 'EXPENSE',
+      category: 'groceries',
+      amountMinor: 700,
+      date: '2026-09-10',
+      requestId: randomUUID(),
+    });
+    await budget.limit(alex.id, {
+      currency: 'USD',
+      category: 'ALL',
+      month: '2026-10',
+      amountMinor: 10000,
+    });
+    const filter = {
+      currency: 'USD',
+      start: '2026-10-01',
+      end: '2026-10-31',
+      month: '2026-10',
+    };
+    const firstPage = await reads.budget(alex.id, filter);
+    assert.equal(firstPage.items.length, 50);
+    assert.equal(firstPage.summary?.count, 125);
+    assert.deepEqual(firstPage.summary?.filtered, {
+      income: 3500,
+      expense: 9000,
+      balance: -5500,
+    });
+    assert.equal(firstPage.summary?.total.balance, -6200);
+    assert.equal(firstPage.summary?.thisMonth, 9000);
+    assert.equal(firstPage.summary?.lastMonth, 700);
+    const seen = new Set(firstPage.items.map((item) => item.id));
+    let nextCursor = firstPage.nextCursor;
+    while (nextCursor) {
+      const more = await reads.budget(alex.id, {
+        ...filter,
+        cursor: nextCursor,
+      });
+      assert.equal(more.summary, null);
+      for (const item of more.items) {
+        assert(!seen.has(item.id), 'page duplicates');
+        seen.add(item.id);
+      }
+      nextCursor = more.nextCursor;
+    }
+    assert.equal(seen.size, 125, 'all pages including equal timestamp ties');
+    const searched = await reads.budget(alex.id, {
+      ...filter,
+      search: 'test',
+      category: 'groceries',
+      author: alex.id,
+    });
+    assert.equal(searched.summary?.count, 45);
+    assert.equal(searched.summary?.filtered.expense, 4500);
+    assert.equal(
+      (await reads.limits(alex.id, { currency: 'USD', month: '2026-10' }))[0]
+        ?.spentMinor,
+      9000,
+    );
+    assert.equal((await reads.budget(other.id, filter)).items.length, 0);
+    assert.throws(() =>
+      reads.budget(alex.id, { ...filter, cursor: 'invalid' }),
+    );
+    assert.throws(() =>
+      reads.budget(alex.id, { ...filter, start: '2026-02-30' }),
+    );
+    const historyGoal = await savings.save(alex.id, {
+      ...goalInput,
+      title: 'History fixture',
+      targetMinor: 20000,
+    });
+    await prisma.savingsTransaction.createMany({
+      data: Array.from({ length: 125 }, (_, i) => ({
+        goalId: historyGoal.id,
+        requestId: randomUUID(),
+        amountMinor: 100,
+        type: i < 120 ? 'DEPOSIT' : 'WITHDRAWAL',
+        createdBy: alex.id,
+        createdAt: fixtureTime,
+        cancelledAt: i === 0 ? fixtureTime : null,
+      })),
+    });
+    const detail = await reads.section(alex.id, 'savings', historyGoal.id);
+    assert.equal(detail.goals[0]?.currentMinor, 11400);
+    assert.equal(
+      detail.goals[0]?.transactions.length,
+      0,
+      'no history in goal summary',
+    );
+    assert.equal(
+      (
+        await reads.contribution(alex.id, historyGoal.id, {
+          from: '2026-10-24T00:00:00Z',
+          to: '2026-10-25T00:00:00Z',
+        })
+      ).amountMinor,
+      11400,
+    );
+    assert.equal(
+      (
+        await reads.contribution(alex.id, historyGoal.id, {
+          from: '2026-10-25T00:00:00Z',
+          to: '2026-10-26T00:00:00Z',
+        })
+      ).amountMinor,
+      0,
+    );
+    const historyFirst = await reads.history(alex.id, historyGoal.id, {});
+    const historySeen = new Set(historyFirst.items.map((item) => item.id));
+    let historyCursor = historyFirst.nextCursor;
+    // Deletion of the cursor row must not break keyset pagination.
+    await prisma.savingsTransaction.delete({
+      where: { id: historyFirst.items.at(-1)!.id },
+    });
+    while (historyCursor) {
+      const more = await reads.history(alex.id, historyGoal.id, {
+        cursor: historyCursor,
+      });
+      for (const item of more.items) {
+        assert(!historySeen.has(item.id));
+        historySeen.add(item.id);
+      }
+      historyCursor = more.nextCursor;
+    }
+    assert.equal(historySeen.size, 125);
+    await assert.rejects(() => reads.history(sam.id, personal.id, {}));
+    await assert.rejects(() =>
+      reads.contribution(other.id, historyGoal.id, {
+        from: '2026-10-24T00:00:00Z',
+        to: '2026-10-25T00:00:00Z',
+      }),
+    );
+    const cardsOnly = await reads.section(alex.id, 'cards');
+    assert.equal(cardsOnly.goals.length, 0);
+    assert.equal(cardsOnly.transactions.length, 0);
+    assert.equal(cardsOnly.cards.length, 1);
+    const legacyBytes = Buffer.byteLength(
+      JSON.stringify(await controller.state(alex.id)),
+    );
+    const cardsBytes = Buffer.byteLength(JSON.stringify(cardsOnly));
+    assert(
+      cardsBytes < legacyBytes / 5,
+      'cards response must not include financial history',
+    );
+    console.info(
+      `Finance payload fixture: legacy=${legacyBytes} bytes; cards=${cardsBytes} bytes; history page<=50; full aggregates verified.`,
     );
     await cards.remove(sam.id, card.id);
     await budget.remove(sam.id, first.id);

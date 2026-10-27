@@ -60,23 +60,25 @@ function periodIndex(start: string, period: SavingsPeriod, now: string) {
   if (scheduleDate(start, period, index) > now) index--;
   return Math.max(0, index);
 }
-export function scheduledContribution(goal: Goal, now = todayDate()) {
+export function scheduledContribution(goal: Goal, now = todayDate(), contributedOverride?: number) {
   const period = goal.scheduleEvery ?? "MONTH";
   const start = goal.scheduleStartDate ?? goal.createdAt?.slice(0, 10) ?? now;
   const index = periodIndex(start, period, now);
   const from = scheduleDate(start, period, index);
   const next = scheduleDate(start, period, index + 1);
-  const contributed = goal.transactions
-    .filter(
-      (entry) =>
-        !entry.cancelledAt &&
-        format(parseISO(entry.createdAt), "yyyy-MM-dd") >= from &&
-        format(parseISO(entry.createdAt), "yyyy-MM-dd") < next,
-    )
-    .reduce(
-      (sum, entry) => sum + (entry.type === "DEPOSIT" ? entry.amountMinor : -entry.amountMinor),
-      0,
-    );
+  const contributed =
+    contributedOverride ??
+    goal.transactions
+      .filter(
+        (entry) =>
+          !entry.cancelledAt &&
+          format(parseISO(entry.createdAt), "yyyy-MM-dd") >= from &&
+          format(parseISO(entry.createdAt), "yyyy-MM-dd") < next,
+      )
+      .reduce(
+        (sum, entry) => sum + (entry.type === "DEPOSIT" ? entry.amountMinor : -entry.amountMinor),
+        0,
+      );
   const remaining = Math.max(0, goal.targetMinor - goal.currentMinor);
   const periods = goal.targetDate
     ? Math.max(1, periodIndex(start, period, goal.targetDate) - index + 1)

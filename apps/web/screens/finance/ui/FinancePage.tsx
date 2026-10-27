@@ -1,6 +1,7 @@
 "use client";
 import { lazy, Suspense, useState } from "react";
 
+import { isFinanceAccessError } from "@/features/finance/api/finance-query";
 import { FinanceProvider, useFinanceData } from "@/features/finance/api/FinanceProvider";
 import type { Currency } from "@/features/finance/model/types";
 import { useCurrentCouple } from "@/features/relationship/hook/use-relationship";
@@ -32,10 +33,10 @@ function FinanceContent({
   tab: Section;
   goalId?: string | undefined;
 }) {
-  const query = useFinanceData(coupleId);
+  const query = useFinanceData(coupleId, tab, goalId);
   const [currency, setCurrency] = useState<Currency>("BYN");
   if (query.isPending) return <LoadingState label="Загрузка финансов" />;
-  if (!query.data || query.isError)
+  if (!query.data || isFinanceAccessError(query.error))
     return (
       <Card className="space-y-3">
         <h2 className="font-semibold">Не удалось загрузить финансы</h2>
@@ -50,6 +51,14 @@ function FinanceContent({
   if (goalId)
     return (
       <FinanceProvider data={query.data}>
+        {query.isError && (
+          <p role="status" className="mb-4 text-sm text-muted-foreground">
+            Не удалось обновить данные. Показана сохранённая версия.{" "}
+            <Button variant="link" onClick={() => void query.refetch()}>
+              Повторить
+            </Button>
+          </p>
+        )}
         <Suspense fallback={<LoadingState label="Загрузка копилки" />}>
           <SavingsGoalPage id={goalId} />
         </Suspense>
@@ -57,6 +66,14 @@ function FinanceContent({
     );
   return (
     <FinanceProvider data={query.data}>
+      {query.isError && (
+        <p role="status" className="mb-4 text-sm text-muted-foreground">
+          Не удалось обновить данные. Показана сохранённая версия.{" "}
+          <Button variant="link" onClick={() => void query.refetch()}>
+            Повторить
+          </Button>
+        </p>
+      )}
       <Suspense fallback={<LoadingState label="Загрузка раздела" />}>
         {tab === "savings" ? (
           <SavingsTab currency={currency} onCurrency={setCurrency} />
